@@ -2,24 +2,41 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/navigation_home">
+    app:startDestination="@+id/navigation_wallet">
 
     <fragment
-        android:id="@+id/navigation_home"
+        android:id="@+id/navigation_assets"
+        android:name="com.example.cuzdan.ui.assets.AssetsFragment"
+        android:label="Varlık Ekle"
+        tools:layout="@layout/fragment_assets" />
+
+    <fragment
+        android:id="@+id/navigation_reports"
+        android:name="com.example.cuzdan.ui.reports.ReportsFragment"
+        android:label="Raporlar"
+        tools:layout="@layout/fragment_reports" />
+
+    <fragment
+        android:id="@+id/navigation_wallet"
         android:name="com.example.cuzdan.ui.home.HomeFragment"
-        android:label="@string/title_home"
+        android:label="Cüzdan"
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_crypto"
-        android:name="com.example.cuzdan.ui.crypto.CryptoFragment"
-        android:label="Kripto"
-        tools:layout="@layout/fragment_crypto" />
+        android:id="@+id/navigation_markets"
+        android:name="com.example.cuzdan.ui.markets.MarketsFragment"
+        android:label="Piyasalar"
+        tools:layout="@layout/fragment_markets" />
 
     <fragment
-        android:id="@+id/navigation_notifications"
+        android:id="@+id/navigation_settings"
         android:name="com.example.cuzdan.ui.notifications.NotificationsFragment"
-        android:label="@string/title_notifications"
+        android:label="İşlemler"
         tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/navigation_profit_loss_chart"
+        android:name="com.example.cuzdan.ui.reports.ProfitLossChartFragment"
+        android:label="Kar/Zarar Grafiği"
+        tools:layout="@layout/fragment_profit_loss_chart" />
 </navigation>
