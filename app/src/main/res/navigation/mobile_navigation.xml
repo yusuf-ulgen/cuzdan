@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
-        android:name="com.example.cuzdan.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:id="@+id/navigation_crypto"
+        android:name="com.example.cuzdan.ui.crypto.CryptoFragment"
+        android:label="Kripto"
+        tools:layout="@layout/fragment_crypto" />
 
     <fragment
         android:id="@+id/navigation_notifications"

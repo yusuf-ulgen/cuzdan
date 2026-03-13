@@ -1,4 +1,4 @@
-package com.example.cuzdan.ui.dashboard
+package com.example.cuzdan.ui.crypto
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -10,28 +10,25 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.cuzdan.databinding.FragmentDashboardBinding
-import com.example.cuzdan.ui.dashboard.DashboardAdapter
-import com.example.cuzdan.ui.dashboard.DashboardUiState
-import com.example.cuzdan.ui.dashboard.DashboardViewModel
+import com.example.cuzdan.databinding.FragmentCryptoBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class DashboardFragment : Fragment() {
+class CryptoFragment : Fragment() {
 
-    private var _binding: FragmentDashboardBinding? = null
+    private var _binding: FragmentCryptoBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: DashboardViewModel by viewModels()
-    private val adapter = DashboardAdapter()
+    private val viewModel: CryptoViewModel by viewModels()
+    private val adapter = CryptoAdapter()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        _binding = FragmentCryptoBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -59,13 +56,13 @@ class DashboardFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     when (state) {
-                        is DashboardUiState.Loading -> {
+                        is CryptoUiState.Loading -> {
                             handleLoading()
                         }
-                        is DashboardUiState.Success -> {
+                        is CryptoUiState.Success -> {
                             handleSuccess(state)
                         }
-                        is DashboardUiState.Error -> {
+                        is CryptoUiState.Error -> {
                             handleError(state)
                         }
                     }
@@ -81,7 +78,7 @@ class DashboardFragment : Fragment() {
         binding.tvError.visibility = View.GONE
     }
 
-    private fun handleSuccess(state: DashboardUiState.Success) {
+    private fun handleSuccess(state: CryptoUiState.Success) {
         binding.swipeRefresh.isRefreshing = false
         binding.shimmerView.stopShimmer()
         binding.shimmerView.visibility = View.GONE
@@ -90,7 +87,7 @@ class DashboardFragment : Fragment() {
         adapter.submitList(state.assets)
     }
 
-    private fun handleError(state: DashboardUiState.Error) {
+    private fun handleError(state: CryptoUiState.Error) {
         binding.swipeRefresh.isRefreshing = false
         binding.shimmerView.stopShimmer()
         binding.shimmerView.visibility = View.GONE

@@ -1,0 +1,82 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
+
+    <View
+        android:id="@+id/viewIconBg"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/bg_circle_accent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/ivAssetIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_asset_placeholder"
+        app:layout_constraintBottom_toBottomOf="@id/viewIconBg"
+        app:layout_constraintEnd_toEndOf="@id/viewIconBg"
+        app:layout_constraintStart_toStartOf="@id/viewIconBg"
+        app:layout_constraintTop_toTopOf="@id/viewIconBg"
+        app:tint="@color/white" />
+
+    <TextView
+        android:id="@+id/tvAssetName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="@color/text_white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/tvAssetChange"
+        app:layout_constraintStart_toEndOf="@id/viewIconBg"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Brent Petrol" />
+
+    <TextView
+        android:id="@+id/tvAssetSymbol"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/tvAssetPrice"
+        app:layout_constraintStart_toStartOf="@id/tvAssetName"
+        app:layout_constraintTop_toBottomOf="@id/tvAssetName"
+        tools:text="BRENT" />
+
+    <TextView
+        android:id="@+id/tvAssetChange"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_green"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="▲ %18,9" />
+
+    <TextView
+        android:id="@+id/tvAssetPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvAssetChange"
+        tools:text="99,360" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="12dp"
+        android:background="#1AFFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/tvAssetSymbol" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

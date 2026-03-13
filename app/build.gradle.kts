@@ -30,11 +30,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         viewBinding = true
@@ -64,12 +64,23 @@ dependencies {
 
     // Retrofit & OkHttp
     implementation(libs.retrofit)
-    implementation(libs.retrofit-converter-gson)
+    implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
-    implementation(libs.okhttp-logging)
+    implementation(libs.okhttp.logging)
 
     // Coroutines
-    implementation(libs.kotlinx-coroutines-android)
+    implementation(libs.kotlinx.coroutines.android)
+
+    // UI Effects
+    implementation(libs.facebook.shimmer)
+    implementation(libs.androidx.swiperefreshlayout)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.mpandroidchart)
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

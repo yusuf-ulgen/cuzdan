@@ -5,6 +5,19 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
+    <!-- Dark Blue Theme Palette -->
+    <color name="bg_start">#1B284F</color>
+    <color name="bg_end">#0D1326</color>
+    <color name="surface_card">#25325A</color>
+    <color name="surface_card_light">#304177</color>
+    
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_secondary">#B0B8D1</color>
+    
+    <color name="accent_green">#4CAF50</color>
+    <color name="accent_red">#FF5252</color>
+    <color name="accent_blue">#448AFF</color>
+    
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>
