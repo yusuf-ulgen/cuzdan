@@ -13,5 +13,6 @@ data class Asset(
     val amount: BigDecimal,
     val averageBuyPrice: BigDecimal,
     val currentPrice: BigDecimal,
-    val assetType: AssetType
+    val assetType: AssetType,
+    val portfolioId: Long = 0 // Varsayılan portföy ID
 )

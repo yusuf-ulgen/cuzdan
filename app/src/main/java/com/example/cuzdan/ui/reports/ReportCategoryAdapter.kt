@@ -67,4 +67,9 @@ class ReportCategoryAdapter(
         isHidden = hidden
         notifyDataSetChanged()
     }
+
+    fun setItems(newItems: List<ReportCategory>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
 }

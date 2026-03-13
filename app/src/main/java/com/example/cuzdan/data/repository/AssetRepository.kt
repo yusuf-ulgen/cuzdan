@@ -36,6 +36,13 @@ class AssetRepository @Inject constructor(
     }
 
     /**
+     * Belirli bir portföye ait varlıkları döner.
+     */
+    fun getAssetsByPortfolioId(portfolioId: Long): Flow<List<Asset>> {
+        return assetDao.getAssetsByPortfolioId(portfolioId)
+    }
+
+    /**
      * Binance API'den kripto fiyatlarını günceller.
      */
     suspend fun refreshCryptoPrices(): Flow<Resource<Unit>> = flow {

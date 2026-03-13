@@ -29,4 +29,7 @@ interface AssetDao {
 
     @Query("SELECT * FROM assets WHERE assetType IN (:types)")
     fun getAssetsByTypes(types: List<AssetType>): Flow<List<Asset>>
+
+    @Query("SELECT * FROM assets WHERE portfolioId = :portfolioId")
+    fun getAssetsByPortfolioId(portfolioId: Long): Flow<List<Asset>>
 }

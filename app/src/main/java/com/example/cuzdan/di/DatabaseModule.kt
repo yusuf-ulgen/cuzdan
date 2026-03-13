@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.cuzdan.data.local.AppDatabase
 import com.example.cuzdan.data.local.dao.AssetDao
+import com.example.cuzdan.data.local.dao.PortfolioDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,11 +23,18 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "cuzdan_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
     fun provideAssetDao(database: AppDatabase): AssetDao {
         return database.assetDao()
+    }
+
+    @Provides
+    fun providePortfolioDao(database: AppDatabase): PortfolioDao {
+        return database.portfolioDao()
     }
 }

@@ -5,18 +5,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.FragmentReportsBinding
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.util.Locale
 
+@AndroidEntryPoint
 class ReportsFragment : Fragment() {
 
     private var _binding: FragmentReportsBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: ReportsViewModel by viewModels()
     private var isHidden = false
     private lateinit var adapter: ReportCategoryAdapter
+    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,8 +36,9 @@ class ReportsFragment : Fragment() {
     ): View {
         _binding = FragmentReportsBinding.inflate(inflater, container, false)
         
-        setupUI()
         setupRecyclerView()
+        setupUI()
+        observeState()
         
         return binding.root
     }
@@ -34,22 +46,44 @@ class ReportsFragment : Fragment() {
     private fun setupUI() {
         binding.imageHideShow.setOnClickListener {
             isHidden = !isHidden
-            updateHideShowUI()
+            updateHideShowUI(viewModel.uiState.value)
         }
 
         binding.layoutDailyChange.setOnClickListener {
             findNavController().navigate(R.id.navigation_profit_loss_chart)
         }
 
-        // Mock switching logic
-        binding.btnPrevPortfolio.setOnClickListener { /* Switch to prev portfolio */ }
-        binding.btnNextPortfolio.setOnClickListener { /* Switch to next portfolio */ }
+        binding.btnPrevPortfolio.setOnClickListener { 
+            viewModel.selectPrevPortfolio()
+        }
         
-        // Initial setup for amounts
-        updateHideShowUI()
+        binding.btnNextPortfolio.setOnClickListener { 
+            viewModel.selectNextPortfolio()
+        }
     }
 
-    private fun updateHideShowUI() {
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    updateUI(state)
+                }
+            }
+        }
+    }
+
+    private fun updateUI(state: ReportsUiState) {
+        
+        if (state.portfolios.isNotEmpty()) {
+            binding.textPortfolioName.text = state.portfolios[state.selectedPortfolioIndex].name
+        }
+
+        updateHideShowUI(state)
+        
+        adapter.setItems(state.categories)
+    }
+
+    private fun updateHideShowUI(state: ReportsUiState) {
         if (isHidden) {
             binding.imageHideShow.setImageResource(R.drawable.ic_eye_off)
             binding.textTotalAmount.text = "***** TL"
@@ -57,9 +91,9 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangePerc.text = "*****"
         } else {
             binding.imageHideShow.setImageResource(R.drawable.ic_eye_on)
-            binding.textTotalAmount.text = "-60 TL"
-            binding.textDailyChangeAbs.text = "- 1.643"
-            binding.textDailyChangePerc.text = "%103,8"
+            binding.textTotalAmount.text = currencyFormat.format(state.totalValue)
+            binding.textDailyChangeAbs.text = currencyFormat.format(state.totalProfitLoss)
+            binding.textDailyChangePerc.text = String.format("%%%+.2f", 0.0) // Günlük değişim için ek alan gerekebilir, şimdilik 0.0
         }
         
         if (::adapter.isInitialized) {
@@ -68,12 +102,7 @@ class ReportsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        val categories = listOf(
-            ReportCategory("BIST", "125.000 TL", "%13,9", "15.000 TL", false),
-            ReportCategory("Emtia", "10.220 TL", "%32,1", "- 77 TL", true)
-        )
-
-        adapter = ReportCategoryAdapter(categories, isHidden)
+        adapter = ReportCategoryAdapter(emptyList(), isHidden)
         binding.recyclerReportCategories.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@ReportsFragment.adapter
