@@ -115,6 +115,18 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/layout_portfolio_selector" />
 
+        <ImageButton
+            android:id="@+id/btn_privacy_toggle"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_eye_on"
+            app:layout_constraintBottom_toBottomOf="@id/text_total_balance"
+            app:layout_constraintStart_toEndOf="@id/text_total_balance"
+            app:layout_constraintTop_toTopOf="@id/text_total_balance"
+            app:tint="@color/text_secondary" />
+
         <!-- Daily Change Pill -->
         <LinearLayout
             android:id="@+id/layout_daily_change_pill"

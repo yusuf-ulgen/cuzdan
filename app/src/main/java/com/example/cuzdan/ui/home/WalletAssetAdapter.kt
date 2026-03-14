@@ -5,14 +5,12 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.databinding.ItemAssetBinding
-import java.text.NumberFormat
-import java.util.Locale
+import com.example.cuzdan.util.formatCurrency
 
 class WalletAssetAdapter(
-    private var assets: List<Asset> = emptyList()
+    private var assets: List<Asset> = emptyList(),
+    private val isPrivacyEnabled: Boolean = false
 ) : RecyclerView.Adapter<WalletAssetAdapter.ViewHolder>() {
-
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
 
     class ViewHolder(val binding: ItemAssetBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -32,7 +30,12 @@ class WalletAssetAdapter(
             tvAssetSymbol.text = asset.symbol
             
             val totalValue = asset.amount.multiply(asset.currentPrice)
-            tvAssetPrice.text = currencyFormat.format(totalValue)
+            
+            if (isPrivacyEnabled) {
+                tvAssetPrice.text = "**** TL"
+            } else {
+                tvAssetPrice.text = totalValue.formatCurrency()
+            }
             
             val profitLoss = totalValue.subtract(asset.amount.multiply(asset.averageBuyPrice))
             val isProfit = profitLoss >= java.math.BigDecimal.ZERO

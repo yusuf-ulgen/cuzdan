@@ -6,14 +6,13 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.databinding.ItemWalletCategoryBinding
-import java.text.NumberFormat
-import java.util.Locale
+import com.example.cuzdan.util.formatCurrency
 
 class WalletCategoryAdapter(
     private var items: List<WalletCategorySummary> = emptyList()
 ) : RecyclerView.Adapter<WalletCategoryAdapter.ViewHolder>() {
 
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
+    private var isPrivacyEnabled: Boolean = false
     private val expandedPositions = mutableSetOf<Int>()
 
     class ViewHolder(val binding: ItemWalletCategoryBinding) : RecyclerView.ViewHolder(binding.root)
@@ -33,17 +32,23 @@ class WalletCategoryAdapter(
 
         holder.binding.apply {
             textCategoryTitle.text = item.title
-            textCategoryTotal.text = currencyFormat.format(item.totalValue)
-            textCategoryChange.text = String.format("%s %%%+.2f", 
-                currencyFormat.format(item.totalProfitLoss), 
-                item.profitLossPerc
-            )
+            
+            if (isPrivacyEnabled) {
+                textCategoryTotal.text = "**** TL"
+                textCategoryChange.text = "**** %***"
+            } else {
+                textCategoryTotal.text = item.totalValue.formatCurrency()
+                textCategoryChange.text = String.format("%s %%%+.2f", 
+                    item.totalProfitLoss.formatCurrency(), 
+                    item.profitLossPerc
+                )
+            }
             
             imageExpandArrow.rotation = if (isExpanded) 90f else 270f
             recyclerChildAssets.visibility = if (isExpanded) View.VISIBLE else View.GONE
             
             if (isExpanded) {
-                val childAdapter = WalletAssetAdapter(item.assets)
+                val childAdapter = WalletAssetAdapter(item.assets, isPrivacyEnabled)
                 recyclerChildAssets.layoutManager = LinearLayoutManager(holder.itemView.context)
                 recyclerChildAssets.adapter = childAdapter
             }
@@ -63,6 +68,12 @@ class WalletCategoryAdapter(
 
     fun setItems(newItems: List<WalletCategorySummary>) {
         items = newItems
+        notifyDataSetChanged()
+    }
+
+    fun setItemsWithPrivacy(newItems: List<WalletCategorySummary>, privacyEnabled: Boolean) {
+        items = newItems
+        isPrivacyEnabled = privacyEnabled
         notifyDataSetChanged()
     }
 }

@@ -10,20 +10,25 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.cuzdan.R
 import com.example.cuzdan.databinding.FragmentHomeBinding
+import com.example.cuzdan.util.PreferenceManager
+import com.example.cuzdan.util.formatCurrency
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
 import java.util.Locale
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
+
+    @Inject
+    lateinit var prefManager: PreferenceManager
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by viewModels()
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
     private lateinit var adapter: WalletCategoryAdapter
 
     override fun onCreateView(
@@ -53,6 +58,11 @@ class HomeFragment : Fragment() {
         binding.btnNextPortfolio.setOnClickListener {
             viewModel.selectNextPortfolio()
         }
+        binding.btnPrivacyToggle.setOnClickListener {
+            val isEnabled = prefManager.isPrivacyModeEnabled()
+            prefManager.setPrivacyModeEnabled(!isEnabled)
+            viewModel.uiState.value.let { updateUI(it) }
+        }
     }
 
     private fun observeState() {
@@ -66,18 +76,30 @@ class HomeFragment : Fragment() {
     }
 
     private fun updateUI(state: WalletUiState) {
+        val isPrivacyEnabled = prefManager.isPrivacyModeEnabled()
+        
         if (state.portfolios.isNotEmpty()) {
             binding.textPortfolioName.text = state.portfolios[state.selectedPortfolioIndex].name
         }
 
-        binding.textTotalBalance.text = currencyFormat.format(state.totalBalance)
-        binding.textDailyChangeAbs.text = currencyFormat.format(state.dailyChangeAbs)
-        binding.textDailyChangePerc.text = String.format("%%%+.2f", state.dailyChangePerc)
+        binding.btnPrivacyToggle.setImageResource(
+            if (isPrivacyEnabled) R.drawable.ic_eye_off else R.drawable.ic_eye_on
+        )
+
+        if (isPrivacyEnabled) {
+            binding.textTotalBalance.text = "**** TL"
+            binding.textDailyChangeAbs.text = "****"
+            binding.textDailyChangePerc.text = "***%"
+        } else {
+            binding.textTotalBalance.text = state.totalBalance.formatCurrency()
+            binding.textDailyChangeAbs.text = state.dailyChangeAbs.formatCurrency()
+            binding.textDailyChangePerc.text = String.format("%%%+.2f", state.dailyChangePerc)
+        }
         
         // Donut Chart simulation
-        binding.textDonutCenterPercent.text = "%100"
+        binding.textDonutCenterPercent.text = if (isPrivacyEnabled) "***%" else "%100"
         
-        adapter.setItems(state.categorySummaries)
+        adapter.setItemsWithPrivacy(state.categorySummaries, isPrivacyEnabled)
     }
 
     override fun onDestroyView() {

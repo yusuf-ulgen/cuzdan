@@ -1,6 +1,29 @@
 <resources>
     <string name="app_name">cuzdan</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_home">Ana Sayfa</string>
+    <string name="title_reports">Raporlar</string>
+    <string name="title_assets">Varlıklarım</string>
+    <string name="title_markets">Piyasalar</string>
+    <string name="title_settings">İşlemler</string>
+    <string name="settings_notifications">Bildirimler</string>
+    <string name="settings_currency">Para Birimi</string>
+    <string name="settings_language">Dil</string>
+    <string name="settings_biometrics">Biyometrik Giriş</string>
+    <string name="settings_device_management">Cihaz Yönetimi</string>
+    <string name="settings_faq">Sıkça Sorulan Sorular</string>
+    <string name="settings_support">Destek</string>
+    <string name="settings_recommend">Arkadaşına Öner</string>
+    <string name="settings_agreement">Kullanıcı Sözleşmesi</string>
+    <string name="settings_legal">Yasal Uyarılar</string>
+    <string name="settings_account_reset">Hesabı Sıfırla</string>
+    <string name="dialog_support_title">Destek Talebi</string>
+    <string name="support_email_hint">E-posta Adresiniz</string>
+    <string name="support_message_hint">Mesajınız</string>
+    <string name="support_send">Gönder</string>
+    <string name="dialog_cancel">İptal</string>
+    <string name="dialog_confirm">Onayla</string>
+    <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
+    <string name="user_agreement_text">Cüzdan uygulamasını kullanarak tüm yasal sorumlulukları kabul etmiş sayılırsınız. Finansal verilerinizin güvenliği için düzenli yedekleme yapmanız önerilir.</string>
+    <string name="legal_warning_text">Bu uygulama yatırım tavsiyesi vermez. Tüm finansal kararlar kullanıcıya aittir.</string>
+    <string name="login_description">Verilerinize erişmek için lütfen kimliğinizi doğrulayın.</string>
 </resources>
