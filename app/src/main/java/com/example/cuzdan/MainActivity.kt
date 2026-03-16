@@ -10,6 +10,8 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.biometric.BiometricManager
+import android.widget.Toast
 import com.example.cuzdan.databinding.ActivityMainBinding
 import com.example.cuzdan.util.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,12 +37,6 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_assets, R.id.navigation_reports, R.id.navigation_wallet,
-                R.id.navigation_markets, R.id.navigation_settings
-            )
-        )
         // setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
@@ -71,6 +67,20 @@ class MainActivity : AppCompatActivity() {
     private fun checkBiometrics() {
         if (!prefManager.isBiometricsEnabled()) return
 
+        val biometricManager = BiometricManager.from(this)
+        val canAuthenticate = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+
+        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+            // Cihazda biyometrik veri yok veya desteklenmiyor
+            prefManager.setBiometricsEnabled(false)
+            Toast.makeText(this, "Telefonda kayıtlı biyometrik veri bulunamadı. Biyometrik giriş kapatıldı.", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        showBiometricPrompt()
+    }
+
+    private fun showBiometricPrompt() {
         val executor: Executor = ContextCompat.getMainExecutor(this)
         val biometricPrompt = BiometricPrompt(this, executor,
             object : BiometricPrompt.AuthenticationCallback() {
@@ -93,7 +103,7 @@ class MainActivity : AppCompatActivity() {
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.settings_biometrics))
-            .setSubtitle(getString(R.string.login_description)) // strings.xml'e eklenecek
+            .setSubtitle(getString(R.string.login_description))
             .setNegativeButtonText(getString(R.string.dialog_cancel))
             .build()
 

@@ -122,7 +122,7 @@ class NotificationsFragment : Fragment() {
     private fun showDeviceManagementDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_device_management)
-            .setMessage("Hesabınızı sıfırlamak istediğinize emin misiniz? Tüm verileriniz silinecektir.")
+            .setMessage("Hesabınızı sıfırlamak istediğinize emin misiniz? Bu işlem tüm yerel ayarlarınızı temizleyecektir.")
             .setPositiveButton(R.string.settings_account_reset) { _, _ ->
                 prefManager.resetPreferences()
                 Toast.makeText(context, "Hesap sıfırlandı.", Toast.LENGTH_SHORT).show()

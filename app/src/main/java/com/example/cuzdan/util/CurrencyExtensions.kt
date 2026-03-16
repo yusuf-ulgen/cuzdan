@@ -14,9 +14,15 @@ import java.util.Locale
 private const val DEFAULT_PRECISION = 2
 private const val CRYPTO_PRECISION = 8
 
-fun BigDecimal.formatCurrency(locale: Locale = Locale("tr", "TR")): String {
-    val formatter = NumberFormat.getCurrencyInstance(locale)
-    return formatter.format(this)
+fun BigDecimal.formatCurrency(currencyCode: String = "TL"): String {
+    val format = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
+    try {
+        val currency = java.util.Currency.getInstance(if (currencyCode == "TL") "TRY" else currencyCode)
+        format.currency = currency
+    } catch (e: Exception) {
+        // Fallback
+    }
+    return format.format(this)
 }
 
 fun BigDecimal.roundForUI(precision: Int = DEFAULT_PRECISION): BigDecimal {

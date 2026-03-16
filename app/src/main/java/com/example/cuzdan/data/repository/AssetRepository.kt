@@ -283,15 +283,8 @@ class AssetRepository @Inject constructor(
                 }
             }
             
-            // İsimleri ve sembolleri temizle (Döviz için)
-            results.map { asset ->
-                if (type == AssetType.DOVIZ) {
-                    asset.copy(
-                        name = asset.name.replace("=X", "").replace("TRY", "/TRY"),
-                        symbol = asset.symbol.replace("=X", "")
-                    )
-                } else asset
-            }
+            // İsimleri ve sembolleri temizle
+            results.map { cleanAssetNaming(it, type) }
         } catch (e: Exception) {
             Log.e("AssetRepo", "searchAssets Error: ${e.message}", e)
             emptyList()
@@ -345,16 +338,18 @@ class AssetRepository @Inject constructor(
                                     fundName = entry.fundName ?: fundName
                                     val rawPriceAny = entry.price
                                     
+                                    Log.d("AssetRepo", "TEFAS Debug: symbol=$symbol, rawPrice=$rawPriceAny, type=${rawPriceAny?.javaClass?.simpleName}")
+                                    
                                     val parsedPrice = when (rawPriceAny) {
                                         is Number -> rawPriceAny.toDouble()
                                         is String -> {
-                                            // Handle both "1.234,56" and "1234.56"
-                                            if (rawPriceAny.contains(",") && rawPriceAny.contains(".")) {
-                                                rawPriceAny.replace(".", "").replace(",", ".").toDoubleOrNull() ?: 0.0
-                                            } else if (rawPriceAny.contains(",")) {
-                                                rawPriceAny.replace(",", ".").toDoubleOrNull() ?: 0.0
+                                            val cleanStr = rawPriceAny.replace("\u00A0", "").trim()
+                                            if (cleanStr.contains(",") && cleanStr.contains(".")) {
+                                                cleanStr.replace(".", "").replace(",", ".").toDoubleOrNull() ?: 0.0
+                                            } else if (cleanStr.contains(",")) {
+                                                cleanStr.replace(",", ".").toDoubleOrNull() ?: 0.0
                                             } else {
-                                                rawPriceAny.toDoubleOrNull() ?: 0.0
+                                                cleanStr.toDoubleOrNull() ?: 0.0
                                             }
                                         }
                                         else -> 0.0
@@ -362,7 +357,7 @@ class AssetRepository @Inject constructor(
                                     
                                     if (parsedPrice > 0) {
                                         price = BigDecimal(parsedPrice)
-                                        Log.d("AssetRepo", "Found price for $symbol: $price (type: ${rawPriceAny?.javaClass?.simpleName})")
+                                        Log.d("AssetRepo", "Found price for $symbol: $price")
                                         break
                                     }
                                 }
@@ -409,51 +404,10 @@ class AssetRepository @Inject constructor(
                                 Log.d("AssetRepo", "Chunk $index: fetched ${result.size} symbols")
                                 
                                 result.forEach { quote ->
-                                    var name = quote.shortName ?: quote.longName ?: quote.symbol
-                                    var symbol = quote.symbol
+                                    val name = quote.shortName ?: quote.longName ?: quote.symbol
+                                    val symbol = quote.symbol
                                     
-                                    when {
-                                        type == AssetType.BIST -> {
-                                            name = name.replace(".IS", "").trim()
-                                        }
-                                        type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && symbol == "TRY=X") -> {
-                                            val cleanSymbol = symbol.uppercase()
-                                            name = when {
-                                                cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> if (type == AssetType.NAKIT) "Amerikan Doları" else "USD/TRY"
-                                                cleanSymbol.startsWith("EURTRY") -> if (type == AssetType.NAKIT) "Euro" else "EUR/TRY"
-                                                cleanSymbol.startsWith("GBPTRY") -> if (type == AssetType.NAKIT) "İngiliz Sterlini" else "GBP/TRY"
-                                                cleanSymbol.startsWith("CHFTRY") -> if (type == AssetType.NAKIT) "İsviçre Frangı" else "CHF/TRY"
-                                                cleanSymbol.startsWith("JPYTRY") -> if (type == AssetType.NAKIT) "Japon Yeni" else "JPY/TRY"
-                                                cleanSymbol.startsWith("AUDTRY") -> if (type == AssetType.NAKIT) "Avustralya Doları" else "AUD/TRY"
-                                                cleanSymbol.startsWith("CADTRY") -> if (type == AssetType.NAKIT) "Kanada Doları" else "CAD/TRY"
-                                                else -> name.replace("=X", "").replace("TRY", "/TRY").replace("USD/TRY", "USD/TRY")
-                                            }
-                                            
-                                            if (type == AssetType.NAKIT) {
-                                                symbol = when {
-                                                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "USD"
-                                                    cleanSymbol.startsWith("EURTRY") -> "EUR"
-                                                    cleanSymbol.startsWith("GBPTRY") -> "GBP"
-                                                    cleanSymbol.startsWith("CHFTRY") -> "CHF"
-                                                    cleanSymbol.startsWith("JPYTRY") -> "JPY"
-                                                    else -> symbol.replace("TRY=X", "").replace("TRY", "")
-                                                }
-                                            }
-                                        }
-                                        type == AssetType.EMTIA -> {
-                                            val cleanSymbol = symbol.uppercase()
-                                            name = when {
-                                                cleanSymbol.startsWith("GC=F") -> "Altın (Ons)"
-                                                cleanSymbol.startsWith("SI=F") -> "Gümüş"
-                                                cleanSymbol.startsWith("PL=F") -> "Platin"
-                                                cleanSymbol.startsWith("PA=F") -> "Paladyum"
-                                                cleanSymbol.startsWith("HG=F") -> "Bakır"
-                                                else -> name
-                                            }
-                                        }
-                                    }
-                                    
-                                    assets.add(Asset(
+                                    assets.add(cleanAssetNaming(Asset(
                                         symbol = symbol,
                                         name = name,
                                         amount = BigDecimal.ZERO,
@@ -461,7 +415,7 @@ class AssetRepository @Inject constructor(
                                         currentPrice = BigDecimal(quote.regularMarketPrice ?: 0.0).setScale(2, RoundingMode.HALF_UP),
                                         dailyChangePercentage = BigDecimal(quote.regularMarketChangePercent ?: 0.0).setScale(2, RoundingMode.HALF_UP),
                                         assetType = type
-                                    ))
+                                    ), type))
                                 }
                             } catch (e: Exception) {
                                 Log.e("AssetRepo", "Chunk $index fetch failed: ${e.message}")
@@ -486,21 +440,15 @@ class AssetRepository @Inject constructor(
                                             BigDecimal((meta!!.regularMarketPrice - prevClose) / prevClose * 100).setScale(2, RoundingMode.HALF_UP)
                                         } else BigDecimal.ZERO
 
-                                        Asset(
+                                        cleanAssetNaming(Asset(
                                             symbol = s,
-                                            name = when {
-                                                type == AssetType.BIST -> s.replace(".IS", "")
-                                                s == "GC=F" -> "Altın (Ons)"
-                                                s == "SI=F" -> "Gümüş"
-                                                s == "TRY=X" -> "USD/TRY"
-                                                else -> s
-                                            },
+                                            name = s,
                                             amount = BigDecimal.ZERO,
                                             averageBuyPrice = BigDecimal.ZERO,
                                             currentPrice = price,
                                             dailyChangePercentage = change,
                                             assetType = type
-                                        )
+                                        ), type)
                                     } catch (e2: Exception) {
                                         Asset(symbol = s, name = s, amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = type)
                                     }
@@ -560,6 +508,54 @@ class AssetRepository @Inject constructor(
 
     suspend fun addAsset(asset: Asset) {
         assetDao.insertAsset(asset)
+    }
+
+    private fun cleanAssetNaming(asset: Asset, type: AssetType): Asset {
+        var name = asset.name
+        var symbol = asset.symbol
+        val cleanSymbol = symbol.uppercase()
+
+        when {
+            type == AssetType.BIST -> {
+                name = name.replace(".IS", "").trim()
+            }
+            type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol.startsWith("USDTRY"))) -> {
+                name = when {
+                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> if (type == AssetType.NAKIT) "Amerikan Doları" else "USD/TRY"
+                    cleanSymbol.startsWith("EURTRY") -> if (type == AssetType.NAKIT) "Euro" else "EUR/TRY"
+                    cleanSymbol.startsWith("GBPTRY") -> if (type == AssetType.NAKIT) "İngiliz Sterlini" else "GBP/TRY"
+                    cleanSymbol.startsWith("CHFTRY") -> if (type == AssetType.NAKIT) "İsviçre Frangı" else "CHF/TRY"
+                    cleanSymbol.startsWith("JPYTRY") -> if (type == AssetType.NAKIT) "Japon Yeni" else "JPY/TRY"
+                    cleanSymbol.startsWith("AUDTRY") -> if (type == AssetType.NAKIT) "Avustralya Doları" else "AUD/TRY"
+                    cleanSymbol.startsWith("CADTRY") -> if (type == AssetType.NAKIT) "Kanada Doları" else "CAD/TRY"
+                    else -> name.replace("=X", "").replace("TRY", "/TRY").trim()
+                }
+                
+                if (type == AssetType.NAKIT) {
+                    symbol = when {
+                        cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "USD"
+                        cleanSymbol.startsWith("EURTRY") -> "EUR"
+                        cleanSymbol.startsWith("GBPTRY") -> "GBP"
+                        cleanSymbol.startsWith("CHFTRY") -> "CHF"
+                        cleanSymbol.startsWith("JPYTRY") -> "JPY"
+                        else -> symbol.replace("TRY=X", "").replace("TRY", "")
+                    }
+                }
+            }
+            type == AssetType.EMTIA -> {
+                name = when {
+                    cleanSymbol.startsWith("GC=F") -> "Altın (Ons)"
+                    cleanSymbol.startsWith("SI=F") -> "Gümüş"
+                    cleanSymbol.startsWith("PL=F") -> "Platin"
+                    cleanSymbol.startsWith("PA=F") -> "Paladyum"
+                    cleanSymbol.startsWith("HG=F") -> "Bakır"
+                    cleanSymbol == "GRAM_ALTIN" -> "Gram Altın"
+                    else -> name
+                }
+            }
+        }
+
+        return asset.copy(name = name, symbol = symbol)
     }
 
     companion object {

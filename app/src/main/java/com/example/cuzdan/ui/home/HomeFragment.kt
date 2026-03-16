@@ -87,12 +87,12 @@ class HomeFragment : Fragment() {
         )
 
         if (isPrivacyEnabled) {
-            binding.textTotalBalance.text = "**** TL"
+            binding.textTotalBalance.text = "**** ${state.currency}"
             binding.textDailyChangeAbs.text = "****"
             binding.textDailyChangePerc.text = "***%"
         } else {
-            binding.textTotalBalance.text = state.totalBalance.formatCurrency()
-            binding.textDailyChangeAbs.text = state.dailyChangeAbs.formatCurrency()
+            binding.textTotalBalance.text = state.totalBalance.formatCurrency(state.currency)
+            binding.textDailyChangeAbs.text = state.dailyChangeAbs.formatCurrency(state.currency)
             binding.textDailyChangePerc.text = String.format("%%%+.2f", state.dailyChangePerc)
         }
         
