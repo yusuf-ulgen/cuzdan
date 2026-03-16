@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.AssetType
@@ -42,7 +43,14 @@ class MarketsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = MarketAdapter()
+        adapter = MarketAdapter { asset ->
+            val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
+                symbol = asset.symbol,
+                name = asset.name,
+                assetType = asset.assetType.name
+            )
+            findNavController().navigate(action)
+        }
         binding.recyclerMarkets.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerMarkets.adapter = adapter
     }

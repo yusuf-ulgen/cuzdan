@@ -1,0 +1,149 @@
+package com.example.cuzdan.ui.markets
+
+import android.graphics.Color
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
+import com.example.cuzdan.R
+import com.example.cuzdan.databinding.FragmentAssetDetailBinding
+import com.example.cuzdan.util.formatCurrency
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import java.math.BigDecimal
+
+@AndroidEntryPoint
+class AssetDetailFragment : Fragment() {
+
+    private var _binding: FragmentAssetDetailBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: AssetDetailViewModel by viewModels()
+    private val args: AssetDetailFragmentArgs by navArgs()
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentAssetDetailBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
+        setupToolbar()
+        setupListeners()
+        observeState()
+        
+        viewModel.init(args.symbol, args.name, args.assetType)
+    }
+
+    private fun setupToolbar() {
+        binding.toolbar.title = args.name
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
+    }
+
+    private fun setupListeners() {
+        binding.btnSave.setOnClickListener {
+            val amountStr = binding.editAmount.text.toString()
+            val costStr = binding.editCost.text.toString()
+            
+            if (amountStr.isEmpty()) {
+                binding.editAmount.error = "Miktar giriniz"
+                return@setOnClickListener
+            }
+            
+            val amount = amountStr.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            val cost = costStr.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            
+            viewModel.saveAsset(amount, cost, args.assetType)
+        }
+    }
+
+    private fun observeState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    updateUI(state)
+                    if (state.isSaved) {
+                        Toast.makeText(requireContext(), "Varlık başarıyla eklendi", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
+                    }
+                    if (state.errorMessage != null) {
+                        Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateUI(state: AssetDetailUiState) {
+        binding.textCurrentPrice.text = state.currentPrice.formatCurrency()
+        
+        val isPositive = state.dailyChangePercentage >= BigDecimal.ZERO
+        binding.textPriceChange.text = String.format("%%%+.2f", state.dailyChangePercentage)
+        binding.textPriceChange.setTextColor(
+            resources.getColor(if (isPositive) R.color.accent_green else R.color.accent_red, null)
+        )
+        
+        setupChart(state.history)
+    }
+
+    private fun setupChart(history: List<Pair<Long, Double>>) {
+        if (history.isEmpty()) {
+            binding.priceChart.setNoDataText("Geçmiş veri bulunamadı")
+            binding.priceChart.invalidate()
+            return
+        }
+
+        val entries = history.mapIndexed { index, pair ->
+            Entry(index.toFloat(), pair.second.toFloat())
+        }
+
+        val dataSet = LineDataSet(entries, "Fiyat").apply {
+            color = resources.getColor(R.color.accent_blue, null)
+            setCircleColor(resources.getColor(R.color.accent_blue, null))
+            lineWidth = 2f
+            circleRadius = 3f
+            setDrawCircleHole(false)
+            valueTextSize = 0f
+            setDrawFilled(true)
+            fillColor = resources.getColor(R.color.accent_blue, null)
+            fillAlpha = 30
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+        }
+
+        binding.priceChart.apply {
+            data = LineData(dataSet)
+            description.isEnabled = false
+            legend.isEnabled = false
+            xAxis.isEnabled = false
+            axisLeft.textColor = Color.WHITE
+            axisRight.isEnabled = false
+            setTouchEnabled(true)
+            setPinchZoom(true)
+            animateX(1000)
+            invalidate()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}

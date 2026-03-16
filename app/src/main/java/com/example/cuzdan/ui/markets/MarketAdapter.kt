@@ -12,7 +12,7 @@ import java.util.Locale
 
 class MarketAdapter(
     private var items: List<Asset> = emptyList(),
-    private val onItemClick: ((Asset) -> Unit)? = null
+    private val onItemClick: (Asset) -> Unit
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))

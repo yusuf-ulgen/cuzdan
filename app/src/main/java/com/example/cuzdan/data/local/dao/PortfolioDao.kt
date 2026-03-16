@@ -16,9 +16,15 @@ interface PortfolioDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPortfolio(portfolio: Portfolio): Long
 
+    @androidx.room.Update
+    suspend fun updatePortfolio(portfolio: Portfolio)
+
     @Delete
     suspend fun deletePortfolio(portfolio: Portfolio)
 
     @Query("SELECT * FROM portfolios WHERE id = :id")
     suspend fun getPortfolioById(id: Long): Portfolio?
+
+    @Query("SELECT * FROM portfolios WHERE isIncludedInTotal = 1")
+    fun getIncludedPortfolios(): Flow<List<Portfolio>>
 }

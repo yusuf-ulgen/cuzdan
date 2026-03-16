@@ -58,6 +58,9 @@ class HomeFragment : Fragment() {
         binding.btnNextPortfolio.setOnClickListener {
             viewModel.selectNextPortfolio()
         }
+        binding.layoutPortfolioSelector.setOnClickListener {
+            showPortfolioManagement()
+        }
         binding.btnPrivacyToggle.setOnClickListener {
             val isEnabled = prefManager.isPrivacyModeEnabled()
             prefManager.setPrivacyModeEnabled(!isEnabled)
@@ -78,9 +81,7 @@ class HomeFragment : Fragment() {
     private fun updateUI(state: WalletUiState) {
         val isPrivacyEnabled = prefManager.isPrivacyModeEnabled()
         
-        if (state.portfolios.isNotEmpty()) {
-            binding.textPortfolioName.text = state.portfolios[state.selectedPortfolioIndex].name
-        }
+        binding.textPortfolioName.text = state.selectedPortfolioName
 
         binding.btnPrivacyToggle.setImageResource(
             if (isPrivacyEnabled) R.drawable.ic_eye_off else R.drawable.ic_eye_on
@@ -90,16 +91,27 @@ class HomeFragment : Fragment() {
             binding.textTotalBalance.text = "**** ${state.currency}"
             binding.textDailyChangeAbs.text = "****"
             binding.textDailyChangePerc.text = "***%"
+            binding.imageDailyChangeTrending.imageTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.text_label))
         } else {
             binding.textTotalBalance.text = state.totalBalance.formatCurrency(state.currency)
             binding.textDailyChangeAbs.text = state.dailyChangeAbs.formatCurrency(state.currency)
             binding.textDailyChangePerc.text = String.format("%%%+.2f", state.dailyChangePerc)
+            
+            val isPositive = state.dailyChangeAbs >= java.math.BigDecimal.ZERO
+            val color = if (isPositive) R.color.accent_green else R.color.accent_red
+            binding.textDailyChangePerc.setTextColor(requireContext().getColor(color))
+            binding.imageDailyChangeTrending.imageTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(color))
+            binding.imageDailyChangeTrending.rotation = if (isPositive) 0f else 180f
         }
         
         // Donut Chart simulation
         binding.textDonutCenterPercent.text = if (isPrivacyEnabled) "***%" else "%100"
         
         adapter.setItemsWithPrivacy(state.categorySummaries, isPrivacyEnabled)
+    }
+    private fun showPortfolioManagement() {
+        val bottomSheet = PortfolioManagementBottomSheet()
+        bottomSheet.show(childFragmentManager, "PortfolioManagement")
     }
 
     override fun onDestroyView() {

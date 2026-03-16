@@ -16,7 +16,21 @@ data class Chart(
 
 data class ChartResult(
     @SerializedName("meta")
-    val meta: Meta
+    val meta: Meta,
+    @SerializedName("timestamp")
+    val timestamp: List<Long>?,
+    @SerializedName("indicators")
+    val indicators: Indicators?
+)
+
+data class Indicators(
+    @SerializedName("quote")
+    val quote: List<Quote>?
+)
+
+data class Quote(
+    @SerializedName("close")
+    val close: List<Double?>?
 )
 
 data class Meta(

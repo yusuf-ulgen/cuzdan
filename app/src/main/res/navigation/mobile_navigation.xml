@@ -30,7 +30,27 @@
         android:id="@+id/navigation_markets"
         android:name="com.example.cuzdan.ui.markets.MarketsFragment"
         android:label="Piyasalar"
-        tools:layout="@layout/fragment_markets" />
+        tools:layout="@layout/fragment_markets">
+        <action
+            android:id="@+id/action_navigation_markets_to_navigation_asset_detail"
+            app:destination="@id/navigation_asset_detail" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_asset_detail"
+        android:name="com.example.cuzdan.ui.markets.AssetDetailFragment"
+        android:label="{name}"
+        tools:layout="@layout/fragment_asset_detail">
+        <argument
+            android:name="symbol"
+            app:argType="string" />
+        <argument
+            android:name="name"
+            app:argType="string" />
+        <argument
+            android:name="assetType"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_settings"
@@ -52,5 +72,8 @@
         <argument
             android:name="assetType"
             app:argType="string" />
+        <action
+            android:id="@+id/action_navigation_symbol_search_to_navigation_asset_detail"
+            app:destination="@id/navigation_asset_detail" />
     </fragment>
 </navigation>

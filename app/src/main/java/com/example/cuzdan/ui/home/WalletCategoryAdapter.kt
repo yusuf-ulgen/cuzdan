@@ -35,13 +35,18 @@ class WalletCategoryAdapter(
             
             if (isPrivacyEnabled) {
                 textCategoryTotal.text = "**** TL"
-                textCategoryChange.text = "**** %***"
+                textCategoryChangeAbs.text = "****"
+                textCategoryChangePerc.text = "%***"
+                textCategoryChangePerc.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
             } else {
                 textCategoryTotal.text = item.totalValue.formatCurrency()
-                textCategoryChange.text = String.format("%s %%%+.2f", 
-                    item.totalProfitLoss.formatCurrency(), 
-                    item.profitLossPerc
-                )
+                textCategoryChangeAbs.text = item.totalProfitLoss.formatCurrency()
+                textCategoryChangePerc.text = String.format("%%%+.2f", item.profitLossPerc)
+                
+                val isPositive = item.totalProfitLoss >= java.math.BigDecimal.ZERO
+                textCategoryChangePerc.setTextColor(holder.itemView.context.getColor(
+                    if (isPositive) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
+                ))
             }
             
             imageExpandArrow.rotation = if (isExpanded) 90f else 270f

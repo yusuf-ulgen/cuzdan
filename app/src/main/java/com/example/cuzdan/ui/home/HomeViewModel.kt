@@ -17,7 +17,8 @@ import javax.inject.Inject
 
 data class WalletUiState(
     val portfolios: List<Portfolio> = emptyList(),
-    val selectedPortfolioIndex: Int = 0,
+    val selectedPortfolioId: Long = 1, // 1: Ana Portföy, -1: Portföyler Toplamı
+    val selectedPortfolioName: String = "",
     val totalBalance: BigDecimal = BigDecimal.ZERO,
     val dailyChangeAbs: BigDecimal = BigDecimal.ZERO,
     val dailyChangePerc: BigDecimal = BigDecimal.ZERO,
@@ -46,52 +47,119 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WalletUiState())
     val uiState: StateFlow<WalletUiState> = _uiState.asStateFlow()
 
+    private val _selectedPortfolioId = MutableStateFlow(1L)
+
     init {
-        loadPortfolios()
+        observePortfolios()
+        observeAssets()
         listenToCurrencyChanges()
     }
 
     private fun listenToCurrencyChanges() {
         viewModelScope.launch {
-            // Basit bir trigger için periyodik kontrol veya değişim anında tetikleme mekanizması
-            // Şimdilik init ve her portföy değişiminde kur güncellenecek
             _uiState.update { it.copy(currency = prefManager.getCurrency()) }
         }
     }
 
-    private fun loadPortfolios() {
+    private fun observePortfolios() {
         viewModelScope.launch {
             portfolioRepository.getAllPortfolios().collect { portfolios ->
                 if (portfolios.isNotEmpty()) {
-                    _uiState.update { it.copy(portfolios = portfolios) }
-                    loadAssetsForPortfolio(portfolios[_uiState.value.selectedPortfolioIndex].id)
+                    val currentId = _selectedPortfolioId.value
+                    val selectedPortfolio = if (currentId == -1L) null else portfolios.find { it.id == currentId } ?: portfolios.first()
+                    
+                    val newId = if (currentId == -1L) -1L else selectedPortfolio?.id ?: 1L
+                    val newName = if (currentId == -1L) "Portföyler Toplamı" else selectedPortfolio?.name ?: ""
+                    
+                    _selectedPortfolioId.value = newId
+                    _uiState.update { it.copy(
+                        portfolios = portfolios,
+                        selectedPortfolioId = newId,
+                        selectedPortfolioName = newName
+                    ) }
+                } else {
+                    portfolioRepository.getOrCreateDefaultPortfolioId()
                 }
             }
         }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private fun observeAssets() {
+        viewModelScope.launch {
+            _selectedPortfolioId.flatMapLatest { id ->
+                if (id == -1L) {
+                    portfolioRepository.getIncludedPortfolios().flatMapLatest { included ->
+                        if (included.isEmpty()) {
+                            flowOf(emptyList<Asset>())
+                        } else {
+                            val flows = included.map { p -> assetRepository.getAssetsByPortfolioId(p.id) }
+                            combine(flows) { lists ->
+                                lists.flatMap { it }.let { mergeDuplicateAssets(it) }
+                            }
+                        }
+                    }
+                } else {
+                    assetRepository.getAssetsByPortfolioId(id)
+                }
+            }.collect { assets ->
+                calculateWeights(assets)
+            }
+        }
+    }
+
+    fun selectPortfolio(id: Long) {
+        val name = if (id == -1L) "Portföyler Toplamı" else _uiState.value.portfolios.find { it.id == id }?.name ?: ""
+        _selectedPortfolioId.value = id
+        _uiState.update { it.copy(selectedPortfolioId = id, selectedPortfolioName = name) }
+    }
+
     fun selectNextPortfolio() {
-        val size = _uiState.value.portfolios.size
-        if (size == 0) return
-        val nextIndex = (_uiState.value.selectedPortfolioIndex + 1) % size
-        _uiState.update { it.copy(selectedPortfolioIndex = nextIndex) }
-        loadAssetsForPortfolio(_uiState.value.portfolios[nextIndex].id)
+        val portfolios = _uiState.value.portfolios
+        if (portfolios.isEmpty()) return
+        
+        val currentIndex = if (_selectedPortfolioId.value == -1L) -1 else portfolios.indexOfFirst { it.id == _selectedPortfolioId.value }
+        val nextIndex = currentIndex + 1
+        
+        if (nextIndex >= portfolios.size) {
+            selectPortfolio(-1L)
+        } else {
+            selectPortfolio(portfolios[nextIndex].id)
+        }
     }
 
     fun selectPrevPortfolio() {
-        val size = _uiState.value.portfolios.size
-        if (size == 0) return
-        var prevIndex = _uiState.value.selectedPortfolioIndex - 1
-        if (prevIndex < 0) prevIndex = size - 1
-        _uiState.update { it.copy(selectedPortfolioIndex = prevIndex) }
-        loadAssetsForPortfolio(_uiState.value.portfolios[prevIndex].id)
+        val portfolios = _uiState.value.portfolios
+        if (portfolios.isEmpty()) return
+        
+        val currentIndex = if (_selectedPortfolioId.value == -1L) -1 else portfolios.indexOfFirst { it.id == _selectedPortfolioId.value }
+        
+        if (currentIndex == -1) {
+            selectPortfolio(portfolios.last().id)
+        } else if (currentIndex == 0) {
+            selectPortfolio(-1L)
+        } else {
+            selectPortfolio(portfolios[currentIndex - 1].id)
+        }
     }
 
-    private fun loadAssetsForPortfolio(portfolioId: Long) {
-        viewModelScope.launch {
-            assetRepository.getAssetsByPortfolioId(portfolioId).collect { assets ->
-                calculateWeights(assets)
+    private fun mergeDuplicateAssets(assets: List<Asset>): List<Asset> {
+        return assets.groupBy { it.symbol }.map { (symbol, symbolAssets) ->
+            if (symbolAssets.size == 1) return@map symbolAssets.first()
+            
+            var totalAmount = BigDecimal.ZERO
+            var totalCost = BigDecimal.ZERO
+            symbolAssets.forEach {
+                totalAmount = totalAmount.add(it.amount)
+                totalCost = totalCost.add(it.amount.multiply(it.averageBuyPrice))
             }
+            
+            val avgPrice = if (totalAmount > BigDecimal.ZERO) totalCost.divide(totalAmount, 8, RoundingMode.HALF_UP) else BigDecimal.ZERO
+            
+            symbolAssets.first().copy(
+                amount = totalAmount,
+                averageBuyPrice = avgPrice
+            )
         }
     }
 

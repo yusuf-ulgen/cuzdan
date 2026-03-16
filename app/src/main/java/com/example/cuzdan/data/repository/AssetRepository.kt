@@ -370,7 +370,7 @@ class AssetRepository @Inject constructor(
                         
                         Asset(
                             symbol = symbol,
-                            name = fundName,
+                            name = fundName ?: symbol,
                             amount = BigDecimal.ZERO,
                             averageBuyPrice = BigDecimal.ZERO,
                             currentPrice = price,
@@ -502,6 +502,44 @@ class AssetRepository @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e("AssetRepo", "getMarketAssets Major Error: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    suspend fun upsertAsset(asset: Asset) {
+        val existingAsset = assetDao.getAssetBySymbolAndPortfolioId(asset.symbol, asset.portfolioId)
+        if (existingAsset != null) {
+            // Ortalama maliyet hesabı
+            val totalAmount = existingAsset.amount + asset.amount
+            val totalCost = (existingAsset.amount * existingAsset.averageBuyPrice) + (asset.amount * asset.averageBuyPrice)
+            val newAveragePrice = if (totalAmount > BigDecimal.ZERO) {
+                totalCost.divide(totalAmount, 8, RoundingMode.HALF_UP)
+            } else BigDecimal.ZERO
+
+            val updatedAsset = existingAsset.copy(
+                amount = totalAmount,
+                averageBuyPrice = newAveragePrice,
+                currentPrice = asset.currentPrice,
+                dailyChangePercentage = asset.dailyChangePercentage
+            )
+            assetDao.updateAsset(updatedAsset)
+        } else {
+            assetDao.insertAsset(asset)
+        }
+    }
+
+    suspend fun getAssetHistory(symbol: String): List<Pair<Long, Double>> {
+        return try {
+            val response = yahooFinanceApi.getChartData(symbol)
+            val result = response.chart.result?.firstOrNull()
+            val timestamps = result?.timestamp ?: emptyList()
+            val closePrices = result?.indicators?.quote?.firstOrNull()?.close ?: emptyList()
+            
+            timestamps.zip(closePrices).mapNotNull { (ts, price) ->
+                if (price != null) ts * 1000 to price else null
+            }
+        } catch (e: Exception) {
+            Log.e("AssetRepo", "History fetch failed for $symbol: ${e.message}")
             emptyList()
         }
     }

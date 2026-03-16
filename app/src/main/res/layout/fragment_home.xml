@@ -102,83 +102,97 @@
         </LinearLayout>
 
         <!-- Total Balance Section -->
-        <TextView
-            android:id="@+id/text_total_balance"
+        <LinearLayout
+            android:id="@+id/layout_balance_container"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:fontFamily="sans-serif-black"
-            android:text="***** TL"
-            android:textColor="@color/white"
-            android:textSize="36sp"
+            android:layout_marginTop="32dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/layout_portfolio_selector" />
+            app:layout_constraintTop_toBottomOf="@id/layout_portfolio_selector">
 
-        <ImageButton
-            android:id="@+id/btn_privacy_toggle"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_eye_on"
-            app:layout_constraintBottom_toBottomOf="@id/text_total_balance"
-            app:layout_constraintStart_toEndOf="@id/text_total_balance"
-            app:layout_constraintTop_toTopOf="@id/text_total_balance"
-            app:tint="@color/text_secondary" />
+            <TextView
+                android:id="@+id/text_total_balance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="-0.02"
+                android:text="₺509,02"
+                android:textColor="@color/white"
+                android:textSize="42sp" />
 
-        <!-- Daily Change Pill -->
+            <ImageButton
+                android:id="@+id/btn_privacy_toggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/ic_eye_on"
+                app:tint="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- Premium Daily Change Pill -->
         <LinearLayout
             android:id="@+id/layout_daily_change_pill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/bg_pill_dark"
+            android:elevation="0dp"
             android:gravity="center"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_total_balance">
+            app:layout_constraintTop_toBottomOf="@id/layout_balance_container">
 
             <TextView
                 android:id="@+id/text_daily_change_abs"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="*****"
+                android:paddingHorizontal="12dp"
+                android:text="₺9,02"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14sp" />
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="16dp"
+                android:background="@color/divider_color" />
 
             <TextView
                 android:id="@+id/text_daily_change_perc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_pill_dark"
-                android:paddingHorizontal="6dp"
-                android:text="*****"
-                android:paddingVertical="2dp"
+                android:paddingHorizontal="12dp"
+                android:text="%+1,80"
                 android:textColor="@color/accent_green"
-                android:textSize="12sp"
-                android:fontFamily="sans-serif-medium" />
+                android:fontFamily="sans-serif-black"
+                android:textSize="14sp" />
 
             <ImageView
                 android:id="@+id/image_daily_change_trending"
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:layout_marginStart="8dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
                 android:src="@drawable/ic_profit_loss"
-                app:tint="@color/text_secondary" />
+                app:tint="@color/accent_green" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/label_daily_change"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
             android:text="GÜNLÜK DEĞİŞİM"
-            android:textColor="@color/text_secondary"
-            android:textSize="10sp"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:fontFamily="sans-serif-medium"
             android:letterSpacing="0.1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

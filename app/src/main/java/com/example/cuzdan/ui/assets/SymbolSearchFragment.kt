@@ -58,9 +58,12 @@ class SymbolSearchFragment : Fragment() {
 
     private fun setupRecyclerView() {
         adapter = MarketAdapter { selectedAsset ->
-            viewModel.saveAsset(selectedAsset)
-            Toast.makeText(context, "${selectedAsset.symbol} portföye eklendi!", Toast.LENGTH_SHORT).show()
-            // İsteğe bağlı: findNavController().navigateUp() // Eklendikten sonra geri dön
+            val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
+                symbol = selectedAsset.symbol,
+                name = selectedAsset.name,
+                assetType = selectedAsset.assetType.name
+            )
+            findNavController().navigate(action)
         }
         binding.recyclerSymbols.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerSymbols.adapter = adapter
