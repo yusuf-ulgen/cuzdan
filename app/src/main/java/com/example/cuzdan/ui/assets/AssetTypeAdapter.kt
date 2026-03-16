@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.databinding.ItemAssetTypeBinding
 
-data class AssetType(val id: Int, val title: String, val iconRes: Int)
+data class AssetType(val id: Int, val title: String, val assetType: String, val iconRes: Int)
 
 class AssetTypeAdapter(private val items: List<AssetType>, private val onClick: (AssetType) -> Unit) :
     RecyclerView.Adapter<AssetTypeAdapter.ViewHolder>() {

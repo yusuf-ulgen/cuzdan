@@ -121,6 +121,7 @@ class HomeViewModel @Inject constructor(
                     AssetType.DOVIZ -> "Döviz"
                     AssetType.ALTIN -> "Altın"
                     AssetType.NAKIT -> "Nakit"
+                    AssetType.FON -> "Fon"
                 },
                 totalValue = catValue,
                 totalProfitLoss = catPL,

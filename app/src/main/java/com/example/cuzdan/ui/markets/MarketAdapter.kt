@@ -34,10 +34,9 @@ class MarketAdapter(
             textMarketSymbol.text = item.symbol
             textMarketPrice.text = currencyFormat.format(item.currentPrice)
             
-            val profitLossPerc = calculateProfitLossPercentage(item.currentPrice, item.averageBuyPrice)
-            val isPositive = profitLossPerc >= java.math.BigDecimal.ZERO
+            val isPositive = item.dailyChangePercentage >= java.math.BigDecimal.ZERO
             
-            textMarketChange.text = String.format("%%%+.2f", profitLossPerc)
+            textMarketChange.text = String.format("%%%+.2f", item.dailyChangePercentage)
             textMarketChange.setTextColor(root.context.getColor(
                 if (isPositive) R.color.accent_green else R.color.accent_red
             ))

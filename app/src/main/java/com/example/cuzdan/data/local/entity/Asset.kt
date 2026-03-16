@@ -13,6 +13,7 @@ data class Asset(
     val amount: BigDecimal,
     val averageBuyPrice: BigDecimal,
     val currentPrice: BigDecimal,
+    val dailyChangePercentage: BigDecimal = BigDecimal.ZERO,
     val assetType: AssetType,
     val portfolioId: Long = 0 // Varsayılan portföy ID
 )

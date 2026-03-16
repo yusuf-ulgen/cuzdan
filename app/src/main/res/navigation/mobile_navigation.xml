@@ -8,7 +8,11 @@
         android:id="@+id/navigation_assets"
         android:name="com.example.cuzdan.ui.assets.AssetsFragment"
         android:label="Varlık Ekle"
-        tools:layout="@layout/fragment_assets" />
+        tools:layout="@layout/fragment_assets">
+        <action
+            android:id="@+id/action_navigation_assets_to_navigation_symbol_search"
+            app:destination="@id/navigation_symbol_search" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_reports"
@@ -39,4 +43,14 @@
         android:name="com.example.cuzdan.ui.reports.ProfitLossChartFragment"
         android:label="Kar/Zarar Grafiği"
         tools:layout="@layout/fragment_profit_loss_chart" />
+
+    <fragment
+        android:id="@+id/navigation_symbol_search"
+        android:name="com.example.cuzdan.ui.assets.SymbolSearchFragment"
+        android:label="Varlık Seç"
+        tools:layout="@layout/fragment_symbol_search">
+        <argument
+            android:name="assetType"
+            app:argType="string" />
+    </fragment>
 </navigation>

@@ -58,13 +58,16 @@ class AssetRepository @Inject constructor(
     suspend fun refreshCryptoPrices(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
-            val tickers = binanceApi.getAllPrices()
+            val tickers = binanceApi.getAllTickers()
             val currentAssets = getCryptoAssets().first()
 
             currentAssets.forEach { asset ->
                 val ticker = tickers.find { it.symbol == asset.symbol }
                 ticker?.let {
-                    assetDao.updateAsset(asset.copy(currentPrice = BigDecimal(it.price)))
+                    assetDao.updateAsset(asset.copy(
+                        currentPrice = BigDecimal(it.lastPrice),
+                        dailyChangePercentage = BigDecimal(it.priceChangePercent)
+                    ))
                 }
             }
             emit(Resource.Success(Unit))
@@ -84,10 +87,10 @@ class AssetRepository @Inject constructor(
             if (otherAssets.isEmpty()) {
                 // Varsayılan BIST, Döviz ve Altın varlıklarını ekle
                 val defaultOther = listOf(
-                    Asset(symbol = "THYAO.IS", name = "Türk Hava Yolları", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, assetType = AssetType.BIST),
-                    Asset(symbol = "TRY=X", name = "USD/TRY", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, assetType = AssetType.DOVIZ),
-                    Asset(symbol = "GC=F", name = "Ons Altın", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, assetType = AssetType.ALTIN),
-                    Asset(symbol = "GRAM_ALTIN", name = "Gram Altın", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, assetType = AssetType.ALTIN)
+                    Asset(symbol = "THYAO.IS", name = "Türk Hava Yolları", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = AssetType.BIST),
+                    Asset(symbol = "TRY=X", name = "USD/TRY", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = AssetType.DOVIZ),
+                    Asset(symbol = "GC=F", name = "Ons Altın", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = AssetType.ALTIN),
+                    Asset(symbol = "GRAM_ALTIN", name = "Gram Altın", amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = AssetType.ALTIN)
                 )
                 defaultOther.forEach { assetDao.insertAsset(it) }
             }
@@ -95,6 +98,8 @@ class AssetRepository @Inject constructor(
             // Gram Altın hesabı için gerekli veriler
             var onsPrice: BigDecimal? = null
             var usdTryPrice: BigDecimal? = null
+            var onsChange: BigDecimal = BigDecimal.ZERO
+            var usdTryChange: BigDecimal = BigDecimal.ZERO
 
             // Güncel listeyi al (yeni eklenenler dahil)
             val currentOtherAssets = getOtherAssets().first()
@@ -104,14 +109,31 @@ class AssetRepository @Inject constructor(
 
                 try {
                     val response = yahooFinanceApi.getChartData(asset.symbol)
-                    val price = response.chart.result?.firstOrNull()?.meta?.regularMarketPrice?.let { 
-                        BigDecimal(it) 
-                    } ?: BigDecimal.ZERO
+                    val result = response.chart.result?.firstOrNull()?.meta
+                    val price = result?.regularMarketPrice?.let { BigDecimal(it) } ?: BigDecimal.ZERO
+                    val prevClose = result?.previousClose?.let { BigDecimal(it) } ?: BigDecimal.ZERO
+                    
+                    val changePerc = if (prevClose > BigDecimal.ZERO) {
+                        price.subtract(prevClose)
+                            .divide(prevClose, 4, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal("100"))
+                    } else {
+                        BigDecimal.ZERO
+                    }
 
-                    if (asset.symbol == "GC=F") onsPrice = price
-                    if (asset.symbol == "TRY=X") usdTryPrice = price
+                    if (asset.symbol == "GC=F") {
+                        onsPrice = price
+                        onsChange = changePerc
+                    }
+                    if (asset.symbol == "TRY=X") {
+                        usdTryPrice = price
+                        usdTryChange = changePerc
+                    }
 
-                    assetDao.updateAsset(asset.copy(currentPrice = price))
+                    assetDao.updateAsset(asset.copy(
+                        currentPrice = price,
+                        dailyChangePercentage = changePerc
+                    ))
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -123,8 +145,14 @@ class AssetRepository @Inject constructor(
                     .divide(BigDecimal("31.1"), 8, RoundingMode.HALF_UP)
                     .multiply(usdTryPrice!!)
                 
+                // Gram Altın Değişimi (Yaklaşık olarak Ons + USD/TRY değişimi)
+                val gramGoldChange = onsChange.add(usdTryChange)
+                
                 assetDao.getAssetBySymbol("GRAM_ALTIN")?.let { asset ->
-                    assetDao.updateAsset(asset.copy(currentPrice = gramGoldPrice))
+                    assetDao.updateAsset(asset.copy(
+                        currentPrice = gramGoldPrice,
+                        dailyChangePercentage = gramGoldChange
+                    ))
                 }
             }
 

@@ -1,15 +1,16 @@
 package com.example.cuzdan.data.remote.api
 
 import com.example.cuzdan.data.remote.model.BinancePriceResponse
+import com.example.cuzdan.data.remote.model.BinanceTickerResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface BinanceApi {
-    @GET("api/v3/ticker/price")
-    suspend fun getPrice(
+    @GET("api/v3/ticker/24hr")
+    suspend fun getTicker(
         @Query("symbol") symbol: String
-    ): BinancePriceResponse
+    ): BinanceTickerResponse
 
-    @GET("api/v3/ticker/price")
-    suspend fun getAllPrices(): List<BinancePriceResponse>
+    @GET("api/v3/ticker/24hr")
+    suspend fun getAllTickers(): List<BinanceTickerResponse>
 }
