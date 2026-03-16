@@ -5,11 +5,13 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.ItemMarketPriceBinding
+import com.example.cuzdan.data.local.entity.Asset
+import com.example.cuzdan.util.calculateProfitLossPercentage
 import java.text.NumberFormat
 import java.util.Locale
 
 class MarketAdapter(
-    private var items: List<MarketPrice> = emptyList()
+    private var items: List<Asset> = emptyList()
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
@@ -30,10 +32,12 @@ class MarketAdapter(
         holder.binding.apply {
             textMarketName.text = item.name
             textMarketSymbol.text = item.symbol
-            textMarketPrice.text = String.format("%,.2f", item.currentPrice)
+            textMarketPrice.text = currencyFormat.format(item.currentPrice)
             
-            val isPositive = item.dailyChangePerc >= java.math.BigDecimal.ZERO
-            textMarketChange.text = String.format("%%%+.2f", item.dailyChangePerc)
+            val profitLossPerc = calculateProfitLossPercentage(item.currentPrice, item.averageBuyPrice)
+            val isPositive = profitLossPerc >= java.math.BigDecimal.ZERO
+            
+            textMarketChange.text = String.format("%%%+.2f", profitLossPerc)
             textMarketChange.setTextColor(root.context.getColor(
                 if (isPositive) R.color.accent_green else R.color.accent_red
             ))
@@ -42,7 +46,7 @@ class MarketAdapter(
 
     override fun getItemCount() = items.size
 
-    fun setItems(newItems: List<MarketPrice>) {
+    fun setItems(newItems: List<Asset>) {
         items = newItems
         notifyDataSetChanged()
     }

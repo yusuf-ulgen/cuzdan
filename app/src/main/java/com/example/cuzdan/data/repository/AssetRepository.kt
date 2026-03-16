@@ -5,6 +5,8 @@ import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.data.remote.api.BinanceApi
 import com.example.cuzdan.data.remote.api.YahooFinanceApi
+import com.example.cuzdan.data.remote.api.TefasApi
+import com.example.cuzdan.data.remote.model.TefasRequest
 import com.example.cuzdan.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,13 +21,21 @@ import javax.inject.Singleton
 class AssetRepository @Inject constructor(
     private val assetDao: AssetDao,
     private val binanceApi: BinanceApi,
-    private val yahooFinanceApi: YahooFinanceApi
+    private val yahooFinanceApi: YahooFinanceApi,
+    private val tefasApi: TefasApi
 ) {
     /**
      * Tüm kripto varlıkları Flow olarak döner.
      */
     fun getCryptoAssets(): Flow<List<Asset>> {
         return assetDao.getAssetsByTypes(listOf(AssetType.KRIPTO))
+    }
+
+    /**
+     * Fon varlıklarını döner.
+     */
+    fun getFundAssets(): Flow<List<Asset>> {
+        return assetDao.getAssetsByTypes(listOf(AssetType.FON))
     }
 
     /**
@@ -121,6 +131,43 @@ class AssetRepository @Inject constructor(
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Yahoo verileri güncellenemedi"))
+        }
+    }
+
+    /**
+     * TEFAS API'den fon fiyatlarını günceller.
+     */
+    suspend fun refreshFundPrices(): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val fundAssets = getFundAssets().first()
+            if (fundAssets.isEmpty()) {
+                emit(Resource.Success(Unit))
+                return@flow
+            }
+
+            // Bugünün tarihini formatla (YYYY-MM-DD)
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val dateStr = sdf.format(java.util.Date())
+
+            fundAssets.forEach { asset ->
+                try {
+                    val request = TefasRequest(fundType = asset.symbol, date = dateStr)
+                    val response = tefasApi.getFundPrices(request)
+                    
+                    // TEFAS bazen o gün için veri dönmeyebilir (hafta sonu vs), ama son fiyatı alabiliriz.
+                    val latestPrice = response.firstOrNull()?.price?.let { BigDecimal(it) }
+                    
+                    latestPrice?.let {
+                        assetDao.updateAsset(asset.copy(currentPrice = it))
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            emit(Resource.Success(Unit))
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Fon verileri güncellenemedi"))
         }
     }
 }

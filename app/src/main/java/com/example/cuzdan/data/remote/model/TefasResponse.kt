@@ -1,0 +1,21 @@
+package com.example.cuzdan.data.remote.model
+
+import com.google.gson.annotations.SerializedName
+
+data class TefasRequest(
+    @SerializedName("fontip")
+    val fundType: String,
+    @SerializedName("tarih")
+    val date: String
+)
+
+data class TefasResponse(
+    @SerializedName("Fontip")
+    val fundType: String?,
+    @SerializedName("FonunAd")
+    val fundName: String?,
+    @SerializedName("Fiyat")
+    val price: Double?,
+    @SerializedName("Tarih")
+    val date: String?
+)

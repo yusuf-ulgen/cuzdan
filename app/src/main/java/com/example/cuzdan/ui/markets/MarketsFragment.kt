@@ -48,6 +48,10 @@ class MarketsFragment : Fragment() {
     }
 
     private fun setupListeners() {
+        binding.swipeRefreshMarkets.setOnRefreshListener {
+            viewModel.refreshPrices()
+        }
+
         binding.editSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -61,6 +65,7 @@ class MarketsFragment : Fragment() {
                 R.id.chip_bist -> AssetType.BIST
                 R.id.chip_crypto -> AssetType.KRIPTO
                 R.id.chip_currency -> AssetType.DOVIZ
+                R.id.chip_fon -> AssetType.FON
                 else -> null
             }
             viewModel.filterByType(type)
@@ -72,6 +77,17 @@ class MarketsFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     adapter.setItems(state.filteredPrices)
+                    binding.swipeRefreshMarkets.isRefreshing = state.isLoading
+                    
+                    if (state.isLoading) {
+                        binding.shimmerMarkets.startShimmer()
+                        binding.shimmerMarkets.visibility = View.VISIBLE
+                        binding.recyclerMarkets.visibility = View.GONE
+                    } else {
+                        binding.shimmerMarkets.stopShimmer()
+                        binding.shimmerMarkets.visibility = View.GONE
+                        binding.recyclerMarkets.visibility = View.VISIBLE
+                    }
                 }
             }
         }

@@ -12,9 +12,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.navigation.fragment.findNavController
 import com.example.cuzdan.R
+import com.example.cuzdan.util.PreferenceManager
+import com.example.cuzdan.util.formatCurrency
 import com.example.cuzdan.databinding.FragmentReportsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -25,9 +28,12 @@ class ReportsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ReportsViewModel by viewModels()
+    
+    @Inject
+    lateinit var prefManager: PreferenceManager
+    
     private var isHidden = false
     private lateinit var adapter: ReportCategoryAdapter
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,6 +41,8 @@ class ReportsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentReportsBinding.inflate(inflater, container, false)
+        
+        isHidden = prefManager.isPrivacyModeEnabled()
         
         setupRecyclerView()
         setupUI()
@@ -46,6 +54,7 @@ class ReportsFragment : Fragment() {
     private fun setupUI() {
         binding.imageHideShow.setOnClickListener {
             isHidden = !isHidden
+            prefManager.setPrivacyModeEnabled(isHidden)
             updateHideShowUI(viewModel.uiState.value)
         }
 
@@ -73,13 +82,10 @@ class ReportsFragment : Fragment() {
     }
 
     private fun updateUI(state: ReportsUiState) {
-        
         if (state.portfolios.isNotEmpty()) {
             binding.textPortfolioName.text = state.portfolios[state.selectedPortfolioIndex].name
         }
-
         updateHideShowUI(state)
-        
         adapter.setItems(state.categories)
     }
 
@@ -91,9 +97,16 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangePerc.text = "*****"
         } else {
             binding.imageHideShow.setImageResource(R.drawable.ic_eye_on)
-            binding.textTotalAmount.text = currencyFormat.format(state.totalValue)
-            binding.textDailyChangeAbs.text = currencyFormat.format(state.totalProfitLoss)
-            binding.textDailyChangePerc.text = String.format("%%%+.2f", 0.0) // Günlük değişim için ek alan gerekebilir, şimdilik 0.0
+            binding.textTotalAmount.text = state.totalValue.formatCurrency()
+            binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency()
+            
+            // Kari hesapla (Maliyet üzerinden yüzde)
+            val totalCost = state.totalValue.subtract(state.totalProfitLoss)
+            val perc = if (totalCost.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                state.totalProfitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(java.math.BigDecimal("100"))
+            } else java.math.BigDecimal.ZERO
+            
+            binding.textDailyChangePerc.text = String.format("%%%+.2f", perc)
         }
         
         if (::adapter.isInitialized) {

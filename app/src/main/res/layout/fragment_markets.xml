@@ -101,19 +101,60 @@
                 android:text="Döviz"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_fon"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fon"
+                android:textColor="@color/white"
+                app:chipBackgroundColor="@color/surface_card" />
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 
-    <!-- Market List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_markets"
+    <!-- Market List with Refresh and Shimmer -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_markets"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:paddingBottom="80dp"
-        android:clipToPadding="false"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/scroll_chips"
-        tools:listitem="@layout/item_market_price" />
+        app:layout_constraintTop_toBottomOf="@id/scroll_chips">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.facebook.shimmer.ShimmerFrameLayout
+                android:id="@+id/shimmer_markets"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                app:shimmer_auto_start="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <include layout="@layout/item_market_price" />
+                    <include layout="@layout/item_market_price" />
+                    <include layout="@layout/item_market_price" />
+                    <include layout="@layout/item_market_price" />
+                    <include layout="@layout/item_market_price" />
+                    <include layout="@layout/item_market_price" />
+                </LinearLayout>
+            </com.facebook.shimmer.ShimmerFrameLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_markets"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingBottom="80dp"
+                android:clipToPadding="false"
+                tools:listitem="@layout/item_market_price" />
+
+        </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

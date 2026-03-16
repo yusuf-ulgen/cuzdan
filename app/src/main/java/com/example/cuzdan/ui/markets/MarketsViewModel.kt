@@ -1,52 +1,69 @@
-package com.example.cuzdan.ui.markets
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
+import com.example.cuzdan.data.repository.AssetRepository
+import com.example.cuzdan.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
-data class MarketPrice(
-    val id: String,
-    val name: String,
-    val symbol: String,
-    val currentPrice: BigDecimal,
-    val dailyChangePerc: BigDecimal,
-    val type: AssetType
-)
-
 data class MarketsUiState(
-    val allPrices: List<MarketPrice> = emptyList(),
-    val filteredPrices: List<MarketPrice> = emptyList(),
+    val prices: List<Asset> = emptyList(),
+    val filteredPrices: List<Asset> = emptyList(),
     val isLoading: Boolean = false,
     val selectedType: AssetType? = null,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val errorMessage: String? = null
 )
 
 @HiltViewModel
-class MarketsViewModel @Inject constructor() : ViewModel() {
+class MarketsViewModel @Inject constructor(
+    private val repository: AssetRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MarketsUiState())
     val uiState: StateFlow<MarketsUiState> = _uiState.asStateFlow()
 
     init {
-        loadMockData()
+        observeAssets()
+        refreshPrices()
     }
 
-    private fun loadMockData() {
-        val mockData = listOf(
-            MarketPrice("1", "Bitcoin", "BTC/USDT", BigDecimal("65430.20"), BigDecimal("2.45"), AssetType.KRIPTO),
-            MarketPrice("2", "Ethereum", "ETH/USDT", BigDecimal("3520.15"), BigDecimal("-1.20"), AssetType.KRIPTO),
-            MarketPrice("3", "Gram Altın", "GA", BigDecimal("2450.75"), BigDecimal("0.85"), AssetType.ALTIN),
-            MarketPrice("4", "Dolar", "USD/TRY", BigDecimal("32.45"), BigDecimal("0.15"), AssetType.DOVIZ),
-            MarketPrice("5", "Ereğli Demir Çelik", "EREGL", BigDecimal("45.60"), BigDecimal("3.20"), AssetType.BIST),
-            MarketPrice("6", "Türk Hava Yolları", "THYAO", BigDecimal("285.40"), BigDecimal("-0.75"), AssetType.BIST),
-            MarketPrice("7", "Solana", "SOL/USDT", BigDecimal("145.20"), BigDecimal("5.60"), AssetType.KRIPTO),
-            MarketPrice("8", "Euro", "EUR/TRY", BigDecimal("35.12"), BigDecimal("-0.05"), AssetType.DOVIZ)
-        )
-        _uiState.update { it.copy(allPrices = mockData, filteredPrices = mockData) }
+    private fun observeAssets() {
+        // Tüm varlıkları (KRIPTO, BIST, DOVIZ, ALTIN, FON) birleştirip gösteriyoruz
+        repository.getAssetsByPortfolioId(0) // Varsayılan portföy
+            .onEach { assets ->
+                _uiState.update { it.copy(prices = assets) }
+                applyFilters()
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun refreshPrices() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // Tüm API'leri paralel tetikle
+            val cryptoFlow = repository.refreshCryptoPrices()
+            val yahooFlow = repository.refreshYahooPrices()
+            val fundFlow = repository.refreshFundPrices()
+
+            // Hata takibi için basit birleştirme (Opsiyonel: Daha detaylı hata yönetimi yapılabilir)
+            combine(cryptoFlow, yahooFlow, fundFlow) { c, y, f ->
+                val error = when {
+                    c is Resource.Error -> c.message
+                    y is Resource.Error -> y.message
+                    f is Resource.Error -> f.message
+                    else -> null
+                }
+                error
+            }.collect { error ->
+                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+            }
+        }
     }
 
     fun filterByType(type: AssetType?) {
@@ -61,10 +78,10 @@ class MarketsViewModel @Inject constructor() : ViewModel() {
 
     private fun applyFilters() {
         _uiState.update { state ->
-            val filtered = state.allPrices.filter { price ->
-                val matchesType = state.selectedType == null || price.type == state.selectedType
-                val matchesSearch = price.name.contains(state.searchQuery, ignoreCase = true) || 
-                                   price.symbol.contains(state.searchQuery, ignoreCase = true)
+            val filtered = state.prices.filter { asset ->
+                val matchesType = state.selectedType == null || asset.assetType == state.selectedType
+                val matchesSearch = asset.name.contains(state.searchQuery, ignoreCase = true) || 
+                                   asset.symbol.contains(state.searchQuery, ignoreCase = true)
                 matchesType && matchesSearch
             }
             state.copy(filteredPrices = filtered)

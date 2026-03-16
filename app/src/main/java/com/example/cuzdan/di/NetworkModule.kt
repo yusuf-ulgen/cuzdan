@@ -2,6 +2,7 @@ package com.example.cuzdan.di
 
 import com.example.cuzdan.data.remote.api.BinanceApi
 import com.example.cuzdan.data.remote.api.YahooFinanceApi
+import com.example.cuzdan.data.remote.api.TefasApi
 import com.example.cuzdan.data.remote.interceptor.ErrorInterceptor
 import dagger.Module
 import dagger.Provides
@@ -56,6 +57,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("TefasRetrofit")
+    fun provideTefasRetrofit(okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://www.tefas.gov.tr/")
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
     fun provideBinanceApi(@Named("BinanceRetrofit") retrofit: Retrofit): BinanceApi {
         return retrofit.create(BinanceApi::class.java)
     }
@@ -64,5 +76,11 @@ object NetworkModule {
     @Singleton
     fun provideYahooFinanceApi(@Named("YahooRetrofit") retrofit: Retrofit): YahooFinanceApi {
         return retrofit.create(YahooFinanceApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTefasApi(@Named("TefasRetrofit") retrofit: Retrofit): TefasApi {
+        return retrofit.create(TefasApi::class.java)
     }
 }
