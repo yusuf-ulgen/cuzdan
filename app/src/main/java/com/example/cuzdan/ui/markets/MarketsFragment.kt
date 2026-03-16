@@ -62,9 +62,11 @@ class MarketsFragment : Fragment() {
 
         binding.chipGroupMarkets.setOnCheckedChangeListener { _, checkedId ->
             val type = when (checkedId) {
+                R.id.chip_all -> null
                 R.id.chip_bist -> AssetType.BIST
                 R.id.chip_crypto -> AssetType.KRIPTO
                 R.id.chip_currency -> AssetType.DOVIZ
+                R.id.chip_emtia -> AssetType.EMTIA
                 R.id.chip_fon -> AssetType.FON
                 else -> null
             }

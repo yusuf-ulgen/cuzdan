@@ -30,47 +30,30 @@ class MarketsViewModel @Inject constructor(
     val uiState: StateFlow<MarketsUiState> = _uiState.asStateFlow()
 
     init {
-        observeAssets()
-        refreshPrices()
+        filterByType(AssetType.BIST) // Varsayılan olarak BIST göster
     }
 
-    private fun observeAssets() {
-        // Tüm varlıkları (KRIPTO, BIST, DOVIZ, ALTIN, FON) birleştirip gösteriyoruz
-        repository.getAssetsByPortfolioId(0) // Varsayılan portföy
-            .onEach { assets ->
-                _uiState.update { it.copy(prices = assets) }
-                applyFilters()
-            }
-            .launchIn(viewModelScope)
-    }
-
-    fun refreshPrices() {
+    private fun loadMarketPrices(type: AssetType) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            // Tüm API'leri paralel tetikle
-            val cryptoFlow = repository.refreshCryptoPrices()
-            val yahooFlow = repository.refreshYahooPrices()
-            val fundFlow = repository.refreshFundPrices()
-
-            // Hata takibi için basit birleştirme (Opsiyonel: Daha detaylı hata yönetimi yapılabilir)
-            combine(cryptoFlow, yahooFlow, fundFlow) { c, y, f ->
-                val error = when {
-                    c is Resource.Error -> c.message
-                    y is Resource.Error -> y.message
-                    f is Resource.Error -> f.message
-                    else -> null
-                }
-                error
-            }.collect { error ->
-                _uiState.update { it.copy(isLoading = false, errorMessage = error) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                val marketAssets = repository.getMarketAssets(type)
+                _uiState.update { it.copy(prices = marketAssets, isLoading = false) }
+                applyFilters()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, errorMessage = "Hata: ${e.localizedMessage}") }
             }
         }
     }
 
+    fun refreshPrices() {
+        val currentType = _uiState.value.selectedType ?: AssetType.BIST
+        loadMarketPrices(currentType)
+    }
+
     fun filterByType(type: AssetType?) {
         _uiState.update { it.copy(selectedType = type) }
-        applyFilters()
+        type?.let { loadMarketPrices(it) } ?: applyFilters()
     }
 
     fun search(query: String) {
@@ -81,10 +64,9 @@ class MarketsViewModel @Inject constructor(
     private fun applyFilters() {
         _uiState.update { state ->
             val filtered = state.prices.filter { asset ->
-                val matchesType = state.selectedType == null || asset.assetType == state.selectedType
                 val matchesSearch = asset.name.contains(state.searchQuery, ignoreCase = true) || 
                                    asset.symbol.contains(state.searchQuery, ignoreCase = true)
-                matchesType && matchesSearch
+                matchesSearch
             }
             state.copy(filteredPrices = filtered)
         }

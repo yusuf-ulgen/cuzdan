@@ -119,7 +119,7 @@ class HomeViewModel @Inject constructor(
                     AssetType.KRIPTO -> "Kripto"
                     AssetType.BIST -> "BIST"
                     AssetType.DOVIZ -> "Döviz"
-                    AssetType.ALTIN -> "Altın"
+                    AssetType.EMTIA -> "Emtia"
                     AssetType.NAKIT -> "Nakit"
                     AssetType.FON -> "Fon"
                 },

@@ -32,7 +32,7 @@ class AssetsFragment : Fragment() {
         val assetTypes = listOf(
             AssetType(1, "TL", "NAKIT", R.drawable.ic_tl),
             AssetType(2, "BIST", "BIST", R.drawable.ic_bist),
-            AssetType(3, "Emtia", "ALTIN", R.drawable.ic_reports),
+            AssetType(3, "Emtia", "EMTIA", R.drawable.ic_reports),
             AssetType(4, "Döviz", "DOVIZ", R.drawable.ic_currency),
             AssetType(5, "Fon", "FON", R.drawable.ic_funds),
             AssetType(6, "Kripto", "KRIPTO", R.drawable.ic_crypto)

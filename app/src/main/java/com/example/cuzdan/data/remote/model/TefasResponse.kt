@@ -15,7 +15,7 @@ data class TefasResponse(
     @SerializedName("FonunAd")
     val fundName: String?,
     @SerializedName("Fiyat")
-    val price: Double?,
+    val price: Any?,
     @SerializedName("Tarih")
     val date: String?
 )

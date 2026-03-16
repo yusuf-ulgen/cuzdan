@@ -11,7 +11,8 @@ import java.text.NumberFormat
 import java.util.Locale
 
 class MarketAdapter(
-    private var items: List<Asset> = emptyList()
+    private var items: List<Asset> = emptyList(),
+    private val onItemClick: ((Asset) -> Unit)? = null
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
@@ -40,6 +41,10 @@ class MarketAdapter(
             textMarketChange.setTextColor(root.context.getColor(
                 if (isPositive) R.color.accent_green else R.color.accent_red
             ))
+
+            root.setOnClickListener {
+                onItemClick?.invoke(item)
+            }
         }
     }
 
