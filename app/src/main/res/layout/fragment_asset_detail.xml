@@ -113,8 +113,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/white"
-                app:cardCornerRadius="16dp">
+                app:cardBackgroundColor="@color/secondary_dark"
+                app:cardCornerRadius="16dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#1AFFFFFF">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -126,7 +128,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Miktar"
-                        android:textColor="@color/primary_dark"
+                        android:textColor="@color/text_label"
                         android:textStyle="bold" />
 
                     <LinearLayout
@@ -142,6 +144,8 @@
                             android:layout_weight="1"
                             android:background="@drawable/bg_input_field"
                             android:hint="0"
+                            android:textColor="@color/white"
+                            android:textColorHint="#66FFFFFF"
                             android:inputType="numberDecimal"
                             android:paddingHorizontal="12dp" />
 
@@ -151,41 +155,50 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
                             android:text="Adet"
-                            android:textColor="@color/primary_dark" />
+                            android:textColor="@color/white" />
 
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Birim Maliyet (Opsiyonel)"
-                        android:textColor="@color/primary_dark"
-                        android:textStyle="bold" />
-
                     <LinearLayout
+                        android:id="@+id/layoutCostContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <EditText
-                            android:id="@+id/editCost"
-                            android:layout_width="0dp"
-                            android:layout_height="50dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_input_field"
-                            android:hint="0"
-                            android:inputType="numberDecimal"
-                            android:paddingHorizontal="12dp" />
+                        android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:text="TL"
-                            android:textColor="@color/primary_dark" />
+                            android:layout_marginTop="16dp"
+                            android:text="Birim Maliyet (Opsiyonel)"
+                            android:textColor="@color/text_label"
+                            android:textStyle="bold" />
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <EditText
+                                android:id="@+id/editCost"
+                                android:layout_width="0dp"
+                                android:layout_height="50dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_input_field"
+                                android:hint="0"
+                                android:textColor="@color/white"
+                                android:textColorHint="#66FFFFFF"
+                                android:inputType="numberDecimal"
+                                android:paddingHorizontal="12dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:text="TL"
+                                android:textColor="@color/white" />
+
+                        </LinearLayout>
                     </LinearLayout>
 
                 </LinearLayout>
@@ -198,9 +211,11 @@
                 android:layout_height="60dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="32dp"
-                android:backgroundTint="@color/secondary_dark"
+                android:backgroundTint="@color/accent_blue"
                 android:text="KAYDET"
+                android:textColor="@color/white"
                 android:textSize="16sp"
+                android:textStyle="bold"
                 app:cornerRadius="30dp" />
 
         </LinearLayout>

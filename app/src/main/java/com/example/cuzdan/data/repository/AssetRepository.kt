@@ -528,9 +528,22 @@ class AssetRepository @Inject constructor(
         }
     }
 
-    suspend fun getAssetHistory(symbol: String): List<Pair<Long, Double>> {
+    suspend fun getAssetHistory(
+        symbol: String,
+        range: String = "1d",
+        interval: String = "1m"
+    ): List<Pair<Long, Double>> {
         return try {
-            val response = yahooFinanceApi.getChartData(symbol)
+            var targetSymbol = symbol
+            // BIST sembolleri için suffix kontrolü (Madde 4)
+            if (!symbol.contains(".") && !symbol.contains("=X") && !symbol.contains("-USD")) {
+                // Eğer büyük harf ve 3-6 karakter arasıysa muhtemelen BIST hissestidir
+                if (symbol.all { it.isUpperCase() || it.isDigit() }) {
+                    targetSymbol = "$symbol.IS"
+                }
+            }
+
+            val response = yahooFinanceApi.getChartData(targetSymbol, range, interval)
             val result = response.chart.result?.firstOrNull()
             val timestamps = result?.timestamp ?: emptyList()
             val closePrices = result?.indicators?.quote?.firstOrNull()?.close ?: emptyList()

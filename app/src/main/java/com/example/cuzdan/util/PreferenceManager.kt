@@ -72,6 +72,14 @@ class PreferenceManager @Inject constructor(
         return prefs.getBoolean("privacy_mode_enabled", false)
     }
 
+    fun setSelectedPortfolioId(id: Long) {
+        prefs.edit().putLong("selected_portfolio_id", id).apply()
+    }
+
+    fun getSelectedPortfolioId(): Long {
+        return prefs.getLong("selected_portfolio_id", 1L)
+    }
+
     fun resetPreferences() {
         prefs.edit().clear().apply()
     }

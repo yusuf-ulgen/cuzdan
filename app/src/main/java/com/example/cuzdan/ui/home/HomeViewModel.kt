@@ -47,7 +47,7 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WalletUiState())
     val uiState: StateFlow<WalletUiState> = _uiState.asStateFlow()
 
-    private val _selectedPortfolioId = MutableStateFlow(1L)
+    private val _selectedPortfolioId = MutableStateFlow(prefManager.getSelectedPortfolioId())
 
     init {
         observePortfolios()
@@ -111,6 +111,7 @@ class HomeViewModel @Inject constructor(
     fun selectPortfolio(id: Long) {
         val name = if (id == -1L) "Portföyler Toplamı" else _uiState.value.portfolios.find { it.id == id }?.name ?: ""
         _selectedPortfolioId.value = id
+        prefManager.setSelectedPortfolioId(id)
         _uiState.update { it.copy(selectedPortfolioId = id, selectedPortfolioName = name) }
     }
 

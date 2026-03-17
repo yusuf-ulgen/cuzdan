@@ -10,7 +10,9 @@ import retrofit2.http.Query
 interface YahooFinanceApi {
     @GET("v8/finance/chart/{symbol}")
     suspend fun getChartData(
-        @Path("symbol") symbol: String
+        @Path("symbol") symbol: String,
+        @Query("range") range: String = "1d",
+        @Query("interval") interval: String = "1m"
     ): YahooFinanceResponse
 
     @GET("v1/finance/search")

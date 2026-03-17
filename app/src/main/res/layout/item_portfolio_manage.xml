@@ -24,10 +24,22 @@
             android:textColor="@color/white"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/layout_portfolio_values"
+            app:layout_constraintEnd_toStartOf="@id/btn_edit_portfolio"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Ana Portföy" />
+
+        <ImageButton
+            android:id="@+id/btn_edit_portfolio"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_edit"
+            app:layout_constraintBottom_toBottomOf="@id/text_portfolio_name"
+            app:layout_constraintStart_toEndOf="@id/text_portfolio_name"
+            app:layout_constraintTop_toTopOf="@id/text_portfolio_name"
+            app:tint="@color/accent_blue" />
 
         <LinearLayout
             android:id="@+id/layout_portfolio_values"

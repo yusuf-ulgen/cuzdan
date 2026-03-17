@@ -48,6 +48,11 @@ class AssetDetailFragment : Fragment() {
         setupListeners()
         observeState()
         
+        if (args.assetType == "NAKIT") {
+            binding.layoutCostContainer.visibility = View.GONE
+            binding.textAmountLabel.text = "TL"
+        }
+        
         viewModel.init(args.symbol, args.name, args.assetType)
     }
 
@@ -82,7 +87,7 @@ class AssetDetailFragment : Fragment() {
                     updateUI(state)
                     if (state.isSaved) {
                         Toast.makeText(requireContext(), "Varlık başarıyla eklendi", Toast.LENGTH_SHORT).show()
-                        findNavController().navigateUp()
+                        findNavController().navigate(R.id.navigation_wallet)
                     }
                     if (state.errorMessage != null) {
                         Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT).show()

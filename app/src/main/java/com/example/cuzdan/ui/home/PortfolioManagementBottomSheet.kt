@@ -46,10 +46,16 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupRecyclerView() {
-        portfolioAdapter = PortfolioManageAdapter { portfolioId ->
-            viewModel.selectPortfolio(portfolioId)
-            dismiss()
-        }
+        portfolioAdapter = PortfolioManageAdapter(
+            onSelected = { portfolioId ->
+                viewModel.selectPortfolio(portfolioId)
+                dismiss()
+            },
+            onEdit = { portfolioId ->
+                EditPortfolioDialogFragment.newInstance(portfolioId).show(parentFragmentManager, "EditPortfolio")
+                dismiss()
+            }
+        )
         binding.recyclerPortfolios.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerPortfolios.adapter = portfolioAdapter
     }
@@ -87,8 +93,10 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
 
     data class PortfolioItem(val id: Long, val name: String, val balance: BigDecimal)
 
-    inner class PortfolioManageAdapter(private val onSelected: (Long) -> Unit) :
-        RecyclerView.Adapter<PortfolioManageAdapter.ViewHolder>() {
+    inner class PortfolioManageAdapter(
+        private val onSelected: (Long) -> Unit,
+        private val onEdit: (Long) -> Unit
+    ) : RecyclerView.Adapter<PortfolioManageAdapter.ViewHolder>() {
 
         private var items = emptyList<PortfolioItem>()
         private var selectedId: Long = -1
@@ -113,12 +121,15 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
                 // Bakiyeyi sadece toplam için gösteriyoruz şimdilik, diğerleri için repo yüklemesi lazım
                 if (item.id == -1L) {
                     textPortfolioTotal.text = item.balance.formatCurrency()
+                    btnEditPortfolio.visibility = View.GONE
                 } else {
                     textPortfolioTotal.text = ""
+                    btnEditPortfolio.visibility = View.VISIBLE
                 }
                 textPortfolioChange.visibility = View.GONE
                 
                 root.setOnClickListener { onSelected(item.id) }
+                btnEditPortfolio.setOnClickListener { onEdit(item.id) }
             }
         }
 
