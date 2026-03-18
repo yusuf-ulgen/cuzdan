@@ -10,6 +10,7 @@ import com.example.cuzdan.data.local.entity.Portfolio
 import com.example.cuzdan.data.repository.AssetRepository
 import com.example.cuzdan.data.repository.PortfolioRepository
 import com.example.cuzdan.util.PreferenceManager
+import com.example.cuzdan.util.PriceSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -22,9 +23,12 @@ data class ReportsUiState(
     val categories: List<ReportCategory> = emptyList(),
     val totalValue: BigDecimal = BigDecimal.ZERO,
     val totalProfitLoss: BigDecimal = BigDecimal.ZERO,
+    val totalProfitPerc: BigDecimal = BigDecimal.ZERO,
     val currency: String = "TL",
     val portfolios: List<Portfolio> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val lastUpdated: String? = null,
+    val isOffline: Boolean = false
 )
 
 @HiltViewModel
@@ -32,6 +36,7 @@ class ReportsViewModel @Inject constructor(
     private val assetRepository: AssetRepository,
     private val portfolioRepository: PortfolioRepository,
     private val prefManager: PreferenceManager,
+    private val priceSyncManager: PriceSyncManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -41,6 +46,12 @@ class ReportsViewModel @Inject constructor(
     private val _currentCurrency = MutableStateFlow(prefManager.getReportsCurrency())
     private val _selectedPortfolioId = MutableStateFlow(prefManager.getSelectedPortfolioId())
     private var lastAssets: List<Asset> = emptyList()
+
+    private val _usdRate = assetRepository.getLatestPrice("TRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("32.5"))
+    private val _eurRate = assetRepository.getLatestPrice("EURTRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("35.2"))
+
 
     init {
         observePortfolios()
@@ -57,6 +68,8 @@ class ReportsViewModel @Inject constructor(
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun observeAssets() {
+        val dateFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+
         viewModelScope.launch {
             combine(
                 _selectedPortfolioId.flatMapLatest { id ->
@@ -70,10 +83,19 @@ class ReportsViewModel @Inject constructor(
                         }
                     } else assetRepository.getAssetsByPortfolioId(id)
                 },
-                _currentCurrency
-            ) { assets, currency ->
+                _currentCurrency,
+                _usdRate,
+                _eurRate,
+                priceSyncManager.syncStatus
+            ) { assets, currency, usdRate, eurRate, syncStatus ->
                 lastAssets = assets
-                calculateReports(assets, currency)
+                calculateReports(assets, currency, usdRate, eurRate)
+                
+                val timeStr = if (syncStatus.lastUpdate > 0) dateFormat.format(java.util.Date(syncStatus.lastUpdate)) else null
+                _uiState.update { it.copy(
+                    lastUpdated = timeStr,
+                    isOffline = syncStatus.isOffline
+                )}
             }.collect()
         }
     }
@@ -92,38 +114,61 @@ class ReportsViewModel @Inject constructor(
         }
     }
 
-    private fun calculateReports(assets: List<Asset>, currency: String, resolveContext: Context = context) {
+    private fun calculateReports(
+        assets: List<Asset>, 
+        currency: String, 
+        usdRate: BigDecimal? = _usdRate.value,
+        eurRate: BigDecimal? = _eurRate.value,
+        resolveContext: Context = context
+    ) {
         var exchangeRate = BigDecimal.ONE
-        if (currency == "USD") exchangeRate = BigDecimal("32.5")
-        else if (currency == "EUR") exchangeRate = BigDecimal("35.2")
+        if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
+        else if (currency == "EUR") exchangeRate = eurRate ?: BigDecimal("35.2")
 
-        var totalValue = BigDecimal.ZERO
-        var totalProfitLoss = BigDecimal.ZERO
 
-        assets.forEach {
-            val assetValue = it.amount.multiply(it.currentPrice)
-            val assetCost = it.amount.multiply(it.averageBuyPrice)
-            totalValue = totalValue.add(assetValue)
-            totalProfitLoss = totalProfitLoss.add(assetValue.subtract(assetCost))
+        var totalValueBase = BigDecimal.ZERO
+        var totalCostBase = BigDecimal.ZERO
+
+        assets.forEach { asset ->
+            val assetRate = when (asset.currency) {
+                "USD" -> usdRate ?: BigDecimal("32.5")
+                "EUR" -> eurRate ?: BigDecimal("35.2")
+                else -> BigDecimal.ONE
+            }
+            val assetValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
+            val assetCost = asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate)
+            totalValueBase = totalValueBase.add(assetValue)
+            totalCostBase = totalCostBase.add(assetCost)
         }
 
-        val convTotalValue = totalValue.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val convTotalProfitLoss = totalProfitLoss.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convTotalValue = totalValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convTotalProfitLoss = (totalValueBase.subtract(totalCostBase)).divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        
+        val totalProfitPerc = if (totalCostBase > BigDecimal.ZERO) {
+            totalValueBase.subtract(totalCostBase).divide(totalCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+        } else BigDecimal.ZERO
+
 
         val reportCategories = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
-            var catValue = BigDecimal.ZERO
-            var catCost = BigDecimal.ZERO
-            typeAssets.forEach {
-                catValue = catValue.add(it.amount.multiply(it.currentPrice))
-                catCost = catCost.add(it.amount.multiply(it.averageBuyPrice))
+            var catValueBase = BigDecimal.ZERO
+            var catCostBase = BigDecimal.ZERO
+            typeAssets.forEach { asset ->
+                val assetRate = when (asset.currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                catValueBase = catValueBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
             }
             
-            val convCatValue = catValue.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            val convCatCost = catCost.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            val convCatValue = catValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            val convCatCost = catCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
             val catPLAbs = convCatValue.subtract(convCatCost)
-            val catPLPerc = if (catCost > BigDecimal.ZERO) {
-                catValue.subtract(catCost).divide(catCost, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+            val catPLPerc = if (catCostBase > BigDecimal.ZERO) {
+                catValueBase.subtract(catCostBase).divide(catCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
             } else BigDecimal.ZERO
+
 
             ReportCategory(
                 name = getLocalizedAssetTypeName(type, resolveContext),
@@ -138,6 +183,7 @@ class ReportsViewModel @Inject constructor(
             categories = reportCategories,
             totalValue = convTotalValue,
             totalProfitLoss = convTotalProfitLoss,
+            totalProfitPerc = totalProfitPerc,
             currency = currency
         )}
     }
@@ -172,8 +218,9 @@ class ReportsViewModel @Inject constructor(
     }
 
     fun refreshLocalization(activityContext: Context) {
-        calculateReports(lastAssets, _currentCurrency.value, activityContext)
+        calculateReports(lastAssets, _currentCurrency.value, _usdRate.value, _eurRate.value, activityContext)
     }
+
 
     private fun getLocalizedAssetTypeName(type: AssetType, resolveContext: Context): String {
         return resolveContext.getString(when(type) {

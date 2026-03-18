@@ -50,7 +50,12 @@
         <argument
             android:name="assetType"
             app:argType="string" />
+        <argument
+            android:name="currency"
+            app:argType="string"
+            android:defaultValue="TRY" />
     </fragment>
+
 
     <fragment
         android:id="@+id/navigation_settings"

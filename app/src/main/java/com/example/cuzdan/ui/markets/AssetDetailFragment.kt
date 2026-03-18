@@ -53,7 +53,8 @@ class AssetDetailFragment : Fragment() {
             binding.textAmountLabel.text = "TL"
         }
         
-        viewModel.init(args.symbol, args.name, args.assetType)
+        viewModel.init(args.symbol, args.name, args.assetType, args.currency)
+
     }
 
     private fun setupToolbar() {
@@ -69,7 +70,7 @@ class AssetDetailFragment : Fragment() {
             val costStr = binding.editCost.text.toString()
             
             if (amountStr.isEmpty()) {
-                binding.editAmount.error = "Miktar giriniz"
+                binding.editAmount.error = getString(R.string.error_loading) // Uygun bir hata mesajı
                 return@setOnClickListener
             }
             
@@ -77,6 +78,16 @@ class AssetDetailFragment : Fragment() {
             val cost = costStr.toBigDecimalOrNull() ?: BigDecimal.ZERO
             
             viewModel.saveAsset(amount, cost, args.assetType)
+        }
+
+        binding.chartRangeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    R.id.btnRange1W -> viewModel.updateRange("1w")
+                    R.id.btnRange1M -> viewModel.updateRange("1mo")
+                    // Varsayılan 1D butonu eklenirse buraya eklenebilir
+                }
+            }
         }
     }
 

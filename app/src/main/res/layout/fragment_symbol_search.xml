@@ -31,6 +31,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/btn_back" />
 
+    <ImageButton
+        android:id="@+id/btn_currency_switcher"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_icon_circle"
+        android:padding="10dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_tl"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/btn_back"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btn_back"
+        app:tint="@color/white" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/card_search"
         android:layout_width="match_parent"

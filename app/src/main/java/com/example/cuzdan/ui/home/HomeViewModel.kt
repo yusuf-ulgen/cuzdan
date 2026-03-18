@@ -10,6 +10,7 @@ import com.example.cuzdan.data.local.entity.Portfolio
 import com.example.cuzdan.data.repository.AssetRepository
 import com.example.cuzdan.data.repository.PortfolioRepository
 import com.example.cuzdan.util.PreferenceManager
+import com.example.cuzdan.util.PriceSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -38,7 +39,9 @@ data class WalletUiState(
     val donutCenterLabel: String = "Dağılım",
     val donutCenterPercent: String = "%100",
     val isLoading: Boolean = false,
-    val currency: String = "TL"
+    val currency: String = "TL",
+    val lastUpdated: String? = null,
+    val isOffline: Boolean = false
 )
 
 data class WalletCategorySummary(
@@ -56,6 +59,7 @@ class HomeViewModel @Inject constructor(
     private val assetRepository: AssetRepository,
     private val portfolioRepository: PortfolioRepository,
     private val prefManager: PreferenceManager,
+    private val priceSyncManager: PriceSyncManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -67,6 +71,12 @@ class HomeViewModel @Inject constructor(
     private val _expandedCategory = MutableStateFlow<AssetType?>(null)
     private val _currentAssets = MutableStateFlow<List<Asset>>(emptyList())
 
+    private val _usdRate = assetRepository.getLatestPrice("TRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("32.5"))
+    private val _eurRate = assetRepository.getLatestPrice("EURTRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("35.2"))
+
+
     init {
         observePortfolios()
         observeAssets()
@@ -77,23 +87,39 @@ class HomeViewModel @Inject constructor(
             combine(
                 portfolioRepository.getAllPortfolios(),
                 assetRepository.getAllAssets(),
-                _homeCurrency
-            ) { portfolios, allAssets, currency ->
+                _homeCurrency,
+                _usdRate,
+                _eurRate
+            ) { portfolios, allAssets, currency, usdRate, eurRate ->
+                val exchangeRate = when (currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+
                 val portfolioList = portfolios.map { p ->
                     val assets = allAssets.filter { it.portfolioId == p.id }
-                    var balance = BigDecimal.ZERO
-                    var cost = BigDecimal.ZERO
+                    var balanceBase = BigDecimal.ZERO
+                    var costBase = BigDecimal.ZERO
                     assets.forEach { asset ->
-                        balance = balance.add(asset.amount.multiply(asset.currentPrice))
-                        cost = cost.add(asset.amount.multiply(asset.averageBuyPrice))
+                        val assetRate = when (asset.currency) {
+                            "USD" -> usdRate ?: BigDecimal("32.5")
+                            "EUR" -> eurRate ?: BigDecimal("35.2")
+                            else -> BigDecimal.ONE
+                        }
+                        balanceBase = balanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+                        costBase = costBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
                     }
-                    val profitLoss = balance.subtract(cost)
-                    val profitPerc = if (cost.compareTo(BigDecimal.ZERO) > 0) {
-                        profitLoss.divide(cost, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+                    val convBalance = balanceBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+                    val convCost = costBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+                    val profitLoss = convBalance.subtract(convCost)
+                    val profitPerc = if (costBase > BigDecimal.ZERO) {
+                        balanceBase.subtract(costBase).divide(costBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
                     } else BigDecimal.ZERO
 
-                    PortfolioWithBalance(p, balance, profitLoss, profitPerc, cost)
+                    PortfolioWithBalance(p, convBalance, profitLoss, profitPerc, convCost)
                 }
+
 
                 if (portfolios.isNotEmpty()) {
                     val currentId = _selectedPortfolioId.value
@@ -110,15 +136,19 @@ class HomeViewModel @Inject constructor(
                         currency = currency
                     )}
 
-                    calculateStats(allAssets, _expandedCategory.value)
+                    calculateStats(allAssets, _expandedCategory.value, currency, _usdRate.value, _eurRate.value)
                 }
             }.collect()
+
         }
     }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     private fun observeAssets() {
+        val dateFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+
         viewModelScope.launch {
+            // İlk 5 Flow'u combine ediyoruz
             combine(
                 _selectedPortfolioId.flatMapLatest { id ->
                     if (id == -1L) {
@@ -132,11 +162,24 @@ class HomeViewModel @Inject constructor(
                     } else assetRepository.getAssetsByPortfolioId(id)
                 },
                 _expandedCategory,
-                _homeCurrency
-            ) { assets, expanded, _ ->
+                _homeCurrency,
+                _usdRate,
+                _eurRate
+            ) { assets, expanded, currency, usdRate, eurRate ->
                 _currentAssets.value = assets
-                calculateStats(assets, expanded)
-            }.collect()
+                calculateStats(assets, expanded, currency, usdRate, eurRate)
+            }.collect() // <--- SADECE İLK 5'İNİ DİNLİYORUZ
+        }
+
+        // SyncStatus'u (6. Flow'u) Ayrı Bir Yerde Dinliyoruz
+        viewModelScope.launch {
+            priceSyncManager.syncStatus.collect { syncStatus ->
+                val timeStr = if (syncStatus.lastUpdate > 0) dateFormat.format(java.util.Date(syncStatus.lastUpdate)) else null
+                _uiState.update { it.copy(
+                    lastUpdated = timeStr,
+                    isOffline = syncStatus.isOffline
+                )}
+            }
         }
     }
 
@@ -182,40 +225,59 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun calculateStats(assets: List<Asset>, expandedCategory: AssetType?, resolveContext: Context = context) {
-        val currency = prefManager.getHomeCurrency()
+    private fun calculateStats(
+        assets: List<Asset>, 
+        expandedCategory: AssetType?, 
+        currency: String = prefManager.getHomeCurrency(),
+        usdRate: BigDecimal? = _usdRate.value,
+        eurRate: BigDecimal? = _eurRate.value,
+        resolveContext: Context = context
+    ) {
         var exchangeRate = BigDecimal.ONE
 
-        if (currency == "USD") exchangeRate = BigDecimal("32.5")
-        else if (currency == "EUR") exchangeRate = BigDecimal("35.2")
+        if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
+        else if (currency == "EUR") exchangeRate = eurRate ?: BigDecimal("35.2")
 
-        var totalBalance = BigDecimal.ZERO
-        var totalCost = BigDecimal.ZERO
+
+        var totalBalanceBase = BigDecimal.ZERO
+        var totalCostBase = BigDecimal.ZERO
 
         assets.forEach { asset ->
-            totalBalance = totalBalance.add(asset.amount.multiply(asset.currentPrice))
-            totalCost = totalCost.add(asset.amount.multiply(asset.averageBuyPrice))
+            val assetRate = when (asset.currency) {
+                "USD" -> usdRate ?: BigDecimal("32.5")
+                "EUR" -> eurRate ?: BigDecimal("35.2")
+                else -> BigDecimal.ONE
+            }
+            totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+            totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
         }
 
-        val convertedBalance = totalBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val convertedCost = totalCost.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convertedBalance = totalBalanceBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convertedCost = totalCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
         val totalProfitLoss = convertedBalance.subtract(convertedCost)
-        val totalProfitPerc = if (totalCost > BigDecimal.ZERO) {
-            totalBalance.subtract(totalCost).divide(totalCost, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+        val totalProfitPerc = if (totalCostBase > BigDecimal.ZERO) {
+            totalBalanceBase.subtract(totalCostBase).divide(totalCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
         } else BigDecimal.ZERO
 
+
         val categorySummaries = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
-            var catValue = BigDecimal.ZERO
-            var catCost = BigDecimal.ZERO
-            typeAssets.forEach {
-                catValue = catValue.add(it.amount.multiply(it.currentPrice))
-                catCost = catCost.add(it.amount.multiply(it.averageBuyPrice))
+            var catValueBase = BigDecimal.ZERO
+            var catCostBase = BigDecimal.ZERO
+            typeAssets.forEach { asset ->
+                val assetRate = when (asset.currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                catValueBase = catValueBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
             }
-            val convCatValue = catValue.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            val convCatCost = catCost.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            val catPLPerc = if (catCost > BigDecimal.ZERO) {
-                catValue.subtract(catCost).divide(catCost, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+            val convCatValue = catValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            val convCatCost = catCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            val catPLPerc = if (catCostBase > BigDecimal.ZERO) {
+                catValueBase.subtract(catCostBase).divide(catCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
             } else BigDecimal.ZERO
+
 
              WalletCategorySummary(
                 type = type,
@@ -245,13 +307,14 @@ class HomeViewModel @Inject constructor(
                 }
             }
         } else {
-            if (totalBalance > BigDecimal.ZERO) {
+            if (totalBalanceBase > BigDecimal.ZERO) {
                 categorySummaries.forEach { summary ->
-                    val weight = (summary.totalValue.multiply(exchangeRate)).divide(totalBalance, 4, RoundingMode.HALF_UP).toFloat()
+                    val weight = (summary.totalValue.multiply(exchangeRate)).divide(totalBalanceBase, 4, RoundingMode.HALF_UP).toFloat()
                     segments.add(DonutChartView.Segment(weight, getCategoryColor(summary.type), summary.title))
                 }
             }
         }
+
 
         _uiState.update { 
             it.copy(
@@ -266,6 +329,7 @@ class HomeViewModel @Inject constructor(
             )
         }
     }
+
 
     private fun getLocalizedAssetTypeName(type: AssetType, resolveContext: Context = context): String {
         return resolveContext.getString(when(type) {
@@ -311,8 +375,9 @@ class HomeViewModel @Inject constructor(
         prefManager.setHomeCurrency(currency)
         _homeCurrency.value = currency
         _uiState.update { it.copy(currency = currency) }
-        calculateStats(_currentAssets.value, _expandedCategory.value)
+        calculateStats(_currentAssets.value, _expandedCategory.value, currency, _usdRate.value, _eurRate.value)
     }
+
 
     fun refreshLocalization(activityContext: Context) {
         val currentId = _selectedPortfolioId.value
@@ -321,6 +386,7 @@ class HomeViewModel @Inject constructor(
                    else portfolios.find { it.portfolio.id == currentId }?.portfolio?.name ?: ""
         
         _uiState.update { it.copy(selectedPortfolioName = name) }
-        calculateStats(_currentAssets.value, _expandedCategory.value, activityContext)
+        calculateStats(_currentAssets.value, _expandedCategory.value, _homeCurrency.value, _usdRate.value, _eurRate.value, activityContext)
     }
+
 }

@@ -53,14 +53,27 @@ class WalletAssetAdapter(
                 tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
             }
             
-            val profitLoss = totalValue.subtract(asset.amount.multiply(asset.averageBuyPrice))
-            val isProfit = profitLoss >= BigDecimal.ZERO
+            val totalCost = asset.amount.multiply(asset.averageBuyPrice)
+            val profitLoss = totalValue.subtract(totalCost)
             
-            tvAssetChange.text = if (isProfit) "▲" else "▼"
-            tvAssetChange.setTextColor(if (isProfit) 
-                holder.itemView.context.getColor(com.example.cuzdan.R.color.accent_green) 
-                else holder.itemView.context.getColor(com.example.cuzdan.R.color.accent_red)
-            )
+            val profitPerc = if (totalCost.compareTo(BigDecimal.ZERO) > 0) {
+                profitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
+            } else BigDecimal.ZERO
+
+            val sign = profitPerc.setScale(1, java.math.RoundingMode.HALF_UP).signum()
+            val color = when {
+                sign > 0 -> com.example.cuzdan.R.color.accent_green
+                sign < 0 -> com.example.cuzdan.R.color.accent_red
+                else -> com.example.cuzdan.R.color.white
+            }
+            val arrow = when {
+                sign > 0 -> "▲"
+                sign < 0 -> "▼"
+                else -> ""
+            }
+
+            tvAssetChange.text = String.format("%s %%%+.1f", arrow, profitPerc)
+            tvAssetChange.setTextColor(holder.itemView.context.getColor(color))
         }
     }
 

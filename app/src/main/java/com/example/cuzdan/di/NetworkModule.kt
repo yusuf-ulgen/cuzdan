@@ -3,7 +3,7 @@ package com.example.cuzdan.di
 import com.example.cuzdan.data.remote.api.BinanceApi
 import com.example.cuzdan.data.remote.api.YahooFinanceApi
 import com.example.cuzdan.data.remote.api.TefasApi
-import com.example.cuzdan.data.remote.interceptor.ErrorInterceptor
+import com.example.cuzdan.data.remote.interceptor.NetworkInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,7 +12,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.cuzdan.data.remote.interceptor.RetryInterceptor
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -34,8 +33,7 @@ object NetworkModule {
                     .build()
                 chain.proceed(request)
             }
-            .addInterceptor(ErrorInterceptor())
-            .addInterceptor(RetryInterceptor())
+            .addInterceptor(NetworkInterceptor())
             .build()
     }
 
@@ -55,7 +53,7 @@ object NetworkModule {
     @Named("YahooRetrofit")
     fun provideYahooRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://query1.finance.yahoo.com/")
+            .baseUrl("https://query2.finance.yahoo.com/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

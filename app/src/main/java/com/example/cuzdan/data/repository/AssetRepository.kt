@@ -8,6 +8,8 @@ import com.example.cuzdan.data.remote.api.YahooFinanceApi
 import com.example.cuzdan.data.remote.api.TefasApi
 import com.example.cuzdan.data.remote.model.TefasRequest
 import com.example.cuzdan.data.remote.model.YahooQuote
+import com.example.cuzdan.data.local.dao.MarketAssetDao
+import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,12 +21,15 @@ import kotlinx.coroutines.coroutineScope
 import java.math.BigDecimal
 import java.math.RoundingMode
 import android.util.Log
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withPermit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AssetRepository @Inject constructor(
     private val assetDao: AssetDao,
+    private val marketAssetDao: MarketAssetDao,
     private val binanceApi: BinanceApi,
     private val yahooFinanceApi: YahooFinanceApi,
     private val tefasApi: TefasApi
@@ -65,8 +70,45 @@ class AssetRepository @Inject constructor(
     }
 
     /**
+     * Piyasa verilerini DB'den Flow olarak döner.
+     */
+    fun getMarketAssetsFlow(type: AssetType): Flow<List<MarketAsset>> {
+        return marketAssetDao.getMarketAssetsByType(type)
+    }
+
+    /**
+     * Sembole göre tüm piyasa verisini Flow olarak döner.
+     */
+    fun getMarketAssetBySymbolFlow(symbol: String): Flow<MarketAsset?> {
+        return marketAssetDao.getMarketAssetBySymbol(symbol)
+    }
+
+    /**
+     * Sembole göre en güncel fiyatı DB'den Flow olarak döner.
+     */
+    fun getLatestPrice(symbol: String): Flow<BigDecimal?> {
+        return marketAssetDao.getMarketAssetBySymbol(symbol).map { it?.currentPrice }
+    }
+
+
+
+
+    /**
      * Binance API'den kripto fiyatlarını günceller.
      */
+    /**
+     * Yahoo Finance API'den tek bir sembolün fiyatını döner.
+     */
+    suspend fun getYahooPriceOnce(symbol: String): BigDecimal? {
+        return try {
+            val response = yahooFinanceApi.getQuotes(symbol)
+            val quote = response.quoteResponse.result?.firstOrNull()
+            quote?.regularMarketPrice
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun refreshCryptoPrices(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
@@ -78,9 +120,11 @@ class AssetRepository @Inject constructor(
                 ticker?.let {
                     assetDao.updateAsset(asset.copy(
                         currentPrice = BigDecimal(it.lastPrice),
-                        dailyChangePercentage = BigDecimal(it.priceChangePercent)
+                        dailyChangePercentage = BigDecimal(it.priceChangePercent),
+                        currency = "USD"
                     ))
                 }
+
             }
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
@@ -122,8 +166,8 @@ class AssetRepository @Inject constructor(
                 try {
                     val response = yahooFinanceApi.getChartData(asset.symbol)
                     val result = response.chart.result?.firstOrNull()?.meta
-                    val price = result?.regularMarketPrice?.let { BigDecimal(it) } ?: BigDecimal.ZERO
-                    val prevClose = result?.previousClose?.let { BigDecimal(it) } ?: BigDecimal.ZERO
+                    val price = result?.regularMarketPrice ?: BigDecimal.ZERO
+                    val prevClose = result?.previousClose ?: BigDecimal.ZERO
                     
                     val changePerc = if (prevClose > BigDecimal.ZERO) {
                         price.subtract(prevClose)
@@ -132,8 +176,11 @@ class AssetRepository @Inject constructor(
                     } else {
                         BigDecimal.ZERO
                     }
+                    val currency = result?.currency ?: "USD"
 
+                    
                     if (asset.symbol == "GC=F") {
+
                         onsPrice = price
                         onsChange = changePerc
                     }
@@ -144,8 +191,10 @@ class AssetRepository @Inject constructor(
 
                     assetDao.updateAsset(asset.copy(
                         currentPrice = price,
-                        dailyChangePercentage = changePerc
+                        dailyChangePercentage = changePerc,
+                        currency = currency
                     ))
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -175,9 +224,9 @@ class AssetRepository @Inject constructor(
     }
 
     /**
-     * TEFAS API'den fon fiyatlarını günceller.
+     * TEFAS API'den sahip olunan fonların fiyatlarını günceller.
      */
-    suspend fun refreshFundPrices(): Flow<Resource<Unit>> = flow {
+    suspend fun refreshOwnedFundPrices(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
             val fundAssets = getFundAssets().first()
@@ -186,36 +235,363 @@ class AssetRepository @Inject constructor(
                 return@flow
             }
 
-            // Bugünün tarihini formatla (YYYY-MM-DD)
             val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-            val dateStr = sdf.format(java.util.Date())
-
+            
             fundAssets.forEach { asset ->
-                try {
-                    val request = TefasRequest(fundType = asset.symbol, date = dateStr)
-                    val response = tefasApi.getFundPrices(request)
-                    
-                    // Safe parse Any? price
-                    val rawPrice = response.firstOrNull()?.price?.toString() ?: "0"
-                    val latestPrice = rawPrice.replace(",", ".").toDoubleOrNull()?.let { BigDecimal(it) }
-                    
-                    latestPrice?.let {
-                        assetDao.updateAsset(asset.copy(currentPrice = it))
+                val calendar = java.util.Calendar.getInstance()
+                var price = BigDecimal.ZERO
+                // Son 5 gün içinde fiyat ara (Hafta sonu/Tatil kontrolü)
+                for (i in 0..5) {
+                    try {
+                        val dateStr = sdf.format(calendar.time)
+                        val response = tefasApi.getFundPrices(TefasRequest(fundType = asset.symbol, date = dateStr))
+                        val entry = response.firstOrNull()
+                        if (entry != null) {
+                            val rawPrice = entry.price
+                            val parsedPrice = parseTefasPrice(rawPrice)
+                            if (parsedPrice > BigDecimal.ZERO) {
+                                price = parsedPrice
+                                break
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("AssetRepo", "Fund update failed for ${asset.symbol}: ${e.message}")
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    calendar.add(java.util.Calendar.DATE, -1)
+                }
+
+                if (price > BigDecimal.ZERO) {
+                    assetDao.updateAsset(asset.copy(
+                        currentPrice = price,
+                        dailyChangePercentage = BigDecimal.ZERO, // TEFAS günlük değişim vermiyor, hesaplanmalı veya 0 bırakılmalı
+                        currency = "TRY"
+                    ))
                 }
             }
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
-            emit(Resource.Error(e.message ?: "Fon verileri güncellenemedi"))
+            emit(Resource.Error(e.message ?: "Fon fiyatları güncellenemedi"))
+        }
+    }
+
+    private fun parseTefasPrice(rawPriceAny: Any?): BigDecimal {
+        return when (rawPriceAny) {
+            is Number -> BigDecimal(rawPriceAny.toString())
+            is String -> {
+                val cleanStr = rawPriceAny.replace("\u00A0", "").trim()
+                try {
+                    if (cleanStr.contains(",") && cleanStr.contains(".")) {
+                        BigDecimal(cleanStr.replace(".", "").replace(",", "."))
+                    } else if (cleanStr.contains(",")) {
+                        BigDecimal(cleanStr.replace(",", "."))
+                    } else {
+                        BigDecimal(cleanStr)
+                    }
+                } catch (e: Exception) {
+                    BigDecimal.ZERO
+                }
+            }
+            else -> BigDecimal.ZERO
+        }
+    }
+
+    /**
+     * Piyasa verilerini API'den çekip DB'ye kaydeder.
+     */
+    suspend fun refreshMarketAssets(type: AssetType): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val assets = when (type) {
+                AssetType.KRIPTO -> {
+                    binanceApi.getAllTickers()
+                        .filter { it.symbol.endsWith("USDT") }
+                        .map { ticker ->
+                            MarketAsset(
+                                symbol = ticker.symbol,
+                                name = ticker.symbol.replace("USDT", ""),
+                                currentPrice = BigDecimal(ticker.lastPrice),
+                                dailyChangePercentage = BigDecimal(ticker.priceChangePercent).setScale(2, RoundingMode.HALF_UP),
+                                assetType = AssetType.KRIPTO,
+                                currency = "USD"
+                            )
+                        }
+                }
+                AssetType.FON -> {
+                    val symbols = listOf(
+                        "TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU", "YAY", "TI1", "GMR",
+                        "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF", "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV",
+                        "GPA", "RTG", "OTJ", "ZPF", "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK",
+                        "EID", "ST1", "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD"
+                    )
+                    
+                    kotlinx.coroutines.coroutineScope {
+                        symbols.map { symbol ->
+                            async {
+                                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                var price = BigDecimal.ZERO
+                                var fundName = "$symbol Fonu"
+                                val calendar = java.util.Calendar.getInstance()
+                                
+                                for (i in 0..5) {
+                                    try {
+                                        val dateStr = sdf.format(calendar.time)
+                                        val response = tefasApi.getFundPrices(TefasRequest(fundType = symbol, date = dateStr))
+                                        val entry = response.firstOrNull()
+                                        if (entry != null) {
+                                            fundName = entry.fundName ?: fundName
+                                            val rawPriceAny = entry.price
+                                            val parsedPrice = when (rawPriceAny) {
+                                                is Number -> BigDecimal(rawPriceAny.toString())
+                                                is String -> {
+                                                    val cleanStr = rawPriceAny.replace("\u00A0", "").trim()
+                                                    try {
+                                                        if (cleanStr.contains(",") && cleanStr.contains(".")) {
+                                                            BigDecimal(cleanStr.replace(".", "").replace(",", "."))
+                                                        } else if (cleanStr.contains(",")) {
+                                                            BigDecimal(cleanStr.replace(",", "."))
+                                                        } else {
+                                                            BigDecimal(cleanStr)
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        BigDecimal.ZERO
+                                                    }
+                                                }
+                                                else -> BigDecimal.ZERO
+                                            }
+                                            if (parsedPrice > BigDecimal.ZERO) {
+                                                price = parsedPrice.setScale(4, RoundingMode.HALF_UP)
+                                                break
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Silent for individual dates
+                                    }
+                                    calendar.add(java.util.Calendar.DATE, -1)
+                                }
+                                
+                                MarketAsset(
+                                    symbol = symbol,
+                                    name = fundName,
+                                    currentPrice = price,
+                                    dailyChangePercentage = BigDecimal.ZERO,
+                                    assetType = AssetType.FON,
+                                    currency = "TRY"
+                                )
+                            }
+                        }.awaitAll()
+                    }
+                }
+                AssetType.NAKIT -> {
+                    // Check if fresh (< 30 mins)
+                    val existing = marketAssetDao.getMarketAssetsByTypeOnce(AssetType.NAKIT)
+                    val lastUpdate = existing.firstOrNull()?.lastUpdated ?: 0L
+                    if (System.currentTimeMillis() - lastUpdate < 30 * 60 * 1000 && existing.isNotEmpty()) {
+                        emit(Resource.Success(Unit))
+                        return@flow
+                    }
+
+                    val cashPairs = listOf("USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X")
+                    val marketAssets = mutableListOf<MarketAsset>()
+                    marketAssets.add(MarketAsset("TRY", "Türk Lirası", BigDecimal.ONE, BigDecimal.ZERO, AssetType.NAKIT, "TRY"))
+                    
+                    kotlinx.coroutines.coroutineScope {
+                        cashPairs.map { symbol ->
+                            async {
+                                try {
+                                    val response = yahooFinanceApi.getChartData(symbol)
+                                    val result = response.chart.result?.firstOrNull()?.meta
+                                    val code = symbol.take(3)
+                                    val price = result?.regularMarketPrice ?: BigDecimal.ONE
+                                    MarketAsset(
+                                        symbol = code,
+                                        name = when(code) {
+                                            "USD" -> "Amerikan Doları"
+                                            "EUR" -> "Euro"
+                                            "GBP" -> "İngiliz Sterlini"
+                                            "CHF" -> "İsviçre Frangı"
+                                            "JPY" -> "Japon Yeni"
+                                            else -> code
+                                        },
+                                        currentPrice = price.setScale(4, RoundingMode.HALF_UP),
+                                        dailyChangePercentage = BigDecimal.ZERO,
+                                        assetType = AssetType.NAKIT,
+                                        currency = "TRY"
+                                    )
+                                } catch (e: Exception) { null }
+                            }
+                        }.awaitAll().filterNotNull().forEach { marketAssets.add(it) }
+                    }
+                    marketAssets
+                }
+                else -> {
+                    val symbols = when (type) {
+                        AssetType.BIST -> ALL_BIST_SYMBOLS
+                        AssetType.DOVIZ -> listOf("USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X", "AUDTRY=X", "CADTRY=X")
+                        AssetType.EMTIA -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F", "GRAM_ALTIN", "USDTRY=X")
+                        else -> emptyList()
+                    }
+
+                    // Check if fresh (< 30 mins)
+                    if (type == AssetType.BIST || type == AssetType.DOVIZ) {
+                        val existing = marketAssetDao.getMarketAssetsByTypeOnce(type)
+                        val lastUpdate = existing.firstOrNull()?.lastUpdated ?: 0L
+                        if (System.currentTimeMillis() - lastUpdate < 30 * 60 * 1000 && existing.size >= symbols.size / 2) {
+                            Log.d("AssetRepo", "[$type] Skipping refresh, data is fresh (${existing.size} assets).")
+                            emit(Resource.Success(Unit))
+                            return@flow
+                        }
+                    }
+
+                    val yahooSymbols = symbols.filter { it != "GRAM_ALTIN" }
+                    val marketAssets = mutableListOf<MarketAsset>()
+
+                    if (type == AssetType.BIST) {
+                        Log.d("AssetRepo", "[BIST] Phase 1 START: Top 40 using v8 (Immediate)")
+                        kotlinx.coroutines.coroutineScope {
+                            yahooSymbols.take(40).map { sym ->
+                                async {
+                                    try {
+                                        val resp = yahooFinanceApi.getChartData(sym)
+                                        val m = resp.chart.result?.firstOrNull()?.meta
+                                        if (m != null) {
+                                            val current = m.regularMarketPrice
+                                            val prev = m.previousClose ?: current
+                                            val change = if (prev > BigDecimal.ZERO) {
+                                                (current - prev).divide(prev, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+                                            } else BigDecimal.ZERO
+
+                                            marketAssets.add(cleanMarketAssetNaming(MarketAsset(
+                                                sym, sym, 
+                                                current.setScale(2, RoundingMode.HALF_UP),
+                                                change.setScale(2, RoundingMode.HALF_UP), 
+                                                type, "TRY"
+                                            ), type))
+                                        }
+                                    } catch (e: Exception) { 
+                                        Log.e("AssetRepo", "[BIST Phase 1] Error for $sym: ${e.message}")
+                                    }
+                                    Unit
+                                }
+                            }.awaitAll()
+                        }
+                        
+                        Log.d("AssetRepo", "[BIST] Phase 1 DONE. Assets count: ${marketAssets.size}")
+                        if (marketAssets.isNotEmpty()) {
+                            // Don't delete anymore, just upsert.
+                            marketAssetDao.insertMarketAssets(marketAssets)
+                        }
+
+                        val remaining = if (yahooSymbols.size > 40) yahooSymbols.drop(40) else emptyList()
+                        if (remaining.isNotEmpty()) {
+                            Log.d("AssetRepo", "[BIST] Phase 2 (Background) START for ${remaining.size} symbols using v8 Throttled")
+                            // background incremental load with throttling
+                            kotlinx.coroutines.MainScope().launch {
+                                val semaphore = kotlinx.coroutines.sync.Semaphore(1)
+                                remaining.forEach { sym ->
+                                    kotlinx.coroutines.delay(300) // strict delay
+                                    semaphore.withPermit {
+                                        try {
+                                            var targetSym = sym
+                                            var resp = try {
+                                                yahooFinanceApi.getChartData(targetSym)
+                                            } catch (e: retrofit2.HttpException) {
+                                                if (e.code() == 404 && targetSym.endsWith(".IS")) {
+                                                    // Fallback check: try without .IS suffix
+                                                    val fallbackSym = targetSym.replace(".IS", "")
+                                                    yahooFinanceApi.getChartData(fallbackSym)
+                                                } else throw e
+                                            }
+
+                                            val m = resp.chart.result?.firstOrNull()?.meta
+                                            if (m != null) {
+                                                val current = m.regularMarketPrice
+                                                val prev = m.previousClose ?: current
+                                                val change = if (prev > BigDecimal.ZERO) {
+                                                    (current - prev).divide(prev, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+                                                } else BigDecimal.ZERO
+
+                                                val asset = cleanMarketAssetNaming(MarketAsset(
+                                                    sym, sym, 
+                                                    current.setScale(2, RoundingMode.HALF_UP),
+                                                    change.setScale(2, RoundingMode.HALF_UP),
+                                                    type, "TRY"
+                                                ), type)
+                                                marketAssetDao.insertMarketAssets(listOf(asset))
+                                                // Log.v("AssetRepo", "[BIST Background] Added: $sym")
+                                            }
+                                        } catch (e: Exception) { 
+                                            Log.e("AssetRepo", "[BIST Phase 2] Error for $sym: ${e.message}")
+                                        }
+                                    }
+                                }
+                                Log.d("AssetRepo", "[BIST] Phase 2 background loading finished")
+                            }
+                        }
+                    } else {
+                        // Diğerleri için klasik paralel fetch
+                        kotlinx.coroutines.coroutineScope {
+                            yahooSymbols.map { symbol ->
+                                async {
+                                    try {
+                                        val response = yahooFinanceApi.getChartData(symbol)
+                                        val result = response.chart.result?.firstOrNull()?.meta
+                                        if (result != null) {
+                                            marketAssets.add(cleanMarketAssetNaming(MarketAsset(
+                                                symbol = symbol,
+                                                name = symbol,
+                                                currentPrice = (result.regularMarketPrice ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
+                                                dailyChangePercentage = BigDecimal.ZERO,
+                                                assetType = type,
+                                                currency = "TRY"
+                                            ), type))
+                                        }
+                                    } catch (e: Exception) { }
+                                }
+                            }.awaitAll()
+                        }
+                    }
+
+                    if (type == AssetType.EMTIA && symbols.contains("GRAM_ALTIN")) {
+                        val onsAsset = marketAssets.find { it.symbol == "GC=F" }
+                        val usdTryAsset = marketAssets.find { it.symbol == "USDTRY=X" }
+                        if (onsAsset != null && usdTryAsset != null) {
+                            val gramPrice = onsAsset.currentPrice.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usdTryAsset.currentPrice)
+                            marketAssets.add(MarketAsset(
+                                symbol = "GRAM_ALTIN",
+                                name = "Gram Altın",
+                                currentPrice = gramPrice.setScale(2, RoundingMode.HALF_UP),
+                                dailyChangePercentage = onsAsset.dailyChangePercentage,
+                                assetType = AssetType.EMTIA,
+                                currency = "TRY"
+                            ))
+                        }
+                    }
+                    if (type == AssetType.EMTIA) {
+                        marketAssets.removeAll { it.symbol == "USDTRY=X" }
+                    }
+                    marketAssets
+                }
+            }
+            
+            if (assets.isNotEmpty() && type != AssetType.BIST) {
+                marketAssetDao.deleteMarketAssetsByType(type)
+                marketAssetDao.insertMarketAssets(assets)
+                Log.d("AssetRepo", "[$type] Final update DONE with ${assets.size} assets")
+            } else if (assets.isEmpty()) {
+                Log.e("AssetRepo", "[$type] Fetched empty list, not updating DB to prevent data loss.")
+            }
+            emit(Resource.Success(Unit))
+        } catch (e: Exception) {
+            Log.e("AssetRepo", "refreshMarketAssets Error: ${e.message}")
+            emit(Resource.Error(e.message ?: "Piyasa verileri güncellenemedi"))
         }
     }
 
     /**
      * Canlı arama yapar.
      */
-    suspend fun searchAssets(query: String, type: AssetType): List<Asset> {
+    suspend fun searchAssets(query: String, type: AssetType): List<MarketAsset> {
+
         Log.d("AssetRepo", "searchAssets: query=$query, type=$type")
         if (query.isBlank()) return emptyList()
 
@@ -226,11 +602,9 @@ class AssetRepository @Inject constructor(
                     allTickers.filter { it.symbol.contains(query, ignoreCase = true) }
                         .take(20)
                         .map {
-                            Asset(
+                            MarketAsset(
                                 symbol = it.symbol,
                                 name = it.symbol.replace("USDT", ""),
-                                amount = BigDecimal.ZERO,
-                                averageBuyPrice = BigDecimal.ZERO,
                                 currentPrice = BigDecimal(it.lastPrice),
                                 dailyChangePercentage = BigDecimal(it.priceChangePercent).setScale(2, RoundingMode.HALF_UP),
                                 assetType = AssetType.KRIPTO
@@ -250,268 +624,39 @@ class AssetRepository @Inject constructor(
                     try {
                         val quotes = yahooFinanceApi.getQuotes(symbols.joinToString(","))
                         quotes.quoteResponse.result?.map { quote ->
-                            Asset(
+                            MarketAsset(
                                 symbol = quote.symbol,
                                 name = quote.shortName ?: quote.longName ?: quote.symbol,
-                                amount = BigDecimal.ZERO,
-                                averageBuyPrice = BigDecimal.ZERO,
-                                currentPrice = BigDecimal(quote.regularMarketPrice ?: 0.0).setScale(2, RoundingMode.HALF_UP),
-                                dailyChangePercentage = BigDecimal(quote.regularMarketChangePercent ?: 0.0).setScale(2, RoundingMode.HALF_UP),
-                                assetType = type
+                                currentPrice = (quote.regularMarketPrice ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
+                                dailyChangePercentage = (quote.regularMarketChangePercent ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
+                                assetType = type,
+                                currency = quote.currency ?: "USD"
                             )
                         } ?: emptyList()
-                    } catch (e: Exception) {
-                        Log.e("AssetRepo", "Bulk quote fetch failed, trying chart fallback: ${e.message}")
-                        // Fallback: Individual chart calls
-                        symbols.take(5).map { symbol ->
-                            try {
-                                val chartResponse = yahooFinanceApi.getChartData(symbol)
-                                val meta = chartResponse.chart.result?.firstOrNull()?.meta
-                                val price = BigDecimal(meta?.regularMarketPrice ?: 0.0)
-                                val prevClose = meta?.previousClose ?: 0.0
-                                val change = if (prevClose > 0) {
-                                    BigDecimal((meta!!.regularMarketPrice - prevClose) / prevClose * 100).setScale(2, RoundingMode.HALF_UP)
-                                } else BigDecimal.ZERO
 
-                                Asset(
-                                    symbol = symbol,
-                                    name = symbol, // Chart meta doesn't have shortName
-                                    amount = BigDecimal.ZERO,
-                                    averageBuyPrice = BigDecimal.ZERO,
-                                    currentPrice = price,
-                                    dailyChangePercentage = change,
-                                    assetType = type
-                                )
-                            } catch (e: Exception) {
-                                Asset(symbol = symbol, name = symbol, amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = type)
-                            }
-                        }
+
+                    } catch (e: Exception) {
+                        Log.e("AssetRepo", "Bulk quote fetch failed, trying individual fallback: ${e.message}")
+                        emptyList()
                     }
                 }
             }
             
             // İsimleri ve sembolleri temizle
-            results.map { cleanAssetNaming(it, type) }
+            results.map { cleanMarketAssetNaming(it, type) }
         } catch (e: Exception) {
-            Log.e("AssetRepo", "searchAssets Error: ${e.message}", e)
+            Log.e("AssetRepo", "searchAssets Major Error: ${e.message}", e)
             emptyList()
         }
     }
 
     /**
-     * Piyasa ekranı için tüm varlıkları döner.
+     * Tek seferlik piyasa verilerini DB'den çeker.
      */
-    suspend fun getMarketAssets(type: AssetType): List<Asset> {
-        Log.d("AssetRepo", "getMarketAssets: type=$type")
-        return try {
-            when (type) {
-                AssetType.KRIPTO -> {
-                    Log.d("AssetRepo", "Fetching Crypto")
-                    binanceApi.getAllTickers()
-                        .filter { it.symbol.endsWith("USDT") }
-                        .sortedByDescending { it.lastPrice.toDouble() }
-                        .map {
-                            Asset(
-                                symbol = it.symbol,
-                                name = it.symbol.replace("USDT", ""),
-                                amount = BigDecimal.ZERO,
-                                averageBuyPrice = BigDecimal.ZERO,
-                                currentPrice = BigDecimal(it.lastPrice),
-                                dailyChangePercentage = BigDecimal(it.priceChangePercent).setScale(2, RoundingMode.HALF_UP),
-                                assetType = AssetType.KRIPTO
-                            )
-                        }
-                }
-                AssetType.FON -> {
-                    Log.d("AssetRepo", "Fetching Fonlar (TEFAS)")
-                    val symbols = listOf(
-                        "TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU", "YAY", "TI1", "GMR",
-                        "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF", "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV",
-                        "GPA", "RTG", "OTJ", "ZPF", "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "GMR", "IHK",
-                        "EID", "ST1", "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD"
-                    )
-                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                    val calendar = java.util.Calendar.getInstance()
-                    
-                    symbols.map { symbol ->
-                        var price = BigDecimal.ZERO
-                        var fundName = "$symbol Fonu"
-                        for (i in 0..5) {
-                            try {
-                                val dateStr = sdf.format(calendar.time)
-                                val response = tefasApi.getFundPrices(TefasRequest(fundType = symbol, date = dateStr))
-                                val entry = response.firstOrNull()
-                                if (entry != null) {
-                                    fundName = entry.fundName ?: fundName
-                                    val rawPriceAny = entry.price
-                                    
-                                    Log.d("AssetRepo", "TEFAS Debug: symbol=$symbol, rawPrice=$rawPriceAny, type=${rawPriceAny?.javaClass?.simpleName}")
-                                    
-                                    val parsedPrice = when (rawPriceAny) {
-                                        is Number -> rawPriceAny.toDouble()
-                                        is String -> {
-                                            val cleanStr = rawPriceAny.replace("\u00A0", "").trim()
-                                            if (cleanStr.contains(",") && cleanStr.contains(".")) {
-                                                cleanStr.replace(".", "").replace(",", ".").toDoubleOrNull() ?: 0.0
-                                            } else if (cleanStr.contains(",")) {
-                                                cleanStr.replace(",", ".").toDoubleOrNull() ?: 0.0
-                                            } else {
-                                                cleanStr.toDoubleOrNull() ?: 0.0
-                                            }
-                                        }
-                                        else -> 0.0
-                                    }
-                                    
-                                    if (parsedPrice > 0) {
-                                        price = BigDecimal(parsedPrice)
-                                        Log.d("AssetRepo", "Found price for $symbol: $price")
-                                        break
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Log.e("AssetRepo", "TEFAS error for $symbol on day $i: ${e.message}")
-                            }
-                            calendar.add(java.util.Calendar.DATE, -1)
-                        }
-                        calendar.setTime(java.util.Date())
-                        
-                        Asset(
-                            symbol = symbol,
-                            name = fundName ?: symbol,
-                            amount = BigDecimal.ZERO,
-                            averageBuyPrice = BigDecimal.ZERO,
-                            currentPrice = price,
-                            dailyChangePercentage = BigDecimal.ZERO,
-                            assetType = AssetType.FON
-                        )
-                    }
-                }
-                else -> {
-                    val symbols = when (type) {
-                        AssetType.BIST -> ALL_BIST_SYMBOLS
-                        AssetType.DOVIZ -> listOf("TRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X", "AUDTRY=X", "CADTRY=X")
-                        AssetType.NAKIT -> listOf("TRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X")
-                        AssetType.EMTIA -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F", "GRAM_ALTIN", "TRY=X")
-                        else -> emptyList()
-                    }
-                    Log.d("AssetRepo", "Fetching Yahoo/Other for type $type: ${symbols.size} symbols")
-                    
-                    val yahooSymbols = symbols.filter { it != "GRAM_ALTIN" }
-                    val assets = mutableListOf<Asset>()
-                    
-                    try {
-                        // Chunked fetch for Yahoo
-                        val chunks = yahooSymbols.chunked(10)
-                        Log.d("AssetRepo", "Fetching ${chunks.size} chunks (size 10) of Yahoo symbols")
-                        
-                        chunks.forEachIndexed { index, chunk ->
-                            try {
-                                val quotes = yahooFinanceApi.getQuotes(chunk.joinToString(","))
-                                val result = quotes.quoteResponse.result ?: emptyList()
-                                Log.d("AssetRepo", "Chunk $index: fetched ${result.size} symbols")
-                                
-                                result.forEach { quote ->
-                                    val name = quote.shortName ?: quote.longName ?: quote.symbol
-                                    val symbol = quote.symbol
-                                    
-                                    assets.add(cleanAssetNaming(Asset(
-                                        symbol = symbol,
-                                        name = name,
-                                        amount = BigDecimal.ZERO,
-                                        averageBuyPrice = BigDecimal.ZERO,
-                                        currentPrice = BigDecimal(quote.regularMarketPrice ?: 0.0).setScale(2, RoundingMode.HALF_UP),
-                                        dailyChangePercentage = BigDecimal(quote.regularMarketChangePercent ?: 0.0).setScale(2, RoundingMode.HALF_UP),
-                                        assetType = type
-                                    ), type))
-                                }
-                            } catch (e: Exception) {
-                                Log.e("AssetRepo", "Chunk $index fetch failed: ${e.message}")
-                            }
-                        }
-
-                        if (assets.isEmpty() && yahooSymbols.isNotEmpty()) {
-                             throw Exception("All granular chunks failed to return valid data")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("AssetRepo", "Yahoo Granular Chunk Fetch failed: ${e.message}, trying UNLIMITED individual fallback")
-                        // Use coroutines to fetch all in parallel to avoid long sequential waits
-                        coroutineScope {
-                            val deferredAssets = yahooSymbols.map { s ->
-                                async {
-                                    try {
-                                        val resp = yahooFinanceApi.getChartData(s)
-                                        val meta = resp.chart.result?.firstOrNull()?.meta
-                                        val price = BigDecimal(meta?.regularMarketPrice ?: 0.0)
-                                        val prevClose = meta?.previousClose ?: 0.0
-                                        val change = if (prevClose > 0) {
-                                            BigDecimal((meta!!.regularMarketPrice - prevClose) / prevClose * 100).setScale(2, RoundingMode.HALF_UP)
-                                        } else BigDecimal.ZERO
-
-                                        cleanAssetNaming(Asset(
-                                            symbol = s,
-                                            name = s,
-                                            amount = BigDecimal.ZERO,
-                                            averageBuyPrice = BigDecimal.ZERO,
-                                            currentPrice = price,
-                                            dailyChangePercentage = change,
-                                            assetType = type
-                                        ), type)
-                                    } catch (e2: Exception) {
-                                        Asset(symbol = s, name = s, amount = BigDecimal.ZERO, averageBuyPrice = BigDecimal.ZERO, currentPrice = BigDecimal.ZERO, dailyChangePercentage = BigDecimal.ZERO, assetType = type)
-                                    }
-                                }
-                            }
-                            assets.addAll(deferredAssets.awaitAll())
-                        }
-                    }
-                    
-                    if (type == AssetType.NAKIT) {
-                        assets.add(0, Asset(
-                            symbol = "TRY",
-                            name = "Türk Lirası",
-                            amount = BigDecimal.ZERO,
-                            averageBuyPrice = BigDecimal.ZERO,
-                            currentPrice = BigDecimal.ONE,
-                            dailyChangePercentage = BigDecimal.ZERO,
-                            assetType = AssetType.NAKIT
-                        ))
-                    }
-                    
-                    if (type == AssetType.EMTIA && symbols.contains("GRAM_ALTIN")) {
-                        // Look for GC=F and TRY=X (USD/TRY)
-                        val onsAsset = assets.find { it.symbol == "GC=F" }
-                        val usdTryAsset = assets.find { it.symbol == "TRY=X" }
-                        
-                        val onsPrice = onsAsset?.currentPrice ?: BigDecimal.ZERO
-                        val usdTryPrice = usdTryAsset?.currentPrice ?: BigDecimal.ZERO
-                        
-                        Log.d("AssetRepo", "Gram Gold Calc: Ons=$onsPrice, USDTRY=$usdTryPrice")
-                        
-                        if (onsPrice > BigDecimal.ZERO && usdTryPrice > BigDecimal.ZERO) {
-                            val gramPrice = onsPrice.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usdTryPrice)
-                            assets.add(Asset(
-                                symbol = "GRAM_ALTIN",
-                                name = "Gram Altın",
-                                amount = BigDecimal.ZERO,
-                                averageBuyPrice = BigDecimal.ZERO,
-                                currentPrice = gramPrice.setScale(2, RoundingMode.HALF_UP),
-                                dailyChangePercentage = onsAsset?.dailyChangePercentage ?: BigDecimal.ZERO,
-                                assetType = AssetType.EMTIA
-                            ))
-                        }
-                    }
-                    if (type == AssetType.EMTIA) {
-                        assets.removeAll { it.symbol == "TRY=X" }
-                    }
-                    Log.d("AssetRepo", "Returning ${assets.size} assets for $type")
-                    assets
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("AssetRepo", "getMarketAssets Major Error: ${e.message}", e)
-            emptyList()
-        }
+    suspend fun getMarketAssetsOnce(type: AssetType): List<MarketAsset> {
+        return marketAssetDao.getMarketAssetsByTypeOnce(type)
     }
+
 
     suspend fun upsertAsset(asset: Asset) {
         val existingAsset = assetDao.getAssetBySymbolAndPortfolioId(asset.symbol, asset.portfolioId)
@@ -527,7 +672,8 @@ class AssetRepository @Inject constructor(
                 amount = totalAmount,
                 averageBuyPrice = newAveragePrice,
                 currentPrice = asset.currentPrice,
-                dailyChangePercentage = asset.dailyChangePercentage
+                dailyChangePercentage = asset.dailyChangePercentage,
+                currency = asset.currency
             )
             assetDao.updateAsset(updatedAsset)
         } else {
@@ -556,8 +702,9 @@ class AssetRepository @Inject constructor(
             val closePrices = result?.indicators?.quote?.firstOrNull()?.close ?: emptyList()
             
             timestamps.zip(closePrices).mapNotNull { (ts, price) ->
-                if (price != null) ts * 1000 to price else null
+                if (price != null) ts * 1000 to price.toDouble() else null
             }
+
         } catch (e: Exception) {
             Log.e("AssetRepo", "History fetch failed for $symbol: ${e.message}")
             emptyList()
@@ -568,7 +715,7 @@ class AssetRepository @Inject constructor(
         assetDao.insertAsset(asset)
     }
 
-    private fun cleanAssetNaming(asset: Asset, type: AssetType): Asset {
+    private fun cleanMarketAssetNaming(asset: MarketAsset, type: AssetType): MarketAsset {
         var name = asset.name
         var symbol = asset.symbol
         val cleanSymbol = symbol.uppercase()
@@ -577,7 +724,7 @@ class AssetRepository @Inject constructor(
             type == AssetType.BIST -> {
                 name = name.replace(".IS", "").trim()
             }
-            type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol.startsWith("USDTRY"))) -> {
+            type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
                 name = when {
                     cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> if (type == AssetType.NAKIT) "Amerikan Doları" else "USD/TRY"
                     cleanSymbol.startsWith("EURTRY") -> if (type == AssetType.NAKIT) "Euro" else "EUR/TRY"
@@ -616,12 +763,62 @@ class AssetRepository @Inject constructor(
         return asset.copy(name = name, symbol = symbol)
     }
 
+    private fun cleanAssetNaming(asset: Asset, type: AssetType): Asset {
+
+        var name = asset.name
+        var symbol = asset.symbol
+        val cleanSymbol = symbol.uppercase()
+
+        when {
+            type == AssetType.BIST -> {
+                name = name.replace(".IS", "").trim()
+            }
+            type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
+                name = when {
+                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> if (type == AssetType.NAKIT) "Amerikan Doları" else "USD/TRY"
+                    cleanSymbol.startsWith("EURTRY") -> if (type == AssetType.NAKIT) "Euro" else "EUR/TRY"
+                    cleanSymbol.startsWith("GBPTRY") -> if (type == AssetType.NAKIT) "İngiliz Sterlini" else "GBP/TRY"
+                    cleanSymbol.startsWith("CHFTRY") -> if (type == AssetType.NAKIT) "İsviçre Frangı" else "CHF/TRY"
+                    cleanSymbol.startsWith("JPYTRY") -> if (type == AssetType.NAKIT) "Japon Yeni" else "JPY/TRY"
+                    cleanSymbol.startsWith("AUDTRY") -> if (type == AssetType.NAKIT) "Avustralya Doları" else "AUD/TRY"
+                    cleanSymbol.startsWith("CADTRY") -> if (type == AssetType.NAKIT) "Kanada Doları" else "CAD/TRY"
+                    else -> name.replace("=X", "").replace("TRY", "/TRY").trim()
+                }
+                
+                if (type == AssetType.NAKIT) {
+                    symbol = when {
+                        cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "USD"
+                        cleanSymbol.startsWith("EURTRY") -> "EUR"
+                        cleanSymbol.startsWith("GBPTRY") -> "GBP"
+                        cleanSymbol.startsWith("CHFTRY") -> "CHF"
+                        cleanSymbol.startsWith("JPYTRY") -> "JPY"
+                        else -> symbol.replace("USDTRY=X", "").replace("TRY=X", "").replace("TRY", "")
+                    }
+                }
+            }
+            type == AssetType.EMTIA -> {
+                name = when {
+                    cleanSymbol.startsWith("GC=F") -> "Altın (Ons)"
+                    cleanSymbol.startsWith("SI=F") -> "Gümüş"
+                    cleanSymbol.startsWith("PL=F") -> "Platin"
+                    cleanSymbol.startsWith("PA=F") -> "Paladyum"
+                    cleanSymbol.startsWith("HG=F") -> "Bakır"
+                    cleanSymbol == "GRAM_ALTIN" -> "Gram Altın"
+                    else -> name
+                }
+            }
+        }
+
+        return asset.copy(name = name, symbol = symbol)
+    }
+
     companion object {
         private val ALL_BIST_SYMBOLS = listOf(
-            "A1CAP.IS", "A1YEN.IS", "ACSEL.IS", "ADEL.IS", "ADESE.IS", "ADGYO.IS", "AEFES.IS", "AFYON.IS", "AGESA.IS", "AGHOL.IS", "AGROT.IS", "AGYO.IS", "AHGAZ.IS", "AHSGY.IS", "AKBNK.IS", "AKCNS.IS", "AKENR.IS", "AKFGY.IS", "AKFIS.IS", "AKFYE.IS", "AKGRT.IS", "AKHAN.IS", "AKMGY.IS", "AKSA.IS", "AKSEN.IS", "AKSUE.IS", "AKYHO.IS", "ALARK.IS", "ALBRK.IS", "ALCAR.IS", "ALCTL.IS", "ALDO.IS", "ALGGY.IS", "ALGYO.IS", "ALKA.IS", "ALKIM.IS", "ALKLC.IS", "ALTNY.IS", "ALVES.IS", "ANELE.IS", "ANGEN.IS", "ANHYT.IS", "ANSGR.IS", "ARASE.IS", "ARCLK.IS", "ARDYZ.IS", "ARENA.IS", "ARFYE.IS", "ARMGD.IS", "ARSAN.IS", "ARTMS.IS", "ARZUM.IS", "ASELS.IS", "ASGYO.IS", "ASTOR.IS", "ASUZU.IS", "ATAGY.IS", "ATAKP.IS", "ATATP.IS", "ATEKS.IS", "ATLAS.IS", "ATSYH.IS", "AVGYO.IS", "AVHOL.IS", "AVOD.IS", "AVPGY.IS", "AVTUR.IS", "AYCES.IS", "AYDEM.IS", "AYEN.IS", "AYES.IS", "AYGAZ.IS", "AZTEK.IS",
+            "THYAO.IS", "TUPRS.IS", "ASELS.IS", "AKBNK.IS", "EREGL.IS", "BIMAS.IS", "KCHOL.IS", "SAHOL.IS", "SISE.IS", "GARAN.IS", "YKBNK.IS", "ISCTR.IS",
+            "A1CAP.IS", "A1YEN.IS", "ACSEL.IS", "ADEL.IS", "ADESE.IS", "ADGYO.IS", "AEFES.IS", "AFYON.IS", "AGESA.IS", "AGHOL.IS", "AGROT.IS", "AGYO.IS", "AHGAZ.IS", "AHSGY.IS", "AKCNS.IS", "AKENR.IS", "AKFGY.IS", "AKFIS.IS", "AKFYE.IS", "AKGRT.IS", "AKHAN.IS", "AKMGY.IS", "AKSA.IS", "AKSEN.IS", "AKSUE.IS", "AKYHO.IS", "ALARK.IS", "ALBRK.IS", "ALCAR.IS", "ALCTL.IS", "ALDOC.IS", "ALGGY.IS", "ALGYO.IS", "ALKA.IS", "ALKIM.IS", "ALKLC.IS", "ALTNY.IS", "ALVES.IS", "ANELE.IS", "ANGEN.IS", "ANHYT.IS", "ANSGR.IS", "ARASE.IS", "ARCLK.IS", "ARDYZ.IS", "ARENA.IS", "ARFYE.IS", "ARMGD.IS", "ARSAN.IS", "ARTMS.IS", "ARZUM.IS", "ASGYO.IS", "ASTOR.IS", "ASUZU.IS", "ATAGY.IS", "ATAKP.IS", "ATATP.IS", "ATEKS.IS", "ATLAS.IS", "ATSYH.IS", "AVGYO.IS", "AVHOL.IS", "AVOD.IS", "AVPGY.IS", "AVTUR.IS", "AYCES.IS", "AYDEM.IS", "AYEN.IS", "AYES.IS", "AYGAZ.IS", "AZTEK.IS",
             "BAGFS.IS", "BAHKM.IS", "BAKAB.IS", "BALAT.IS", "BALSU.IS", "BNTAS.IS", "BANVT.IS", "BARMA.IS", "BASGZ.IS", "BASCM.IS", "BAYRK.IS", "BEGYO.IS", "BERA.IS", "BESLR.IS", "BESTE.IS", "BEYAZ.IS", "BFREN.IS", "BIENY.IS", "BIGCH.IS", "BIMAS.IS", "BINBN.IS", "BINHO.IS", "BIOEN.IS", "BIZIM.IS", "BJKAS.IS", "BLCYT.IS", "BLUME.IS", "BMSCH.IS", "BMSTL.IS", "BOBET.IS", "BORLS.IS", "BORSK.IS", "BOSSA.IS", "BRISA.IS", "BRKO.IS", "BRKSN.IS", "BRKVY.IS", "BRLSM.IS", "BRMEN.IS", "BRSAN.IS", "BRYAT.IS", "BSOKE.IS", "BTCIM.IS", "BUCIM.IS", "BURCE.IS", "BURVA.IS", "BVSAN.IS", "BYDNR.IS",
             "CANTE.IS", "CASA.IS", "CATES.IS", "CCOLA.IS", "CELHA.IS", "CEMAS.IS", "CEMTS.IS", "CEMZY.IS", "CEOEM.IS", "CGCAM.IS", "CIMSA.IS", "CLEBI.IS", "CMBTN.IS", "CMENT.IS", "CONSE.IS", "COSMO.IS", "CRDFA.IS", "CRFSA.IS", "CUSAN.IS", "CVKMD.IS", "CWENE.IS",
-            "DAGHL.IS", "DAGI.IS", "DAPGM.IS", "DARDL.IS", "DCTTR.IS", "DENGE.IS", "DERAS.IS", "DERIM.IS", "DESA.IS", "DESPC.IS", "DEVA.IS", "DGGYO.IS", "DGNMO.IS", "DIRIT.IS", "DITAS.IS", "DMSAS.IS", "DNZGY.IS", "DOAS.IS", "DOBUR.IS", "DOCO.IS", "DOGUB.IS", "DOHOL.IS", "DOKTA.IS", "DURDO.IS", "DYOBY.IS", "DZGYO.IS",
+            "DAGHL.IS", "DAGI.IS", "DAPGM.IS", "DARDL.IS", "DCTTR.IS", "DENGE.IS", "DERHS.IS", "DERIM.IS", "DESA.IS", "DESPC.IS", "DEVA.IS", "DGGYO.IS", "DGNMO.IS", "DIRIT.IS", "DITAS.IS", "DMSAS.IS", "DNZGY.IS", "DOAS.IS", "DOBUR.IS", "DOCO.IS", "DOGUB.IS", "DOHOL.IS", "DOKTA.IS", "DURDO.IS", "DYOBY.IS", "DZGYO.IS",
             "EBEBK.IS", "ECILC.IS", "ECZYT.IS", "EDATA.IS", "EDIP.IS", "EFORV.IS", "EGEEN.IS", "EGGUB.IS", "EGPRO.IS", "EGSER.IS", "EKGYO.IS", "EKIZ.IS", "EKSUN.IS", "ELITE.IS", "EMKEL.IS", "ENERY.IS", "ENJSA.IS", "ENKAI.IS", "ENTRA.IS", "ERBOS.IS", "EREGL.IS", "ERSU.IS", "ESCOM.IS", "ESEN.IS", "ETILR.IS", "EUHOL.IS", "EUKYO.IS", "EUPWR.IS", "EUREN.IS", "EYGYO.IS",
             "FADE.IS", "FENER.IS", "FLAP.IS", "FONET.IS", "FORMT.IS", "FRIGO.IS", "FROTO.IS",
             "GARAN.IS", "GENTS.IS", "GEREL.IS", "GESAN.IS", "GIPTA.IS", "GLBMD.IS", "GLRYH.IS", "GLYHO.IS", "GOKNR.IS", "GOLTS.IS", "GOODY.IS", "GOZDE.IS", "GRNYO.IS", "GRSEL.IS", "GRTRK.IS", "GSDDE.IS", "GSDHO.IS", "GSRAY.IS", "GUBRF.IS", "GWIND.IS", "GZNMI.IS",
@@ -637,7 +834,7 @@ class AssetRepository @Inject constructor(
             "QUAGR.IS",
             "RALYH.IS", "RAYFA.IS", "RAYSG.IS", "REEDR.IS", "RNPOL.IS", "RODRG.IS", "ROYAL.IS", "RTALB.IS", "RUBNS.IS", "RYGYO.IS", "RYSAS.IS",
             "SAFKR.IS", "SAHOL.IS", "SAMAT.IS", "SANEL.IS", "SANFM.IS", "SANKO.IS", "SARKY.IS", "SASA.IS", "SAYAS.IS", "SDTTR.IS", "SEKFK.IS", "SEKUR.IS", "SELEC.IS", "SELGD.IS", "SERVE.IS", "SEYKM.IS", "SILVR.IS", "SISE.IS", "SKBNK.IS", "SKTAS.IS", "SMCRT.IS", "SNGYO.IS", "SNKRN.IS", "SNPAM.IS", "SODSN.IS", "SOKM.IS", "SONME.IS", "SRVGY.IS", "SUMAS.IS", "SUNTK.IS", "SURGY.IS", "SUWEN.IS",
-            "TABGD.IS", "TAPDI.IS", "TARKM.IS", "TATGD.IS", "TAVHL.IS", "TBTAS.IS", "TCPAL.IS", "TEKTU.IS", "TERA.IS", "TETMT.IS", "TEZOL.IS", "THYAO.IS", "TIRE.IS", "TKFEN.IS", "TKNSA.IS", "TMSN.IS", "TOASO.IS", "TRGYO.IS", "TRILC.IS", "TSKB.IS", "TSGYO.IS", "TUCLK.IS", "TUKAS.IS", "TUPRS.IS", "TUREX.IS", "TURSG.IS",
+            "TABGD.IS", "TAPDI.IS", "TARKM.IS", "TATGD.IS", "TAVHL.IS", "TBTAS.IS", "TCPAL.IS", "TEKTU.IS", "TERA.IS", "TETMT.IS", "TEZOL.IS", "THYAO.IS", "MONDI.IS", "TKFEN.IS", "TKNSA.IS", "TMSN.IS", "TOASO.IS", "TRGYO.IS", "TRILC.IS", "TSKB.IS", "TSGYO.IS", "TUCLK.IS", "TUKAS.IS", "TUPRS.IS", "TUREX.IS", "TURSG.IS",
             "UFUK.IS", "ULAS.IS", "ULUFA.IS", "ULUSE.IS", "ULUUN.IS", "UMPAS.IS", "USAK.IS",
             "VAKBN.IS", "VAKFN.IS", "VAKKO.IS", "VANGD.IS", "VBTYZ.IS", "VERTU.IS", "VERUS.IS", "VESBE.IS", "VESTL.IS", "VKFYO.IS", "VKGYO.IS", "VKING.IS", "VRGYO.IS",
             "YAPRK.IS", "YAYLA.IS", "YEOTK.IS", "YESIL.IS", "YGGYO.IS", "YGYO.IS", "YKBNK.IS", "YKSLN.IS", "YONGA.IS", "YUNSA.IS",

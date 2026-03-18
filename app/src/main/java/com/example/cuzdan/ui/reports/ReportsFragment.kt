@@ -109,11 +109,6 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangeAbs.text = "*****"
             binding.textDailyChangePerc.text = "*****"
         } else {
-            val totalCost = state.totalValue.subtract(state.totalProfitLoss)
-            val perc = if (totalCost.compareTo(java.math.BigDecimal.ZERO) > 0) {
-                state.totalProfitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(java.math.BigDecimal("100"))
-            } else java.math.BigDecimal.ZERO
-            
             val isPositive = state.totalProfitLoss >= java.math.BigDecimal.ZERO
             val color = if (isPositive) R.color.accent_green else R.color.accent_red
             val colorInt = requireContext().getColor(color)
@@ -124,7 +119,7 @@ class ReportsFragment : Fragment() {
             
             binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency)
             binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency)
-            binding.textDailyChangePerc.text = String.format("%%%+.2f", perc)
+            binding.textDailyChangePerc.text = String.format("%%%+.2f", state.totalProfitPerc)
         }
         
         // Currency icon update
@@ -138,6 +133,11 @@ class ReportsFragment : Fragment() {
         if (::adapter.isInitialized) {
             adapter.setPrivacyEnabled(isHidden)
         }
+
+        // Sync Status and Offline Indicator
+        binding.textLastUpdated.text = state.lastUpdated ?: ""
+        binding.textLastUpdated.visibility = if (state.lastUpdated != null) View.VISIBLE else View.GONE
+        binding.textOfflineIndicator.visibility = if (state.isOffline) View.VISIBLE else View.GONE
     }
 
     private fun setupRecyclerView() {

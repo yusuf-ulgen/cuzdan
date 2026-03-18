@@ -5,17 +5,16 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.ItemMarketPriceBinding
-import com.example.cuzdan.data.local.entity.Asset
+import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.util.calculateProfitLossPercentage
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
 class MarketAdapter(
-    private var items: List<Asset> = emptyList(),
-    private val onItemClick: (Asset) -> Unit
+    private var items: List<MarketAsset> = emptyList(),
+    private val onItemClick: (MarketAsset) -> Unit
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
-
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
 
     class ViewHolder(val binding: ItemMarketPriceBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -33,27 +32,42 @@ class MarketAdapter(
         holder.binding.apply {
             textMarketName.text = getLocalizedAssetName(item.name, root.context)
             textMarketSymbol.text = item.symbol
-            textMarketPrice.text = currencyFormat.format(item.currentPrice)
             
-            val isPositive = item.dailyChangePercentage >= java.math.BigDecimal.ZERO
+            val formattedPrice = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
+                minimumFractionDigits = 2
+                maximumFractionDigits = 4
+            }.format(item.currentPrice)
             
+            val symbol = when(item.currency) {
+                "USD" -> "$"
+                "EUR" -> "€"
+                else -> "₺"
+            }
+            textMarketPrice.text = if (item.currency == "USD") "$symbol$formattedPrice" else "$formattedPrice $symbol"
+            
+            val sign = item.dailyChangePercentage.setScale(2, java.math.RoundingMode.HALF_UP).signum()
             textMarketChange.text = String.format("%%%+.2f", item.dailyChangePercentage)
             textMarketChange.setTextColor(root.context.getColor(
-                if (isPositive) R.color.accent_green else R.color.accent_red
+                when {
+                    sign > 0 -> R.color.accent_green
+                    sign < 0 -> R.color.accent_red
+                    else -> R.color.white
+                }
             ))
 
             root.setOnClickListener {
-                onItemClick?.invoke(item)
+                onItemClick.invoke(item)
             }
         }
     }
 
     override fun getItemCount() = items.size
 
-    fun setItems(newItems: List<Asset>) {
+    fun setItems(newItems: List<MarketAsset>) {
         items = newItems
         notifyDataSetChanged()
     }
+
     private fun getLocalizedAssetName(name: String, context: android.content.Context): String {
         return when(name) {
             "Türk Lirası" -> context.getString(R.string.currency_try).replace(" (₺)", "")

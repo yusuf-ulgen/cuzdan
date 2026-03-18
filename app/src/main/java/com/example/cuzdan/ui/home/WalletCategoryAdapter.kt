@@ -40,8 +40,12 @@ class WalletCategoryAdapter(
                 textCategoryChangeAbs.text = item.totalProfitLoss.formatCurrency(currency)
                 textCategoryChangePerc.text = String.format("%%%+.2f", item.profitLossPerc)
                 
-                val isPositive = item.totalProfitLoss >= java.math.BigDecimal.ZERO
-                val color = if (isPositive) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
+                val sign = item.profitLossPerc.setScale(2, java.math.RoundingMode.HALF_UP).signum()
+                val color = when {
+                    sign > 0 -> com.example.cuzdan.R.color.accent_green
+                    sign < 0 -> com.example.cuzdan.R.color.accent_red
+                    else -> com.example.cuzdan.R.color.white
+                }
                 val colorInt = holder.itemView.context.getColor(color)
                 
                 textCategoryTotal.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))

@@ -1,0 +1,17 @@
+package com.example.cuzdan.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import java.math.BigDecimal
+
+@Entity(tableName = "market_assets", primaryKeys = ["symbol", "assetType"])
+data class MarketAsset(
+    val symbol: String,
+    val name: String,
+    val currentPrice: BigDecimal,
+    val dailyChangePercentage: BigDecimal,
+    val assetType: AssetType,
+    val currency: String = "TRY",
+    val lastUpdated: Long = System.currentTimeMillis()
+)
+

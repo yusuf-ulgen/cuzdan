@@ -16,6 +16,7 @@ import android.widget.Toast
 import com.example.cuzdan.databinding.ActivityMainBinding
 import com.example.cuzdan.ui.notifications.AgreementBottomSheet
 import com.example.cuzdan.util.PreferenceManager
+import com.example.cuzdan.util.PriceSyncManager
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.Executor
 import javax.inject.Inject
@@ -26,7 +27,29 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var prefManager: PreferenceManager
 
+    @Inject
+    lateinit var priceSyncManager: PriceSyncManager
+
     private lateinit var binding: ActivityMainBinding
+
+    override fun onResume() {
+        super.onResume()
+        priceSyncManager.startPolling()
+
+        // Biyometrik kontrol (Cooldown 30 saniye)
+        if (prefManager.isAgreementAccepted() && prefManager.isBiometricsEnabled()) {
+            val now = System.currentTimeMillis()
+            val lastAuth = prefManager.getLastAuthTimestamp()
+            if (now - lastAuth > 30_000) { // 30 saniye cooldown
+                checkBiometrics()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        priceSyncManager.stopPolling()
+    }
     
     override fun attachBaseContext(newBase: Context) {
         val prefManager = PreferenceManager(newBase)
@@ -48,9 +71,7 @@ class MainActivity : AppCompatActivity() {
         // setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        if (prefManager.isAgreementAccepted()) {
-            checkBiometrics()
-        } else {
+        if (!prefManager.isAgreementAccepted()) {
             checkUserAgreement()
         }
     }
@@ -92,12 +113,15 @@ class MainActivity : AppCompatActivity() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     // Hata durumunda uygulamayı kapat veya tekrar dene
-                    finish()
+                    if (errorCode != BiometricPrompt.ERROR_USER_CANCELED && errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                        finish()
+                    }
                 }
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    // Başarılı giriş, uygulama devam edebilir
+                    // Başarılı giriş, timestamp güncelle
+                    prefManager.setLastAuthTimestamp(System.currentTimeMillis())
                 }
 
                 override fun onAuthenticationFailed() {

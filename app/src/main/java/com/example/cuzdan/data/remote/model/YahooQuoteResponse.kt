@@ -1,6 +1,8 @@
 package com.example.cuzdan.data.remote.model
 
 import com.google.gson.annotations.SerializedName
+import java.math.BigDecimal
+
 
 data class YahooQuoteResponse(
     @SerializedName("quoteResponse") val quoteResponse: QuoteResponseWrapper
@@ -12,8 +14,10 @@ data class QuoteResponseWrapper(
 
 data class YahooQuote(
     @SerializedName("symbol") val symbol: String,
-    @SerializedName("regularMarketPrice") val regularMarketPrice: Double? = null,
-    @SerializedName("regularMarketChangePercent") val regularMarketChangePercent: Double? = null,
+    @SerializedName("regularMarketPrice") val regularMarketPrice: BigDecimal? = null,
+    @SerializedName("regularMarketChangePercent") val regularMarketChangePercent: BigDecimal? = null,
+
     @SerializedName("shortName") val shortName: String? = null,
-    @SerializedName("longName") val longName: String? = null
+    @SerializedName("longName") val longName: String? = null,
+    @SerializedName("currency") val currency: String? = null
 )

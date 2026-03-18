@@ -15,7 +15,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.AssetType
+import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.databinding.FragmentMarketsBinding
+
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -47,8 +49,10 @@ class MarketsFragment : Fragment() {
             val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
                 symbol = asset.symbol,
                 name = asset.name,
-                assetType = asset.assetType.name
+                assetType = asset.assetType.name,
+                currency = asset.currency
             )
+
             findNavController().navigate(action)
         }
         binding.recyclerMarkets.layoutManager = LinearLayoutManager(requireContext())
@@ -68,7 +72,8 @@ class MarketsFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        binding.chipGroupMarkets.setOnCheckedChangeListener { _, checkedId ->
+        binding.chipGroupMarkets.setOnCheckedStateChangeListener { _, checkedIds ->
+            val checkedId = checkedIds.firstOrNull() ?: View.NO_ID
             val type = when (checkedId) {
                 R.id.chip_all -> null
                 R.id.chip_bist -> AssetType.BIST

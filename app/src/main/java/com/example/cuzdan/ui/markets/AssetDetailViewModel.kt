@@ -21,11 +21,13 @@ data class AssetDetailUiState(
     val name: String = "",
     val currentPrice: BigDecimal = BigDecimal.ZERO,
     val dailyChangePercentage: BigDecimal = BigDecimal.ZERO,
+    val currency: String = "TRY",
     val history: List<Pair<Long, Double>> = emptyList(),
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val errorMessage: String? = null
 )
+
 
 @HiltViewModel
 class AssetDetailViewModel @Inject constructor(
@@ -37,10 +39,12 @@ class AssetDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AssetDetailUiState())
     val uiState: StateFlow<AssetDetailUiState> = _uiState.asStateFlow()
 
-    fun init(symbol: String, name: String, typeString: String) {
-        _uiState.update { it.copy(symbol = symbol, name = name) }
+    fun init(symbol: String, name: String, typeString: String, currency: String = "TRY") {
+        if (_uiState.value.symbol.isNotEmpty()) return // Zaten initialize edilmişse çalışma
+        
+        _uiState.update { it.copy(symbol = symbol, name = name, currency = currency) }
         loadHistory(symbol)
-        fetchCurrentPrice(symbol, typeString)
+        observeCurrentPrice(symbol)
     }
 
     fun updateRange(range: String) {
@@ -61,13 +65,13 @@ class AssetDetailViewModel @Inject constructor(
         }
     }
 
-    private fun fetchCurrentPrice(symbol: String, typeString: String) {
+    private fun observeCurrentPrice(symbol: String) {
         viewModelScope.launch {
-            try {
-                val type = AssetType.valueOf(typeString)
-                val marketAssets = repository.getMarketAssets(type)
-                val asset = marketAssets.find { it.symbol == symbol }
-                asset?.let {
+            // repository.getMarketAssetBySymbolFlow (marketAssetDao'dan) kullanabiliriz
+            // Veya direkt getLatestPrice üzerinden sadece fiyatı alabiliriz.
+            // Ancak yüzdelik değişim de lazım olduğu için tüm objeyi dinlemek daha iyi.
+            repository.getMarketAssetBySymbolFlow(symbol).collect { marketAsset ->
+                marketAsset?.let {
                     _uiState.update { state ->
                         state.copy(
                             currentPrice = it.currentPrice,
@@ -75,8 +79,6 @@ class AssetDetailViewModel @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = "Fiyat bilgisi alınamadı") }
             }
         }
     }
@@ -88,18 +90,24 @@ class AssetDetailViewModel @Inject constructor(
             if (portfolioId == -1L) portfolioId = 1L // Ana Portföy varsayılan
 
             val assetType = AssetType.valueOf(typeString)
-            val finalAvgCost = if (assetType == AssetType.NAKIT) BigDecimal.ONE else avgCost
+            
+            // Nakit ise fiyat her zaman 1 (Sabit)
+            val isCash = assetType == AssetType.NAKIT
+            val finalCurrentPrice = if (isCash) BigDecimal.ONE else state.currentPrice
+            val finalAvgCost = if (isCash) BigDecimal.ONE else avgCost
             
             val asset = Asset(
                 symbol = state.symbol,
                 name = state.name,
                 amount = amount,
                 averageBuyPrice = finalAvgCost,
-                currentPrice = if (assetType == AssetType.NAKIT) BigDecimal.ONE else state.currentPrice,
-                dailyChangePercentage = if (assetType == AssetType.NAKIT) BigDecimal.ZERO else state.dailyChangePercentage,
+                currentPrice = finalCurrentPrice,
+                dailyChangePercentage = if (isCash) BigDecimal.ZERO else state.dailyChangePercentage,
                 assetType = assetType,
-                portfolioId = portfolioId
+                portfolioId = portfolioId,
+                currency = if (isCash) "TRY" else state.currency
             )
+
             repository.upsertAsset(asset)
             _uiState.update { it.copy(isSaved = true) }
         }

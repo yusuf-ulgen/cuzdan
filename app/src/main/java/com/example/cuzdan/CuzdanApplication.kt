@@ -32,16 +32,36 @@ class CuzdanApplication : Application(), Configuration.Provider {
     private fun setupPeriodicWork() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
             .build()
 
-        val workRequest = PeriodicWorkRequestBuilder<PriceSyncWorker>(15, TimeUnit.MINUTES)
+        val initialDelay = calculateInitialDelayToNineAM()
+
+        val workRequest = PeriodicWorkRequestBuilder<PriceSyncWorker>(24, TimeUnit.HOURS)
             .setConstraints(constraints)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "PriceSyncWork",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
+    }
+
+    private fun calculateInitialDelayToNineAM(): Long {
+        val calendar = java.util.Calendar.getInstance()
+        val now = calendar.timeInMillis
+        
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 9)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        
+        if (calendar.timeInMillis <= now) {
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+        
+        return calendar.timeInMillis - now
     }
 }

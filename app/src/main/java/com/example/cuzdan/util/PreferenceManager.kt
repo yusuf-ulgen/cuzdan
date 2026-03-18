@@ -16,13 +16,30 @@ class PreferenceManager @Inject constructor(
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
 
-    private val prefs: SharedPreferences = EncryptedSharedPreferences.create(
-        context,
-        "cuzdan_secure_prefs",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val prefs: SharedPreferences = try {
+        createSharedPrefs(context, masterKey)
+    } catch (e: Exception) {
+        android.util.Log.e("PreferenceManager", "Failed to create EncryptedSharedPreferences, resetting...", e)
+        // Bozuk dosyayı temizleyelim
+        context.getSharedPreferences("cuzdan_secure_prefs", Context.MODE_PRIVATE).edit().clear().apply()
+        // Tekrar deneyelim
+        try {
+            createSharedPrefs(context, masterKey)
+        } catch (e2: Exception) {
+            // Hala hata varsa standart SharedPreferences'a düşelim (çökmesini engellemek için)
+            context.getSharedPreferences("cuzdan_secure_prefs", Context.MODE_PRIVATE)
+        }
+    }
+
+    private fun createSharedPrefs(context: Context, masterKey: MasterKey): SharedPreferences {
+        return EncryptedSharedPreferences.create(
+            context,
+            "cuzdan_secure_prefs",
+            masterKey,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+    }
 
     fun setHomeCurrency(currency: String) {
         prefs.edit().putString("home_currency", currency).apply()
@@ -38,6 +55,14 @@ class PreferenceManager @Inject constructor(
 
     fun getReportsCurrency(): String {
         return prefs.getString("reports_currency", "TL") ?: "TL"
+    }
+
+    fun setCryptoCurrency(currency: String) {
+        prefs.edit().putString("crypto_currency", currency).apply()
+    }
+
+    fun getCryptoCurrency(): String {
+        return prefs.getString("crypto_currency", "TL") ?: "TL"
     }
 
     fun setLanguage(language: String) {
@@ -86,6 +111,14 @@ class PreferenceManager @Inject constructor(
 
     fun getSelectedPortfolioId(): Long {
         return prefs.getLong("selected_portfolio_id", 1L)
+    }
+
+    fun setLastAuthTimestamp(timestamp: Long) {
+        prefs.edit().putLong("last_auth_timestamp", timestamp).apply()
+    }
+
+    fun getLastAuthTimestamp(): Long {
+        return prefs.getLong("last_auth_timestamp", 0L)
     }
 
     fun resetPreferences() {

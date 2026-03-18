@@ -130,6 +130,11 @@ class HomeFragment : Fragment() {
         binding.btnCurrencySwitcher.setImageResource(currencyIcon)
         
         adapter.setItemsWithPrivacy(state.categorySummaries, isPrivacyEnabled, state.currency)
+
+        // Sync Status and Offline Indicator
+        binding.textLastUpdated.text = state.lastUpdated ?: ""
+        binding.textLastUpdated.visibility = if (state.lastUpdated != null) View.VISIBLE else View.GONE
+        binding.textOfflineIndicator.visibility = if (state.isOffline) View.VISIBLE else View.GONE
     }
 
     private fun showPortfolioManagement() {

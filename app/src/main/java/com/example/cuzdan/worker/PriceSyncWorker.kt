@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.cuzdan.data.repository.AssetRepository
+import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.util.Resource
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -19,19 +20,11 @@ class PriceSyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         return try {
-            // Kripto fiyatlarını yenile
-            repository.refreshCryptoPrices().collect { resource ->
-                if (resource is Resource.Error) {
-                    // Hata durumunda loglanabilir, ama işlemi durdurmuyoruz
-                }
-            }
+            // Sadece Fon fiyatlarını yenile (Günde bir kez yeterli)
+            repository.refreshMarketAssets(AssetType.FON).collect { /* handled */ }
+            repository.refreshOwnedFundPrices().collect { /* handled */ }
 
-            // BIST, Döviz ve Altın fiyatlarını yenile
-            repository.refreshYahooPrices().collect { resource ->
-                if (resource is Resource.Error) {
-                    // Hata durumunda loglanabilir
-                }
-            }
+            // Not: Kripto, BIST ve Döviz fiyatları artık real-time poller (5s) ile güncel tutulacak.
 
             Result.success()
         } catch (e: Exception) {

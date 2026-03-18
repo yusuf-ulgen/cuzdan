@@ -43,7 +43,15 @@ class SymbolSearchFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         
         assetType = arguments?.getString("assetType")
-        
+        val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
+
+        if (type == AssetType.KRIPTO) {
+            binding.btnCurrencySwitcher.visibility = View.VISIBLE
+            binding.btnCurrencySwitcher.setOnClickListener {
+                viewModel.toggleCurrency(type)
+            }
+        }
+
         setupRecyclerView()
         setupSearch()
         observeViewModel()
@@ -52,7 +60,6 @@ class SymbolSearchFragment : Fragment() {
             findNavController().navigateUp()
         }
         
-        val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
         viewModel.loadInitialSymbols(type)
         val localizedTypeName = getLocalizedAssetTypeName(type)
         binding.textTitle.text = getString(R.string.asset_title_template, localizedTypeName)
@@ -74,7 +81,8 @@ class SymbolSearchFragment : Fragment() {
             val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
                 symbol = selectedAsset.symbol,
                 name = selectedAsset.name,
-                assetType = selectedAsset.assetType.name
+                assetType = selectedAsset.assetType.name,
+                currency = selectedAsset.currency
             )
             findNavController().navigate(action)
         }
@@ -98,6 +106,7 @@ class SymbolSearchFragment : Fragment() {
             .flowWithLifecycle(viewLifecycleOwner.lifecycle)
             .onEach { state ->
                 binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                binding.btnCurrencySwitcher.setImageResource(if (state.currency == "TL") R.drawable.ic_tl else R.drawable.ic_usd)
                 adapter.setItems(state.results)
                 
                 if (state.error != null) {
