@@ -13,7 +13,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
-        android:text="Piyasalar"
+        android:text="@string/nav_markets"
         android:textColor="@color/white"
         android:textSize="28sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -43,7 +43,7 @@
             android:id="@+id/edit_search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Varlık ara..."
+            android:hint="@string/asset_search_hint"
             android:textColor="@color/white"
             android:textSize="14sp" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -71,7 +71,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hepsi"
+                android:text="@string/filter_all"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
 
@@ -80,7 +80,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="BIST"
+                android:text="@string/asset_type_stocks"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
 
@@ -89,7 +89,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Kripto"
+                android:text="@string/asset_type_crypto"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
 
@@ -98,7 +98,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Döviz"
+                android:text="@string/asset_type_currency"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
 
@@ -107,7 +107,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Emtia"
+                android:text="@string/asset_type_commodity"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
 
@@ -116,7 +116,7 @@
                 style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Fon"
+                android:text="@string/asset_type_fund"
                 android:textColor="@color/white"
                 app:chipBackgroundColor="@color/surface_card" />
         </com.google.android.material.chip.ChipGroup>

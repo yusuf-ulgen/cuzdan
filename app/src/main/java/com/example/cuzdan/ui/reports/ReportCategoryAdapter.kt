@@ -1,75 +1,152 @@
 package com.example.cuzdan.ui.reports
 
-import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.cuzdan.R
 import com.example.cuzdan.databinding.ItemReportCategoryBinding
+import com.example.cuzdan.databinding.ItemAssetBinding
+import com.example.cuzdan.util.formatCurrency
+import java.math.BigDecimal
 
 data class ReportCategory(
     val name: String,
-    val value: String,
-    val changePerc: String,
-    val changeAbs: String,
-    val isPositive: Boolean
+    val totalValue: BigDecimal,
+    val changePerc: BigDecimal,
+    val changeAbs: BigDecimal,
+    val assets: List<com.example.cuzdan.data.local.entity.Asset>
 )
 
 class ReportCategoryAdapter(
-    private var items: List<ReportCategory>,
-    private var isHidden: Boolean = false
+    private var items: List<ReportCategory> = emptyList(),
+    private var isPrivacyEnabled: Boolean = false,
+    private var currency: String = "TL",
+    private val onItemClick: (ReportCategory) -> Unit
 ) : RecyclerView.Adapter<ReportCategoryAdapter.ViewHolder>() {
+
+    private val expandedPositions = mutableSetOf<Int>()
 
     class ViewHolder(val binding: ItemReportCategoryBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ItemReportCategoryBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
+        val binding = ItemReportCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.binding.textCategoryName.text = item.name
+        val isExpanded = expandedPositions.contains(position)
         
-        if (isHidden) {
-            holder.binding.textCategoryValue.text = "*****"
-            holder.binding.textCategoryChangeAbs.text = "*****"
-        } else {
-            holder.binding.textCategoryValue.text = item.value
-            holder.binding.textCategoryChangeAbs.text = item.changeAbs
-        }
-        
-        holder.binding.textCategoryChangePerc.text = item.changePerc
-        
-        val color = if (item.isPositive) {
-            Color.parseColor("#4CAF50") // accent_green
-        } else {
-            Color.parseColor("#FF5252") // accent_red
-        }
-        
-        holder.binding.textCategoryChangePerc.setTextColor(color)
-        if (!isHidden && !item.isPositive) {
-            holder.binding.textCategoryChangeAbs.setTextColor(color)
-            holder.binding.textCategoryValue.setTextColor(color)
-        } else if (!isHidden) {
-            holder.binding.textCategoryValue.setTextColor(Color.WHITE)
-            holder.binding.textCategoryChangeAbs.setTextColor(Color.parseColor("#B0B8D1"))
+        holder.binding.apply {
+            textCategoryName.text = item.name
+            
+            if (isPrivacyEnabled) {
+                textCategoryValue.text = "**** $currency"
+                textCategoryChangePerc.text = "%***"
+                textCategoryChangeAbs.text = "****"
+                textCategoryChangePerc.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+            } else {
+                textCategoryValue.text = item.totalValue.formatCurrency(currency)
+                textCategoryChangePerc.text = String.format("%%%+.1f", item.changePerc)
+                textCategoryChangeAbs.text = item.changeAbs.formatCurrency(currency)
+
+                val color = if (item.changeAbs >= BigDecimal.ZERO) {
+                    com.example.cuzdan.R.color.accent_green
+                } else {
+                    com.example.cuzdan.R.color.accent_red
+                }
+                val colorInt = holder.itemView.context.getColor(color)
+                textCategoryValue.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                textCategoryChangePerc.setTextColor(colorInt)
+                textCategoryChangeAbs.setTextColor(colorInt)
+            }
+            
+            imageExpand.rotation = if (isExpanded) 180f else 0f
+            recyclerChildAssets.visibility = if (isExpanded) View.VISIBLE else View.GONE
+            
+            if (isExpanded) {
+                val childAdapter = ReportAssetInlineAdapter(item.assets, isPrivacyEnabled, currency)
+                recyclerChildAssets.layoutManager = LinearLayoutManager(holder.itemView.context)
+                recyclerChildAssets.adapter = childAdapter
+            }
+
+            root.setOnClickListener {
+                if (isExpanded) {
+                    expandedPositions.remove(position)
+                } else {
+                    expandedPositions.add(position)
+                }
+                notifyItemChanged(position)
+                onItemClick(item)
+            }
         }
     }
 
-    override fun getItemCount() = items.size
+    override fun getItemCount(): Int = items.size
 
-    fun setHidden(hidden: Boolean) {
-        isHidden = hidden
+    fun setItems(newList: List<ReportCategory>) {
+        items = newList
         notifyDataSetChanged()
     }
 
-    fun setItems(newItems: List<ReportCategory>) {
-        items = newItems
+    fun setPrivacyEnabled(enabled: Boolean) {
+        isPrivacyEnabled = enabled
         notifyDataSetChanged()
     }
+
+    fun setCurrency(newCurrency: String) {
+        currency = newCurrency
+        notifyDataSetChanged()
+    }
+}
+
+class ReportAssetInlineAdapter(
+    private val assets: List<com.example.cuzdan.data.local.entity.Asset>,
+    private val isPrivacyEnabled: Boolean,
+    private val currency: String
+) : RecyclerView.Adapter<ReportAssetInlineAdapter.ViewHolder>() {
+
+    class ViewHolder(val binding: ItemAssetBinding) : RecyclerView.ViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val binding = ItemAssetBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        val asset = assets[position]
+        holder.binding.apply {
+            tvAssetSymbol.text = asset.symbol
+            tvAssetName.text = asset.name
+            
+            // Note: Simplification - we assume the values passed to adapters are already converted by viewmodel
+            val totalValue = asset.amount.multiply(asset.currentPrice)
+            
+            if (isPrivacyEnabled) {
+                tvAssetPrice.text = "**** $currency"
+                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetChange.text = "***"
+                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+            } else {
+                tvAssetPrice.text = totalValue.formatCurrency(currency)
+                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                
+                val cost = asset.amount.multiply(asset.averageBuyPrice)
+                val profitLoss = totalValue.subtract(cost)
+                val isProfit = profitLoss >= BigDecimal.ZERO
+                
+                val profitPerc = if (cost.compareTo(BigDecimal.ZERO) > 0) {
+                    profitLoss.divide(cost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
+                } else BigDecimal.ZERO
+
+                tvAssetChange.text = String.format("%s %%%+.1f", if (isProfit) "▲" else "▼", profitPerc)
+                
+                val color = if (isProfit) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
+                tvAssetChange.setTextColor(holder.itemView.context.getColor(color))
+            }
+        }
+    }
+
+    override fun getItemCount(): Int = assets.size
 }

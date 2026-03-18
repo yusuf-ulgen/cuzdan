@@ -12,23 +12,54 @@
         android:paddingBottom="80dp"
         tools:context=".ui.home.HomeFragment">
 
-        <!-- Custom Donut Chart (Placeholder with ProgressBar) -->
+        <!-- Top Right Icons -->
+        <LinearLayout
+            android:id="@+id/layout_top_icons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/btn_currency_switcher"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_icon_circle"
+                android:padding="10dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_tl"
+                app:tint="@color/white" />
+
+            <ImageButton
+                android:id="@+id/btn_privacy_toggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_icon_circle"
+                android:padding="10dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_eye_on"
+                app:tint="@color/white" />
+        </LinearLayout>
+
+        <!-- Custom Donut Chart -->
         <FrameLayout
             android:id="@+id/layout_donut_container"
-            android:layout_width="220dp"
-            android:layout_height="220dp"
-            android:layout_marginTop="32dp"
+            android:layout_width="match_parent"
+            android:layout_height="210dp"
+            android:layout_marginTop="48dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ProgressBar
-                android:id="@+id/donut_chart_bg"
-                style="?android:attr/progressBarStyleHorizontal"
+            <com.example.cuzdan.ui.home.DonutChartView
+                android:id="@+id/donut_chart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:indeterminate="false"
-                android:progressDrawable="@drawable/bg_donut_chart" />
+                android:layout_height="match_parent" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -44,13 +75,14 @@
                     android:text="%100"
                     android:textColor="@color/white"
                     android:fontFamily="sans-serif-medium"
+                    android:visibility="gone"
                     android:textSize="24sp" />
 
                 <TextView
                     android:id="@+id/text_donut_center_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Dağılım"
+                    android:text="@string/label_distribution"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -86,7 +118,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
                 android:fontFamily="sans-serif-medium"
-                android:text="Portföyler Toplamı"
+                android:text="@string/total_portfolios"
                 android:textColor="@color/white"
                 android:textSize="14sp" />
 
@@ -123,15 +155,6 @@
                 android:textColor="@color/white"
                 android:textSize="42sp" />
 
-            <ImageButton
-                android:id="@+id/btn_privacy_toggle"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="8dp"
-                android:src="@drawable/ic_eye_on"
-                app:tint="@color/text_secondary" />
         </LinearLayout>
 
         <!-- Premium Daily Change Pill -->
@@ -189,7 +212,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="GÜNLÜK DEĞİŞİM"
+            android:text="@string/label_daily_change"
             android:textColor="@color/text_label"
             android:textSize="11sp"
             android:fontFamily="sans-serif-medium"

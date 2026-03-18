@@ -15,7 +15,10 @@ import com.example.cuzdan.databinding.DialogSupportBinding
 import com.example.cuzdan.databinding.FragmentNotificationsBinding
 import com.example.cuzdan.util.PreferenceManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import androidx.lifecycle.lifecycleScope
+import com.example.cuzdan.data.repository.PortfolioRepository
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -23,6 +26,9 @@ class NotificationsFragment : Fragment() {
 
     @Inject
     lateinit var prefManager: PreferenceManager
+
+    @Inject
+    lateinit var portfolioRepository: PortfolioRepository
 
     private var _binding: FragmentNotificationsBinding? = null
     private val binding get() = _binding!!
@@ -44,7 +50,7 @@ class NotificationsFragment : Fragment() {
             SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled()),
             // Abonelik kaldırıldı
             SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English"),
-            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getCurrency()),
+            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency()),
             SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled()),
             SettingItem(6, getString(R.string.settings_device_management)),
             SettingItem(7, getString(R.string.settings_faq)),
@@ -101,8 +107,7 @@ class NotificationsFragment : Fragment() {
             .setItems(languages) { _, which ->
                 val lang = if (which == 0) "tr" else "en"
                 prefManager.setLanguage(lang)
-                setupRecyclerView()
-                Toast.makeText(context, "Dil değiştirildi: ${languages[which]}", Toast.LENGTH_SHORT).show()
+                requireActivity().recreate()
             }
             .show()
     }
@@ -112,7 +117,7 @@ class NotificationsFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_currency)
             .setItems(currencies) { _, which ->
-                prefManager.setCurrency(currencies[which])
+                prefManager.setHomeCurrency(currencies[which])
                 setupRecyclerView()
                 Toast.makeText(context, "Para birimi değiştirildi: ${currencies[which]}", Toast.LENGTH_SHORT).show()
             }
@@ -121,22 +126,26 @@ class NotificationsFragment : Fragment() {
 
     private fun showDeviceManagementDialog() {
         AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_device_management)
-            .setMessage("Hesabınızı sıfırlamak istediğinize emin misiniz? Bu işlem tüm yerel ayarlarınızı temizleyecektir.")
+            .setTitle(R.string.reset_warning_title)
+            .setMessage(R.string.reset_warning_message)
             .setPositiveButton(R.string.settings_account_reset) { _, _ ->
-                prefManager.resetPreferences()
-                Toast.makeText(context, "Hesap sıfırlandı.", Toast.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch {
+                    portfolioRepository.clearAllData()
+                    prefManager.resetPreferences()
+                    Toast.makeText(context, R.string.settings_account_reset, Toast.LENGTH_SHORT).show()
+                    requireActivity().recreate()
+                }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
             .show()
     }
 
     private fun showFAQDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_faq)
-            .setMessage("1. Uygulama nedir?\nCüzdan, varlıklarınızı takip etmenize yardımcı olan bir uygulamadır.\n\n2. Verilerim güvende mi?\nEvet, tüm verileriniz cihazınızda saklanır.")
-            .setPositiveButton("Tamam", null)
-            .show()
+        AgreementBottomSheet.newInstance(
+            title = getString(R.string.faq_title),
+            content = "${getString(R.string.faq_q1)}\n${getString(R.string.faq_a1)}\n\n${getString(R.string.faq_q2)}\n${getString(R.string.faq_a2)}",
+            isReadOnly = true
+        ).show(parentFragmentManager, "FAQ")
     }
 
     private fun showSupportDialog() {
@@ -173,19 +182,22 @@ class NotificationsFragment : Fragment() {
     }
 
     private fun showAgreementDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_agreement)
-            .setMessage(R.string.user_agreement_text)
-            .setPositiveButton("Tamam", null)
-            .show()
+        AgreementBottomSheet.newInstance(
+            title = getString(R.string.settings_agreement),
+            content = getString(R.string.user_agreement_text),
+            isReadOnly = false,
+            onAccepted = {
+                Toast.makeText(context, R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
+            }
+        ).show(parentFragmentManager, "Agreement")
     }
 
     private fun showLegalWarningDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle(R.string.settings_legal)
-            .setMessage(R.string.legal_warning_text)
-            .setPositiveButton("Tamam", null)
-            .show()
+        AgreementBottomSheet.newInstance(
+            title = getString(R.string.settings_legal),
+            content = getString(R.string.legal_warning_text),
+            isReadOnly = true
+        ).show(parentFragmentManager, "Legal")
     }
 
     override fun onDestroyView() {

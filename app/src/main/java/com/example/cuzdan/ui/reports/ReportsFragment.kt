@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -18,8 +18,7 @@ import com.example.cuzdan.databinding.FragmentReportsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import java.text.NumberFormat
-import java.util.Locale
+import com.example.cuzdan.ui.currency.CurrencyBottomSheet
 
 @AndroidEntryPoint
 class ReportsFragment : Fragment() {
@@ -27,7 +26,7 @@ class ReportsFragment : Fragment() {
     private var _binding: FragmentReportsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ReportsViewModel by viewModels()
+    private val viewModel: ReportsViewModel by activityViewModels()
     
     @Inject
     lateinit var prefManager: PreferenceManager
@@ -48,11 +47,14 @@ class ReportsFragment : Fragment() {
         setupUI()
         observeState()
         
+        // Ensure localized strings are updated
+        viewModel.refreshLocalization(requireContext())
+        
         return binding.root
     }
 
     private fun setupUI() {
-        binding.imageHideShow.setOnClickListener {
+        binding.btnPrivacyToggle.setOnClickListener {
             isHidden = !isHidden
             prefManager.setPrivacyModeEnabled(isHidden)
             updateHideShowUI(viewModel.uiState.value)
@@ -69,6 +71,10 @@ class ReportsFragment : Fragment() {
         binding.btnNextPortfolio.setOnClickListener { 
             viewModel.selectNextPortfolio()
         }
+
+        binding.btnCurrencySwitcher.setOnClickListener {
+            showCurrencySwitcher()
+        }
     }
 
     private fun observeState() {
@@ -82,44 +88,67 @@ class ReportsFragment : Fragment() {
     }
 
     private fun updateUI(state: ReportsUiState) {
-        if (state.portfolios.isNotEmpty()) {
-            binding.textPortfolioName.text = state.portfolios[state.selectedPortfolioIndex].name
+        val currentId = prefManager.getSelectedPortfolioId()
+        val portfolios = state.portfolios
+        
+        binding.textPortfolioName.text = if (currentId == -1L) {
+            getString(R.string.total_portfolios)
+        } else {
+            portfolios.find { it.id == currentId }?.name ?: ""
         }
+
         updateHideShowUI(state)
+        adapter.setCurrency(state.currency)
         adapter.setItems(state.categories)
     }
 
     private fun updateHideShowUI(state: ReportsUiState) {
         if (isHidden) {
-            binding.imageHideShow.setImageResource(R.drawable.ic_eye_off)
-            binding.textTotalAmount.text = "***** TL"
+            binding.btnPrivacyToggle.setImageResource(R.drawable.ic_eye_off)
+            binding.textTotalAmount.text = "***** ${state.currency}"
             binding.textDailyChangeAbs.text = "*****"
             binding.textDailyChangePerc.text = "*****"
         } else {
-            binding.imageHideShow.setImageResource(R.drawable.ic_eye_on)
-            binding.textTotalAmount.text = state.totalValue.formatCurrency()
-            binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency()
-            
-            // Kari hesapla (Maliyet üzerinden yüzde)
             val totalCost = state.totalValue.subtract(state.totalProfitLoss)
             val perc = if (totalCost.compareTo(java.math.BigDecimal.ZERO) > 0) {
                 state.totalProfitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(java.math.BigDecimal("100"))
             } else java.math.BigDecimal.ZERO
             
+            val isPositive = state.totalProfitLoss >= java.math.BigDecimal.ZERO
+            val color = if (isPositive) R.color.accent_green else R.color.accent_red
+            val colorInt = requireContext().getColor(color)
+            
+            binding.textTotalAmount.setTextColor(requireContext().getColor(R.color.white))
+            binding.textDailyChangeAbs.setTextColor(colorInt)
+            binding.textDailyChangePerc.setTextColor(colorInt)
+            
+            binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency)
+            binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency)
             binding.textDailyChangePerc.text = String.format("%%%+.2f", perc)
         }
         
+        // Currency icon update
+        val currencyIcon = when(state.currency) {
+            "USD" -> R.drawable.ic_usd
+            "EUR" -> R.drawable.ic_eur
+            else -> R.drawable.ic_tl
+        }
+        binding.btnCurrencySwitcher.setImageResource(currencyIcon)
+        
         if (::adapter.isInitialized) {
-            adapter.setHidden(isHidden)
+            adapter.setPrivacyEnabled(isHidden)
         }
     }
 
     private fun setupRecyclerView() {
-        adapter = ReportCategoryAdapter(emptyList(), isHidden)
-        binding.recyclerReportCategories.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = this@ReportsFragment.adapter
-        }
+        adapter = ReportCategoryAdapter(emptyList(), isHidden) { _ -> }
+        binding.recyclerReportCategories.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerReportCategories.adapter = adapter
+    }
+
+    private fun showCurrencySwitcher() {
+        val bottomSheet = com.example.cuzdan.ui.currency.CurrencyBottomSheet.newInstance(com.example.cuzdan.ui.currency.CurrencyBottomSheet.SOURCE_REPORTS)
+        bottomSheet.show(childFragmentManager, "CurrencyBottomSheet")
     }
 
     override fun onDestroyView() {

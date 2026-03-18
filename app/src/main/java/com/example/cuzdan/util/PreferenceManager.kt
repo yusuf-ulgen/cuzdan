@@ -24,12 +24,20 @@ class PreferenceManager @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    fun setCurrency(currency: String) {
-        prefs.edit().putString("currency", currency).apply()
+    fun setHomeCurrency(currency: String) {
+        prefs.edit().putString("home_currency", currency).apply()
     }
 
-    fun getCurrency(): String {
-        return prefs.getString("currency", "TL") ?: "TL"
+    fun getHomeCurrency(): String {
+        return prefs.getString("home_currency", "TL") ?: "TL"
+    }
+
+    fun setReportsCurrency(currency: String) {
+        prefs.edit().putString("reports_currency", currency).apply()
+    }
+
+    fun getReportsCurrency(): String {
+        return prefs.getString("reports_currency", "TL") ?: "TL"
     }
 
     fun setLanguage(language: String) {

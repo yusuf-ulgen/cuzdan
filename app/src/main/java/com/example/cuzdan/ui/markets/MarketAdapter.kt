@@ -15,7 +15,7 @@ class MarketAdapter(
     private val onItemClick: (Asset) -> Unit
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
 
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
+    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale.getDefault())
 
     class ViewHolder(val binding: ItemMarketPriceBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -31,7 +31,7 @@ class MarketAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.binding.apply {
-            textMarketName.text = item.name
+            textMarketName.text = getLocalizedAssetName(item.name, root.context)
             textMarketSymbol.text = item.symbol
             textMarketPrice.text = currencyFormat.format(item.currentPrice)
             
@@ -53,5 +53,16 @@ class MarketAdapter(
     fun setItems(newItems: List<Asset>) {
         items = newItems
         notifyDataSetChanged()
+    }
+    private fun getLocalizedAssetName(name: String, context: android.content.Context): String {
+        return when(name) {
+            "Türk Lirası" -> context.getString(R.string.currency_try).replace(" (₺)", "")
+            "Amerikan Doları" -> context.getString(R.string.currency_usd).replace(" ($)", "")
+            "Euro" -> context.getString(R.string.currency_eur).replace(" (€)", "")
+            "İngiliz Sterlini" -> "British Pound" // Add to strings if needed, currently manual for quick fix
+            "İsviçre Frangı" -> "Swiss Franc"
+            "Japon Yeni" -> "Japanese Yen"
+            else -> name
+        }
     }
 }

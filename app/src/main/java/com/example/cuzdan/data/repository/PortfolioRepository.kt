@@ -1,5 +1,6 @@
 package com.example.cuzdan.data.repository
 
+import com.example.cuzdan.data.local.dao.AssetDao
 import com.example.cuzdan.data.local.dao.PortfolioDao
 import com.example.cuzdan.data.local.entity.Portfolio
 import kotlinx.coroutines.flow.Flow
@@ -9,7 +10,8 @@ import javax.inject.Singleton
 
 @Singleton
 class PortfolioRepository @Inject constructor(
-    private val portfolioDao: PortfolioDao
+    private val portfolioDao: PortfolioDao,
+    private val assetDao: AssetDao
 ) {
     fun getAllPortfolios(): Flow<List<Portfolio>> {
         return portfolioDao.getAllPortfolios()
@@ -42,5 +44,12 @@ class PortfolioRepository @Inject constructor(
 
     fun getIncludedPortfolios(): Flow<List<Portfolio>> {
         return portfolioDao.getIncludedPortfolios()
+    }
+
+    suspend fun clearAllData() {
+        assetDao.deleteAllAssets()
+        portfolioDao.deleteAllPortfolios()
+        // Varsayılan portföyü yeniden oluştur
+        portfolioDao.insertPortfolio(Portfolio(name = "Ana Portföy"))
     }
 }

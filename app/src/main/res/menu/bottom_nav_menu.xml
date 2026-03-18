@@ -4,26 +4,26 @@
     <item
         android:id="@+id/navigation_assets"
         android:icon="@drawable/ic_assets"
-        android:title="Varlıklar" />
+        android:title="@string/nav_assets" />
 
     <item
         android:id="@+id/navigation_reports"
         android:icon="@drawable/ic_reports"
-        android:title="Raporlar" />
+        android:title="@string/nav_reports" />
 
     <item
         android:id="@+id/navigation_wallet"
         android:icon="@drawable/ic_wallet"
-        android:title="Cüzdan" />
+        android:title="@string/nav_wallet" />
 
     <item
         android:id="@+id/navigation_markets"
         android:icon="@drawable/ic_markets"
-        android:title="Piyasalar" />
+        android:title="@string/nav_markets" />
 
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/ic_settings"
-        android:title="İşlemler" />
+        android:title="@string/nav_settings" />
 
 </menu>

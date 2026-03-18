@@ -16,6 +16,7 @@ import com.example.cuzdan.databinding.BottomSheetPortfolioManagementBinding
 import com.example.cuzdan.databinding.ItemPortfolioManageBinding
 import com.example.cuzdan.util.formatCurrency
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.fragment.app.activityViewModels
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -26,7 +27,7 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
     private var _binding: BottomSheetPortfolioManagementBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: HomeViewModel by viewModels({ requireParentFragment() })
+    private val viewModel: HomeViewModel by activityViewModels()
     private lateinit var portfolioAdapter: PortfolioManageAdapter
 
     override fun onCreateView(
@@ -73,14 +74,18 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     val list = mutableListOf<PortfolioItem>()
-                    // Portföyler Toplamı (Sanal portföy)
-                    list.add(PortfolioItem(-1, "Portföyler Toplamı", state.totalBalance)) // Basitlik için sadece bakiye
+                    // Portföyler Toplamı (Maliyet hesaplaması burada yapılmalı ya da viewmodel'den gelmeli)
+                    // Önceki implementasyonda totalBalance ve dailyChange viewmodel'den geliyordu.
+                    // Toplam maliyeti de ekliyorum.
+                    val totalCost = state.portfolios.sumOf { it.totalCost }
+                    
+                    list.add(PortfolioItem(-1, "Portföyler Toplamı", state.totalBalance, state.dailyChangeAbs, state.dailyChangePerc, totalCost))
                     
                     state.portfolios.forEach { p ->
-                        list.add(PortfolioItem(p.id, p.name, BigDecimal.ZERO)) // Gerçek bakiyeler için ek repo çağrısı gerekebilir ama şimdilik isim yeterli
+                        list.add(PortfolioItem(p.portfolio.id, p.portfolio.name, p.balance, p.dailyChangeAbs, p.dailyChangePerc, p.totalCost))
                     }
                     
-                    portfolioAdapter.submitList(list, state.selectedPortfolioId)
+                    portfolioAdapter.submitList(list, state.selectedPortfolioId, state.currency)
                 }
             }
         }
@@ -91,7 +96,14 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
         _binding = null
     }
 
-    data class PortfolioItem(val id: Long, val name: String, val balance: BigDecimal)
+    data class PortfolioItem(
+        val id: Long, 
+        val name: String, 
+        val balance: BigDecimal,
+        val changeAbs: BigDecimal,
+        val changePerc: BigDecimal,
+        val totalCost: BigDecimal
+    )
 
     inner class PortfolioManageAdapter(
         private val onSelected: (Long) -> Unit,
@@ -100,10 +112,12 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
 
         private var items = emptyList<PortfolioItem>()
         private var selectedId: Long = -1
+        private var currency: String = "TL"
 
-        fun submitList(newList: List<PortfolioItem>, currentSelected: Long) {
+        fun submitList(newList: List<PortfolioItem>, currentSelected: Long, currentCurrency: String) {
             items = newList
             selectedId = currentSelected
+            currency = currentCurrency
             notifyDataSetChanged()
         }
 
@@ -118,15 +132,33 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
                 textPortfolioName.text = item.name
                 radioSelected.isChecked = item.id == selectedId
                 
-                // Bakiyeyi sadece toplam için gösteriyoruz şimdilik, diğerleri için repo yüklemesi lazım
+                textPortfolioTotal.text = item.balance.formatCurrency(currency)
+                textPortfolioChange.text = String.format("%s (%%%+.1f)", 
+                    item.changeAbs.formatCurrency(currency), 
+                    item.changePerc
+                )
+                
+                // Toplam bakiyeyi kar/zarara göre renklendir
+                val isProfit = item.balance >= item.totalCost
+                val balanceColor = if (isProfit) {
+                    com.example.cuzdan.R.color.accent_green
+                } else {
+                    com.example.cuzdan.R.color.accent_red
+                }
+                textPortfolioTotal.setTextColor(root.context.getColor(balanceColor))
+
+                val changeColor = if (item.changeAbs >= BigDecimal.ZERO) {
+                    com.example.cuzdan.R.color.accent_green
+                } else {
+                    com.example.cuzdan.R.color.accent_red
+                }
+                textPortfolioChange.setTextColor(root.context.getColor(changeColor))
+
                 if (item.id == -1L) {
-                    textPortfolioTotal.text = item.balance.formatCurrency()
                     btnEditPortfolio.visibility = View.GONE
                 } else {
-                    textPortfolioTotal.text = ""
                     btnEditPortfolio.visibility = View.VISIBLE
                 }
-                textPortfolioChange.visibility = View.GONE
                 
                 root.setOnClickListener { onSelected(item.id) }
                 btnEditPortfolio.setOnClickListener { onEdit(item.id) }

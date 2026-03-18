@@ -1,12 +1,15 @@
 package com.example.cuzdan.ui.markets
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.data.repository.AssetRepository
 import com.example.cuzdan.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -23,7 +26,8 @@ data class MarketsUiState(
 
 @HiltViewModel
 class MarketsViewModel @Inject constructor(
-    private val repository: AssetRepository
+    private val repository: AssetRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MarketsUiState())
@@ -41,7 +45,7 @@ class MarketsViewModel @Inject constructor(
                 _uiState.update { it.copy(prices = marketAssets, isLoading = false) }
                 applyFilters()
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Hata: ${e.localizedMessage}") }
+                _uiState.update { it.copy(isLoading = false, errorMessage = "${context.getString(R.string.error_prefix)}: ${e.localizedMessage}") }
             }
         }
     }

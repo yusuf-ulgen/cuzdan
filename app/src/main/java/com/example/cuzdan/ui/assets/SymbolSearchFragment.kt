@@ -19,6 +19,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import com.example.cuzdan.R
 
 @AndroidEntryPoint
 class SymbolSearchFragment : Fragment() {
@@ -53,7 +54,19 @@ class SymbolSearchFragment : Fragment() {
         
         val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
         viewModel.loadInitialSymbols(type)
-        binding.textTitle.text = "${assetType ?: ""} Varlıkları"
+        val localizedTypeName = getLocalizedAssetTypeName(type)
+        binding.textTitle.text = getString(R.string.asset_title_template, localizedTypeName)
+    }
+
+    private fun getLocalizedAssetTypeName(type: AssetType): String {
+        return getString(when(type) {
+            AssetType.KRIPTO -> R.string.asset_type_crypto
+            AssetType.BIST -> R.string.asset_type_stocks
+            AssetType.DOVIZ -> R.string.asset_type_currency
+            AssetType.EMTIA -> R.string.asset_type_commodity
+            AssetType.NAKIT -> R.string.asset_type_cash
+            AssetType.FON -> R.string.asset_type_fund
+        })
     }
 
     private fun setupRecyclerView() {

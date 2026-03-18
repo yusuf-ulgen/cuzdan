@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.secrets)
     alias(libs.plugins.navigation.safeargs)
+    id("kotlin-parcelize")
 }
 
 android {

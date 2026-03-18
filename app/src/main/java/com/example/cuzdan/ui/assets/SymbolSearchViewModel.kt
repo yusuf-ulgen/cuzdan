@@ -1,11 +1,14 @@
 package com.example.cuzdan.ui.assets
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.data.repository.AssetRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +26,8 @@ data class SymbolSearchUiState(
 
 @HiltViewModel
 class SymbolSearchViewModel @Inject constructor(
-    private val repository: AssetRepository
+    private val repository: AssetRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SymbolSearchUiState())
@@ -38,7 +42,7 @@ class SymbolSearchViewModel @Inject constructor(
                 val marketAssets = repository.getMarketAssets(type)
                 _uiState.update { it.copy(results = marketAssets, isLoading = false) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = "Yükleme hatası: ${e.localizedMessage}") }
+                _uiState.update { it.copy(isLoading = false, error = "${context.getString(R.string.error_loading)}: ${e.localizedMessage}") }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.example.cuzdan
 
+import android.content.Context
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.biometric.BiometricManager
 import android.widget.Toast
 import com.example.cuzdan.databinding.ActivityMainBinding
+import com.example.cuzdan.ui.notifications.AgreementBottomSheet
 import com.example.cuzdan.util.PreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.Executor
@@ -25,6 +27,12 @@ class MainActivity : AppCompatActivity() {
     lateinit var prefManager: PreferenceManager
 
     private lateinit var binding: ActivityMainBinding
+    
+    override fun attachBaseContext(newBase: Context) {
+        val prefManager = PreferenceManager(newBase)
+        val lang = prefManager.getLanguage()
+        super.attachBaseContext(com.example.cuzdan.util.LocaleHelper.onAttach(newBase, lang))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,18 +57,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkUserAgreement() {
         if (!prefManager.isAgreementAccepted()) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.settings_agreement)
-                .setMessage(R.string.user_agreement_text)
-                .setCancelable(false)
-                .setPositiveButton(R.string.dialog_confirm) { _, _ ->
+            AgreementBottomSheet.newInstance(
+                title = getString(R.string.settings_agreement),
+                content = getString(R.string.user_agreement_text),
+                isReadOnly = false,
+                onAccepted = {
                     prefManager.setAgreementAccepted(true)
                     checkBiometrics()
                 }
-                .setNegativeButton(R.string.dialog_cancel) { _, _ ->
-                    finish()
-                }
-                .show()
+            ).show(supportFragmentManager, "InitialAgreement")
         }
     }
 

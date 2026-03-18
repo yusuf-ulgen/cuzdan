@@ -5,49 +5,53 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="6dp"
-    app:cardBackgroundColor="@color/surface_card"
+    app:cardBackgroundColor="#F5F6F8"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="#1AFFFFFF"
-    app:strokeWidth="1dp">
+    app:strokeWidth="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/text_portfolio_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/btn_edit_portfolio"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="Ana Portföy" />
-
         <ImageButton
             android:id="@+id/btn_edit_portfolio"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:scaleType="centerInside"
             android:src="@drawable/ic_edit"
-            app:layout_constraintBottom_toBottomOf="@id/text_portfolio_name"
-            app:layout_constraintStart_toEndOf="@id/text_portfolio_name"
-            app:layout_constraintTop_toTopOf="@id/text_portfolio_name"
-            app:tint="@color/accent_blue" />
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/accent_blue"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/text_portfolio_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="sans-serif-bold"
+            android:textColor="#1A237E"
+            android:textSize="17sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/layout_portfolio_values"
+            app:layout_constraintStart_toEndOf="@id/btn_edit_portfolio"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_goneMarginStart="0dp"
+            tools:text="Portföyler Toplamı" />
 
         <LinearLayout
             android:id="@+id/layout_portfolio_values"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
             android:gravity="end"
             android:orientation="vertical"
-            android:layout_marginEnd="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/radio_selected"
             app:layout_constraintTop_toTopOf="parent">
@@ -57,18 +61,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
-                android:textColor="@color/white"
-                android:textSize="16sp"
-                tools:text="₺45.250,00" />
+                android:textColor="#1A237E"
+                android:textSize="17sp"
+                tools:text="₺142.357,14" />
 
             <TextView
                 android:id="@+id/text_portfolio_change"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-bold"
                 android:textColor="@color/accent_green"
                 android:textSize="12sp"
-                android:fontFamily="sans-serif-bold"
-                tools:text="+₺1.250 (%2,5)" />
+                tools:text="+₺100 (%0,2)" />
         </LinearLayout>
 
         <RadioButton

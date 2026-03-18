@@ -1,0 +1,89 @@
+<resources>
+    <string name="app_name">cuzdan</string>
+    <string name="title_home">Home</string>
+    <string name="title_reports">Reports</string>
+    <string name="title_assets">My Assets</string>
+    <string name="title_markets">Markets</string>
+    <string name="title_settings">Settings</string>
+    <string name="settings_subheader">Manage your account and app preferences</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_biometrics">Biometric Login</string>
+    <string name="settings_device_management">Account Reset</string>
+    <string name="settings_faq">FAQ</string>
+    <string name="settings_support">Support</string>
+    <string name="settings_recommend">Recommend to a Friend</string>
+    <string name="settings_agreement">User Agreement</string>
+    <string name="settings_legal">Legal Warnings</string>
+    <string name="settings_account_reset">Reset Account</string>
+    <string name="dialog_support_title">Support Request</string>
+    <string name="support_email_hint">Your Email Address</string>
+    <string name="support_message_hint">Your Message</string>
+    <string name="support_send">Send</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_confirm">Confirm</string>
+    <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
+
+    <string name="user_agreement_text">Cuzdan App User Agreement: 1. Scope of Service: This app provides a financial tool to track your assets. 2. Data Security: All your data is stored locally on your device. The app developer is not responsible for data loss on your device. 3. Disclaimer: The data presented is for informational purposes only; it is not investment advice. You are solely responsible for your financial decisions. 4. Updates: The app owner reserves the right to update the terms of the agreement at any time.</string>
+    <string name="legal_warning_text">Legal Warning: No data, charts, or analysis provided through this application are within the scope of investment consultancy. Market data may be delayed. Please consult a licensed financial expert before making transactions.</string>
+    <string name="login_description">Please perform biometric authentication for secure access to your assets.</string>
+
+    <string name="faq_title">Frequently Asked Questions</string>
+    <string name="faq_q1">What is Cuzdan app?</string>
+    <string name="faq_a1">Cuzdan is a professional portfolio management tool that allows you to track all your financial assets (gold, stock market, crypto) from a single point.</string>
+    <string name="faq_q2">Where is my data stored?</string>
+    <string name="faq_a2">We value your privacy. All your data is not stored on our servers, but only in the secure database on your own device.</string>
+
+    <string name="agreement_checkbox_text">I have read and agree to the User Agreement and Privacy Policy.</string>
+    <string name="button_accept">Accept and Continue</string>
+    <string name="reset_warning_title">Reset Account</string>
+    <string name="reset_warning_message">Are you sure you want to reset your account? As a result of this action, all your portfolios and assets will be PERMANENTLY deleted.</string>
+
+    <!-- Navigation Labels -->
+    <string name="nav_assets">Assets</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_wallet">Wallet</string>
+    <string name="nav_markets">Markets</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_add_asset">Add Asset</string>
+    <string name="nav_select_asset">Select Asset</string>
+    <string name="nav_profit_loss_chart">Profit/Loss Chart</string>
+
+    <!-- Layout & UI Labels -->
+    <string name="label_daily_change">DAILY CHANGE</string>
+    <string name="label_distribution">Distribution</string>
+    <string name="label_profit_loss">Profit/Loss</string>
+    <string name="total_portfolios">Total Portfolios</string>
+
+    <!-- Asset Types -->
+    <string name="asset_type_crypto">Crypto</string>
+    <string name="asset_type_stocks">Stocks</string>
+    <string name="asset_type_currency">Currencies</string>
+    <string name="asset_type_commodity">Commodities</string>
+    <string name="asset_type_cash">Cash</string>
+    <string name="asset_type_fund">Funds</string>
+
+    <!-- Asset Detail & Search Labels -->
+    <string name="label_enter_asset">Enter Asset</string>
+    <string name="label_amount">Amount</string>
+    <string name="label_unit">Unit</string>
+    <string name="label_unit_cost_optional">Unit Cost (Optional)</string>
+    <string name="btn_save">SAVE</string>
+    <string name="range_7_days">7 Days</string>
+    <string name="range_1_month">1 Month</string>
+    <string name="asset_search_hint">Search assets…</string>
+    <string name="subheader_select_asset">Select the asset you want to add to your portfolio</string>
+    <string name="total_portfolios_warning_title">Total Portfolios</string>
+    <string name="total_portfolios_warning_message">You are currently in total portfolios. You cannot add assets here, please switch to a specific portfolio.</string>
+    <string name="error_loading">Loading error</string>
+
+    <!-- Markets & Currency -->
+    <string name="filter_all">All</string>
+    <string name="title_select_currency">Select Currency</string>
+    <string name="currency_try">Turkish Lira (₺)</string>
+    <string name="currency_usd">US Dollar ($)</string>
+    <string name="currency_eur">Euro (€)</string>
+    <string name="asset_title_template">%1$s Assets</string>
+    <string name="error_prefix">Error</string>
+</resources>

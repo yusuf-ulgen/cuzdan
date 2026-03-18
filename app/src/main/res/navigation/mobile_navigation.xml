@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/navigation_assets"
         android:name="com.example.cuzdan.ui.assets.AssetsFragment"
-        android:label="Varlık Ekle"
+        android:label="@string/nav_add_asset"
         tools:layout="@layout/fragment_assets">
         <action
             android:id="@+id/action_navigation_assets_to_navigation_symbol_search"
@@ -17,19 +17,19 @@
     <fragment
         android:id="@+id/navigation_reports"
         android:name="com.example.cuzdan.ui.reports.ReportsFragment"
-        android:label="Raporlar"
+        android:label="@string/nav_reports"
         tools:layout="@layout/fragment_reports" />
 
     <fragment
         android:id="@+id/navigation_wallet"
         android:name="com.example.cuzdan.ui.home.HomeFragment"
-        android:label="Cüzdan"
+        android:label="@string/nav_wallet"
         tools:layout="@layout/fragment_home" />
 
     <fragment
         android:id="@+id/navigation_markets"
         android:name="com.example.cuzdan.ui.markets.MarketsFragment"
-        android:label="Piyasalar"
+        android:label="@string/nav_markets"
         tools:layout="@layout/fragment_markets">
         <action
             android:id="@+id/action_navigation_markets_to_navigation_asset_detail"
@@ -55,19 +55,19 @@
     <fragment
         android:id="@+id/navigation_settings"
         android:name="com.example.cuzdan.ui.notifications.NotificationsFragment"
-        android:label="İşlemler"
+        android:label="@string/nav_settings"
         tools:layout="@layout/fragment_notifications" />
 
     <fragment
         android:id="@+id/navigation_profit_loss_chart"
         android:name="com.example.cuzdan.ui.reports.ProfitLossChartFragment"
-        android:label="Kar/Zarar Grafiği"
+        android:label="@string/nav_profit_loss_chart"
         tools:layout="@layout/fragment_profit_loss_chart" />
 
     <fragment
         android:id="@+id/navigation_symbol_search"
         android:name="com.example.cuzdan.ui.assets.SymbolSearchFragment"
-        android:label="Varlık Seç"
+        android:label="@string/nav_select_asset"
         tools:layout="@layout/fragment_symbol_search">
         <argument
             android:name="assetType"

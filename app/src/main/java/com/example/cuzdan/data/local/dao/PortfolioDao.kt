@@ -27,4 +27,7 @@ interface PortfolioDao {
 
     @Query("SELECT * FROM portfolios WHERE isIncludedInTotal = 1")
     fun getIncludedPortfolios(): Flow<List<Portfolio>>
+
+    @Query("DELETE FROM portfolios")
+    suspend fun deleteAllPortfolios()
 }

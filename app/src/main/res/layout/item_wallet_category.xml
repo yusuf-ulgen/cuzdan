@@ -28,52 +28,39 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="BIST" />
 
-        <LinearLayout
-            android:id="@+id/layout_category_data"
+        <TextView
+            android:id="@+id/text_category_change_perc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end"
-            android:orientation="vertical"
+            android:textColor="@color/accent_green"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-black"
+            app:layout_constraintStart_toStartOf="@id/text_category_title"
+            app:layout_constraintTop_toBottomOf="@id/text_category_title"
+            tools:text="%2,5" />
+
+        <TextView
+            android:id="@+id/text_category_total"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:textColor="@color/white"
+            android:textSize="18sp"
             android:layout_marginEnd="12dp"
             app:layout_constraintEnd_toStartOf="@id/image_expand_arrow"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="₺45.250,00" />
 
-            <TextView
-                android:id="@+id/text_category_total"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:textColor="@color/white"
-                android:textSize="18sp"
-                tools:text="₺45.250,00" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="2dp">
-
-                <TextView
-                    android:id="@+id/text_category_change_abs"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/text_label"
-                    android:textSize="12sp"
-                    android:fontFamily="sans-serif-medium"
-                    tools:text="₺1.250" />
-
-                <TextView
-                    android:id="@+id/text_category_change_perc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:textColor="@color/accent_green"
-                    android:textSize="12sp"
-                    android:fontFamily="sans-serif-black"
-                    tools:text="%2,5" />
-            </LinearLayout>
-        </LinearLayout>
+        <TextView
+            android:id="@+id/text_category_change_abs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_label"
+            android:textSize="12sp"
+            android:fontFamily="sans-serif-medium"
+            app:layout_constraintEnd_toEndOf="@id/text_category_total"
+            app:layout_constraintTop_toBottomOf="@id/text_category_total"
+            tools:text="₺1.250" />
 
         <ImageView
             android:id="@+id/image_expand_arrow"
@@ -81,7 +68,7 @@
             android:layout_height="20dp"
             android:src="@drawable/ic_chevron_left"
             android:rotation="270"
-            app:layout_constraintBottom_toBottomOf="@id/layout_category_data"
+            app:layout_constraintBottom_toBottomOf="@+id/text_category_change_perc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/text_label" />
@@ -93,7 +80,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/layout_category_data"
+            app:layout_constraintTop_toBottomOf="@id/text_category_change_perc"
             app:layout_constraintBottom_toBottomOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
