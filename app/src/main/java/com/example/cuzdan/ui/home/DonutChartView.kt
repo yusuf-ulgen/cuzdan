@@ -20,6 +20,13 @@ class DonutChartView @JvmOverloads constructor(
     }
     private val rectF = RectF()
     private var strokeWidthPx = 60f
+    private var labelColor: Int = android.graphics.Color.WHITE
+
+    fun setLabelColor(color: Int) {
+        labelColor = color
+        invalidate()
+    }
+
 
     data class Segment(val percentage: Float, val color: Int, val label: String)
 
@@ -37,12 +44,14 @@ class DonutChartView @JvmOverloads constructor(
         super.onDraw(canvas)
         
         val size = minOf(width, height).toFloat()
-        val padding = size * 0.12f // Donut'u tekrar büyüterek eski formuna yakınlaştırıyoruz
+        val padding = size * 0.15f // Orta boy bir padding, grafiği koca yapıp yazılara yer bırakıyoruz
         val margin = (strokeWidthPx / 2) + padding
         
         val left = (width - size) / 2 + margin
         val top = (height - size) / 2 + margin
         rectF.set(left, top, left + size - 2 * margin, top + size - 2 * margin)
+
+
         
         paint.strokeWidth = strokeWidthPx
         
@@ -67,26 +76,30 @@ class DonutChartView @JvmOverloads constructor(
     }
 
     private fun drawSegmentLabel(canvas: Canvas, startAngle: Float, sweepAngle: Float, segment: Segment, size: Float) {
-        if (segment.percentage < 0.01f) return // Don't draw labels for very small segments
+        if (segment.percentage < 0.05f) return // Küçük dilimler için yazı karmaşasını önle
 
         val midAngle = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
         val centerX = width / 2f
         val centerY = height / 2f
         val radius = (rectF.width() / 2f) + (strokeWidthPx / 2f)
         
-        // Line points
+        // Çizginin başladığı nokta (donutun dış sınırı)
         val startX = centerX + (radius * Math.cos(midAngle)).toFloat()
         val startY = centerY + (radius * Math.sin(midAngle)).toFloat()
         
-        val elbowRadius = radius + 20f
-        val elbowX = centerX + (elbowRadius * Math.cos(midAngle)).toFloat()
-        val elbowY = centerY + (elbowRadius * Math.sin(midAngle)).toFloat()
+        // Kırılma noktası (dirsek)
+        val elbowLen = 30f
+        val elbowX = centerX + ((radius + elbowLen) * Math.cos(midAngle)).toFloat()
+        val elbowY = centerY + ((radius + elbowLen) * Math.sin(midAngle)).toFloat()
         
         val isRightSide = Math.cos(midAngle) > 0
-        val endX = if (isRightSide) elbowX + 25f else elbowX - 25f
+        
+        // Yatay çizginin ucu
+        val horizontalLineLen = 40f
+        val endX = if (isRightSide) elbowX + horizontalLineLen else elbowX - horizontalLineLen
         val endY = elbowY
 
-        // Draw Line
+        // Çizgileri çiz
         val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = segment.color
             strokeWidth = 3f
@@ -95,18 +108,23 @@ class DonutChartView @JvmOverloads constructor(
         canvas.drawLine(startX, startY, elbowX, elbowY, linePaint)
         canvas.drawLine(elbowX, elbowY, endX, endY, linePaint)
 
-        // Draw Text
+        // Yazıyı çiz
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.WHITE
-            textSize = 28f
+            color = labelColor
+            textSize = 26f
             textAlign = if (isRightSide) Paint.Align.LEFT else Paint.Align.RIGHT
             isFakeBoldText = true
         }
         
-        val labelText = "%${String.format("%.1f", segment.percentage * 100).replace(".", ",")} ${segment.label}"
-        val textX = if (isRightSide) endX + 10f else endX - 10f
-        val textY = endY + 12f
+        val percentageText = "%${String.format("%.0f", segment.percentage * 100)} "
+        val labelText = if (isRightSide) "$percentageText${segment.label}" else "${segment.label} $percentageText"
         
+        // Yazı konumu (X pozisyonuna biraz daha padding ekle)
+        val textX = if (isRightSide) endX + 8f else endX - 8f
+        val textY = endY + 10f
+        
+        // Yazıyı çiz
         canvas.drawText(labelText, textX, textY, textPaint)
     }
+
 }

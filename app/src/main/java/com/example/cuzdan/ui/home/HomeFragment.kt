@@ -75,7 +75,17 @@ class HomeFragment : Fragment() {
         binding.btnCurrencySwitcher.setOnClickListener {
             showCurrencySwitcher()
         }
+        binding.btnAddPortfolio.setOnClickListener {
+            AddPortfolioDialogFragment().show(childFragmentManager, "AddPortfolio")
+        }
+        binding.textPortfolioName.setOnClickListener {
+            PortfolioManagementBottomSheet().show(parentFragmentManager, "PortfolioManagement")
+        }
     }
+
+
+
+
 
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -93,33 +103,38 @@ class HomeFragment : Fragment() {
         binding.textPortfolioName.text = state.selectedPortfolioName
 
         binding.btnPrivacyToggle.setImageResource(
+
             if (isPrivacyEnabled) R.drawable.ic_eye_off else R.drawable.ic_eye_on
         )
 
-        // Donut Chart updates
+
+
         binding.donutChart.setSegments(state.donutSegments)
-        binding.textDonutCenterLabel.text = state.donutCenterLabel
-        binding.textDonutCenterPercent.text = if (isPrivacyEnabled) "***%" else state.donutCenterPercent
+        binding.donutChart.setLabelColor(
+            requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.black else R.color.white)
+        )
+
 
         if (isPrivacyEnabled) {
+
             binding.textTotalBalance.text = "**** ${state.currency}"
-            binding.textDailyChangeAbs.text = "****"
-            binding.textDailyChangePerc.text = "***%"
+            binding.textDailyChangePerc.text = "****"
         } else {
+
             binding.textTotalBalance.text = state.totalBalance.formatCurrency(state.currency)
-            binding.textDailyChangeAbs.text = state.dailyChangeAbs.formatCurrency(state.currency)
-            binding.textDailyChangePerc.text = String.format("%%%+.2f", state.dailyChangePerc)
+            val changeStr = state.dailyChangeAbs.formatCurrency(state.currency)
+            val percStr = String.format("%%%+.2f", state.dailyChangePerc)
+            binding.textDailyChangePerc.text = "$changeStr ($percStr)"
             
             val isPositive = state.dailyChangeAbs >= java.math.BigDecimal.ZERO
             val color = if (isPositive) R.color.accent_green else R.color.accent_red
             val colorInt = requireContext().getColor(color)
             
             binding.textTotalBalance.setTextColor(requireContext().getColor(R.color.white))
-            binding.textDailyChangeAbs.setTextColor(colorInt)
             binding.textDailyChangePerc.setTextColor(colorInt)
-            binding.imageDailyChangeTrending.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
-            binding.imageDailyChangeTrending.rotation = if (isPositive) 0f else 180f
         }
+
+
         
         // Currency icon update
         val currencyIcon = when(state.currency) {
@@ -130,12 +145,8 @@ class HomeFragment : Fragment() {
         binding.btnCurrencySwitcher.setImageResource(currencyIcon)
         
         adapter.setItemsWithPrivacy(state.categorySummaries, isPrivacyEnabled, state.currency)
-
-        // Sync Status and Offline Indicator
-        binding.textLastUpdated.text = state.lastUpdated ?: ""
-        binding.textLastUpdated.visibility = if (state.lastUpdated != null) View.VISIBLE else View.GONE
-        binding.textOfflineIndicator.visibility = if (state.isOffline) View.VISIBLE else View.GONE
     }
+
 
     private fun showPortfolioManagement() {
         val bottomSheet = PortfolioManagementBottomSheet()

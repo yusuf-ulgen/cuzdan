@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_main_gradient">
+    android:background="?attr/layoutBackground">
+
 
     <!-- Top Bar with Logo and Eye Icon -->
     <!-- Top Bar with Icons -->
@@ -51,24 +52,25 @@
 
         <ImageButton
             android:id="@+id/btn_currency_switcher"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:background="@drawable/bg_icon_circle"
-            android:padding="10dp"
+            android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_tl"
-            app:tint="@color/white" />
+            app:tint="?attr/iconTint" />
 
         <ImageButton
             android:id="@+id/btn_privacy_toggle"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/bg_icon_circle"
-            android:padding="10dp"
+            android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_eye_on"
-            app:tint="@color/white" />
+            app:tint="?attr/iconTint" />
+
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -159,9 +161,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_profit_loss"
-                    android:textColor="@color/white"
+                    android:textColor="?attr/textPrimary"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+
 
                 <ImageView
                     android:layout_width="24dp"
@@ -177,13 +180,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="64dp"
-                android:textColor="@color/white"
+                android:textColor="?attr/textPrimary"
                 android:textSize="42sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/layout_main_header"
                 tools:text="-60 TL" />
+
 
             <TextView
                 android:id="@+id/text_total_change_perc"

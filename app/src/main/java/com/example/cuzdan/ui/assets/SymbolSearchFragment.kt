@@ -106,6 +106,7 @@ class SymbolSearchFragment : Fragment() {
             .flowWithLifecycle(viewLifecycleOwner.lifecycle)
             .onEach { state ->
                 binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+
                 binding.btnCurrencySwitcher.setImageResource(if (state.currency == "TL") R.drawable.ic_tl else R.drawable.ic_usd)
                 adapter.setItems(state.results)
                 

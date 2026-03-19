@@ -3,50 +3,57 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_main_gradient">
+    android:background="?attr/layoutBackground"
+    tools:context=".ui.markets.MarketsFragment">
 
-    <!-- Header Section -->
+    <!-- Header -->
     <TextView
         android:id="@+id/text_markets_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="32dp"
         android:fontFamily="sans-serif-black"
-        android:text="@string/nav_markets"
-        android:textColor="@color/white"
-        android:textSize="28sp"
+        android:text="Piyasalar"
+        android:textColor="?attr/textPrimary"
+        android:textSize="32sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <!-- Search Box -->
-    <com.google.android.material.textfield.TextInputLayout
+    <LinearLayout
         android:id="@+id/layout_search"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
-        app:boxCornerRadiusBottomEnd="12dp"
-        app:boxCornerRadiusBottomStart="12dp"
-        app:boxCornerRadiusTopEnd="12dp"
-        app:boxCornerRadiusTopStart="12dp"
-        app:boxStrokeColor="@color/surface_card_light"
-        app:hintTextColor="@color/text_secondary"
+        android:layout_height="48dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_search_bar"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_markets_header"
-        app:startIconDrawable="@drawable/ic_dashboard_black_24dp"
-        app:startIconTint="@color/text_secondary">
+        app:layout_constraintTop_toBottomOf="@id/text_markets_header">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_search"
+            app:tint="@color/text_secondary" />
+
+        <EditText
             android:id="@+id/edit_search"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="12dp"
+            android:background="@android:color/transparent"
             android:hint="@string/asset_search_hint"
             android:textColor="@color/white"
+            android:textColorHint="@color/text_secondary"
             android:textSize="14sp" />
-    </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
 
     <!-- Filters (Chips) -->
     <HorizontalScrollView
@@ -73,7 +80,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/filter_all"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_bist"
@@ -82,7 +90,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_stocks"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_crypto"
@@ -91,7 +100,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_crypto"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_currency"
@@ -100,7 +110,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_currency"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_emtia"
@@ -109,7 +120,8 @@
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_commodity"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_fon"
@@ -118,7 +130,9 @@
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_fund"
                 android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card" />
+                app:chipBackgroundColor="@color/surface_card_light"
+                app:chipStrokeWidth="0dp" />
+
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>
 

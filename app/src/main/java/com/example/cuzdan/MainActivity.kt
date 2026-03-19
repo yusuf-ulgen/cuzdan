@@ -58,7 +58,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val themeMode = PreferenceManager(this).getThemeMode()
+        if (themeMode == "light") {
+            setTheme(R.style.Theme_Cuzdan_Light)
+        } else {
+            setTheme(R.style.Theme_Cuzdan_Dark)
+        }
         super.onCreate(savedInstanceState)
+
+
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

@@ -20,11 +20,18 @@ import androidx.fragment.app.activityViewModels
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import com.example.cuzdan.util.PreferenceManager
+
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
 
+    @Inject
+    lateinit var prefManager: PreferenceManager
+
     private var _binding: BottomSheetPortfolioManagementBinding? = null
+
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by activityViewModels()
@@ -63,11 +70,8 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupListeners() {
         binding.btnClose.setOnClickListener { dismiss() }
-        binding.btnAddPortfolio.setOnClickListener {
-            AddPortfolioDialogFragment().show(parentFragmentManager, "AddPortfolio")
-            dismiss()
-        }
     }
+
 
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -133,19 +137,13 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
                 radioSelected.isChecked = item.id == selectedId
                 
                 textPortfolioTotal.text = item.balance.formatCurrency(currency)
+                textPortfolioTotal.setTextColor(root.context.getColor(if (prefManager.getThemeMode() == "light") R.color.black else R.color.white))
+                
                 textPortfolioChange.text = String.format("%s (%%%+.1f)", 
                     item.changeAbs.formatCurrency(currency), 
                     item.changePerc
                 )
-                
-                // Toplam bakiyeyi kar/zarara göre renklendir
-                val isProfit = item.balance >= item.totalCost
-                val balanceColor = if (isProfit) {
-                    com.example.cuzdan.R.color.accent_green
-                } else {
-                    com.example.cuzdan.R.color.accent_red
-                }
-                textPortfolioTotal.setTextColor(root.context.getColor(balanceColor))
+
 
                 val changeColor = if (item.changeAbs >= BigDecimal.ZERO) {
                     com.example.cuzdan.R.color.accent_green

@@ -58,11 +58,12 @@ class AssetDetailFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.toolbar.title = args.name
-        binding.toolbar.setNavigationOnClickListener {
+        binding.textTitleDetail.text = args.name
+        binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
         }
     }
+
 
     private fun setupListeners() {
         binding.btnSave.setOnClickListener {
@@ -85,6 +86,8 @@ class AssetDetailFragment : Fragment() {
                 when (checkedId) {
                     R.id.btnRange1W -> viewModel.updateRange("1w")
                     R.id.btnRange1M -> viewModel.updateRange("1mo")
+                    R.id.btnRange1Y -> viewModel.updateRange("1y")
+
                     // Varsayılan 1D butonu eklenirse buraya eklenebilir
                 }
             }
@@ -131,31 +134,40 @@ class AssetDetailFragment : Fragment() {
             Entry(index.toFloat(), pair.second.toFloat())
         }
 
+        val accentViolet = resources.getColor(R.color.accent_violet, null)
+
         val dataSet = LineDataSet(entries, "Fiyat").apply {
-            color = resources.getColor(R.color.accent_blue, null)
-            setCircleColor(resources.getColor(R.color.accent_blue, null))
-            lineWidth = 2f
-            circleRadius = 3f
+            color = accentViolet
+            lineWidth = 3f
+            setDrawCircles(false)
             setDrawCircleHole(false)
-            valueTextSize = 0f
-            setDrawFilled(true)
-            fillColor = resources.getColor(R.color.accent_blue, null)
-            fillAlpha = 30
+            setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
+            cubicIntensity = 0.15f
+            
+            setDrawFilled(true)
+            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient, null)
         }
 
         binding.priceChart.apply {
             data = LineData(dataSet)
             description.isEnabled = false
             legend.isEnabled = false
+            
             xAxis.isEnabled = false
-            axisLeft.textColor = Color.WHITE
+            axisLeft.apply {
+                textColor = Color.WHITE
+                setDrawGridLines(false)
+                axisLineColor = Color.TRANSPARENT
+            }
             axisRight.isEnabled = false
+            
             setTouchEnabled(true)
             setPinchZoom(true)
-            animateX(1000)
+            animateX(1200)
             invalidate()
         }
+
     }
 
     override fun onDestroyView() {

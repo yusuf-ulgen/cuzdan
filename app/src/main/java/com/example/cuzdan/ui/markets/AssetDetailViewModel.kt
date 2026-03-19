@@ -52,10 +52,12 @@ class AssetDetailViewModel @Inject constructor(
             "1d" -> "1m"
             "1w" -> "30m"
             "1mo" -> "1h"
-            else -> "1m"
+            "1y" -> "1d"
+            else -> "1d"
         }
         loadHistory(_uiState.value.symbol, range, interval)
     }
+
 
     private fun loadHistory(symbol: String, range: String = "1d", interval: String = "1m") {
         viewModelScope.launch {

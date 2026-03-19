@@ -33,7 +33,13 @@ class NotificationsFragment : Fragment() {
     private var _binding: FragmentNotificationsBinding? = null
     private val binding get() = _binding!!
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+    }
+
+
     override fun onCreateView(
+
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -47,11 +53,13 @@ class NotificationsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         val settings = listOf(
+            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark"),
             SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled()),
             // Abonelik kaldırıldı
             SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English"),
             SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency()),
             SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled()),
+
             SettingItem(6, getString(R.string.settings_device_management)),
             SettingItem(7, getString(R.string.settings_faq)),
             SettingItem(8, getString(R.string.settings_support)),
@@ -77,7 +85,12 @@ class NotificationsFragment : Fragment() {
 
     private fun handleSwitchChange(id: Int, isChecked: Boolean) {
         when (id) {
+            0 -> {
+                prefManager.setThemeMode(if (isChecked) "dark" else "light")
+                requireActivity().recreate()
+            }
             1 -> prefManager.setNotificationsEnabled(isChecked)
+
             5 -> {
                 prefManager.setBiometricsEnabled(isChecked)
                 if (isChecked) {

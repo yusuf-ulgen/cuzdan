@@ -121,7 +121,16 @@ class PreferenceManager @Inject constructor(
         return prefs.getLong("last_auth_timestamp", 0L)
     }
 
+    fun setThemeMode(mode: String) {
+        prefs.edit().putString("theme_mode", mode).apply()
+    }
+
+    fun getThemeMode(): String {
+        return prefs.getString("theme_mode", "dark") ?: "dark"
+    }
+
     fun resetPreferences() {
+
         prefs.edit().clear().apply()
     }
 }

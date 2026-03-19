@@ -344,19 +344,20 @@ class HomeViewModel @Inject constructor(
 
     private fun getCategoryColor(type: AssetType): Int {
         return when(type) {
-            AssetType.KRIPTO -> 0xFFE91E63.toInt()
-            AssetType.BIST -> 0xFF2196F3.toInt()
-            AssetType.DOVIZ -> 0xFF4CAF50.toInt()
-            AssetType.EMTIA -> 0xFFFF9800.toInt()
-            AssetType.NAKIT -> 0xFF9C27B0.toInt()
-            AssetType.FON -> 0xFF00BCD4.toInt()
+            AssetType.KRIPTO -> 0xFF8B5CF6.toInt() // Violet
+            AssetType.BIST -> 0xFFD8B4FE.toInt()   // Light Violet
+            AssetType.DOVIZ -> 0xFF6366F1.toInt()  // Indigo
+            AssetType.EMTIA -> 0xFFA78BFA.toInt()  // Soft Purple
+            AssetType.NAKIT -> 0xFF4F46E5.toInt()  // Deep Indigo
+            AssetType.FON -> 0xFFC084FC.toInt()    // Bright Purple
         }
     }
 
     private fun getAssetColor(index: Int): Int {
-        val colors = listOf(0xFF2196F3, 0xFF4CAF50, 0xFFFF9800, 0xFFE91E63, 0xFF9C27B0, 0xFF009688)
+        val colors = listOf(0xFF8B5CF6, 0xFFD8B4FE, 0xFF6366F1, 0xFFA78BFA, 0xFF4F46E5, 0xFFC084FC)
         return colors[index % colors.size].toInt()
     }
+
 
     suspend fun getPortfolioById(id: Long) = portfolioRepository.getPortfolioById(id)
     suspend fun updatePortfolio(id: Long, name: String, isIncluded: Boolean) {

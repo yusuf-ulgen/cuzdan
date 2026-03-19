@@ -3,14 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp">
+    android:paddingHorizontal="4dp"
+    android:paddingVertical="8dp">
 
     <View
         android:id="@+id/viewIconBg"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:background="@drawable/bg_circle_accent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,23 +17,25 @@
 
     <ImageView
         android:id="@+id/ivAssetIcon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
         android:src="@drawable/ic_asset_placeholder"
         app:layout_constraintBottom_toBottomOf="@id/viewIconBg"
         app:layout_constraintEnd_toEndOf="@id/viewIconBg"
         app:layout_constraintStart_toStartOf="@id/viewIconBg"
         app:layout_constraintTop_toTopOf="@id/viewIconBg"
-        app:tint="@color/white" />
+        app:tint="?attr/iconTint" />
+
 
     <TextView
         android:id="@+id/tvAssetName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textColor="@color/text_white"
-        android:textSize="16sp"
-        android:textStyle="bold"
+        android:layout_marginStart="12dp"
+        android:textColor="?attr/textPrimary"
+        android:textSize="14sp"
+
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toStartOf="@+id/tvAssetChange"
         app:layout_constraintStart_toEndOf="@id/viewIconBg"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,8 +45,9 @@
         android:id="@+id/tvAssetSymbol"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_secondary"
-        android:textSize="12sp"
+        android:textColor="?attr/textSecondary"
+        android:textSize="11sp"
+
         app:layout_constraintEnd_toStartOf="@+id/tvAssetPrice"
         app:layout_constraintStart_toStartOf="@id/tvAssetName"
         app:layout_constraintTop_toBottomOf="@id/tvAssetName"
@@ -56,27 +58,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/accent_green"
-        android:textSize="14sp"
-        android:textStyle="bold"
+        android:textSize="13sp"
+        android:fontFamily="sans-serif-black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="▲ %18,9" />
+        tools:text="+%18,9" />
 
     <TextView
         android:id="@+id/tvAssetPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_white"
-        android:textSize="14sp"
+        android:textColor="?attr/textPrimary"
+        android:textSize="13sp"
+
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAssetChange"
-        tools:text="99,360" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0.5dp"
-        android:layout_marginTop="12dp"
-        android:background="#1AFFFFFF"
-        app:layout_constraintTop_toBottomOf="@id/tvAssetSymbol" />
+        tools:text="₺99,36" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+

@@ -41,34 +41,95 @@ class ProfitLossChartFragment : Fragment() {
             Entry(3f, 1200f),
             Entry(4f, 1800f),
             Entry(5f, 1750f),
-            Entry(6f, 1600f)
+            Entry(6f, 1600f),
+            Entry(7f, 1900f)
         )
 
+        val accentViolet = resources.getColor(com.example.cuzdan.R.color.accent_violet, null)
+        val accentVioletGlow = resources.getColor(com.example.cuzdan.R.color.accent_violet_glow, null)
+
         val dataSet = LineDataSet(entries, "Kar/Zarar").apply {
-            color = Color.WHITE
-            setCircleColor(Color.WHITE)
-            lineWidth = 2f
-            circleRadius = 4f
+            color = accentViolet
+            lineWidth = 3f
+            setDrawCircles(false)
             setDrawCircleHole(false)
-            valueTextSize = 10f
-            valueTextColor = Color.WHITE
+            setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
+            cubicIntensity = 0.2f
+            
             setDrawFilled(true)
-            fillColor = Color.WHITE
-            fillAlpha = 30
+            fillDrawable = resources.getDrawable(com.example.cuzdan.R.drawable.bg_chart_gradient, null)
         }
 
         binding.lineChart.apply {
             data = LineData(dataSet)
             description.isEnabled = false
             legend.isEnabled = false
-            axisLeft.textColor = Color.WHITE
-            axisRight.isEnabled = false
-            xAxis.textColor = Color.WHITE
             setTouchEnabled(true)
-            animateX(1000)
+            setScaleEnabled(false)
+            setPinchZoom(false)
+            setDrawGridBackground(false)
+            
+            xAxis.apply {
+                isEnabled = false
+            }
+            axisLeft.apply {
+                isEnabled = false
+            }
+            axisRight.apply {
+                isEnabled = false
+            }
+            
+            animateX(1200)
+        }
+
+        // Setup the big chart (the main one)
+        val bigDataSet = LineDataSet(entries, "Total").apply {
+            color = accentViolet
+            lineWidth = 5f
+            setDrawCircles(true)
+            setCircleColor(accentViolet)
+            circleRadius = 4f
+            setCircleHoleColor(resources.getColor(com.example.cuzdan.R.color.bg_dark_start, null))
+            setDrawCircleHole(true)
+            circleHoleRadius = 2f
+            
+            setDrawValues(false)
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            cubicIntensity = 0.15f
+            
+            setDrawFilled(true)
+            fillDrawable = resources.getDrawable(com.example.cuzdan.R.drawable.bg_chart_gradient, null)
+        }
+
+        binding.bigLineChart.apply {
+            data = LineData(bigDataSet)
+            description.isEnabled = false
+            legend.isEnabled = false
+            setTouchEnabled(true)
+            setScaleEnabled(true)
+            setPinchZoom(true)
+            
+            xAxis.apply {
+                textColor = resources.getColor(com.example.cuzdan.R.color.text_secondary, null)
+                position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
+                setDrawGridLines(false)
+                axisLineColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
+            }
+            axisLeft.apply {
+                textColor = resources.getColor(com.example.cuzdan.R.color.text_secondary, null)
+                setDrawGridLines(true)
+                gridColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
+                gridLineWidth = 0.5f
+                axisLineColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
+                labelCount = 6
+            }
+            axisRight.isEnabled = false
+            
+            animateX(1500)
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

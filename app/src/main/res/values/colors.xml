@@ -5,27 +5,49 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-    <!-- Dark Blue Theme Palette -->
-    <color name="bg_start">#1B284F</color>
-    <color name="bg_end">#0D1326</color>
-    <color name="surface_card">#25325A</color>
-    <color name="surface_card_light">#304177</color>
+    <!-- Modern Deep Purple Theme Palette -->
+    <color name="bg_dark_start">#0D0118</color>
+    <color name="bg_dark_end">#05000A</color>
+    <color name="surface_card_dark">#1E122A</color>
+    <color name="surface_glass">#1A2D1B4D</color>
+    <color name="surface_glass_strong">#332D1B4D</color>
+    
+    <color name="accent_violet">#B060FF</color>
+    <color name="accent_violet_light">#D090FF</color>
+    <color name="accent_violet_glow">#4DB060FF</color>
+
+    
+    <color name="bg_start">#0D0118</color>
+    <color name="bg_end">#05000A</color>
+    <color name="surface_card">#1E122A</color>
+    <color name="surface_card_light">#2D1B4D</color>
     
     <color name="text_white">#FFFFFF</color>
-    <color name="text_secondary">#B0B8D1</color>
+    <color name="text_secondary">#9D8DB5</color>
     
-    <color name="accent_green">#00E676</color>
-    <color name="accent_red">#FF5252</color>
+    <color name="accent_green">#00FF88</color>
+    <color name="accent_red">#FF4081</color>
     <color name="accent_blue">#448AFF</color>
     
     <color name="glass_white">#1AFFFFFF</color>
     <color name="glass_white_strong">#33FFFFFF</color>
-    <color name="divider_color">#2A355F</color>
+    <color name="divider_color">#2D1B4D</color>
     
-    <color name="primary_dark">#1B284F</color>
-    <color name="secondary_dark">#0D1326</color>
-    <color name="text_label">#8E99B7</color>
+    <color name="primary_dark">#0D0118</color>
+    <color name="secondary_dark">#05000A</color>
+    <color name="text_label">#7B6B96</color>
 
-    <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+
+
+    <!-- Light Theme Palette (Pale Blue / Cloud) -->
+    <color name="bg_light_start">#E8F1F9</color>
+    <color name="bg_light_end">#FFFFFF</color>
+    <color name="surface_light_glass">#99F0F4F8</color>
+    <color name="surface_light_glass_strong">#CCDEE6F0</color>
+    <color name="text_primary_light">#1A1C1E</color>
+    <color name="text_secondary_light">#5C6066</color>
+    <color name="divider_light">#DDE2E9</color>
+    <color name="accent_violet_light_theme">#8B44D5</color>
 </resources>

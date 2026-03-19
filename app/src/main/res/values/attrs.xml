@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="layoutBackground" format="reference" />
+    <attr name="surfaceGlass" format="color" />
+    <attr name="surfaceGlassStrong" format="color" />
+    <attr name="textPrimary" format="color" />
+    <attr name="textSecondary" format="color" />
+    <attr name="accentColor" format="color" />
+    <attr name="accentGlow" format="color" />
+    <attr name="iconTint" format="color" />
+</resources>

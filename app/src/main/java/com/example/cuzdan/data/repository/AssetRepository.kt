@@ -686,7 +686,13 @@ class AssetRepository @Inject constructor(
         range: String = "1d",
         interval: String = "1m"
     ): List<Pair<Long, Double>> {
+        if (symbol == "TRY" || symbol == "TL") {
+            val now = System.currentTimeMillis()
+            val start = now - (24 * 60 * 60 * 1000)
+            return listOf(start to 1.0, now to 1.0)
+        }
         return try {
+
             var targetSymbol = symbol
             // BIST sembolleri için suffix kontrolü (Madde 4)
             if (!symbol.contains(".") && !symbol.contains("=X") && !symbol.contains("-USD")) {
