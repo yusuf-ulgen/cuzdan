@@ -170,12 +170,23 @@ class ReportsViewModel @Inject constructor(
             } else BigDecimal.ZERO
 
 
+            val reportAssets = if (type == AssetType.NAKIT) {
+                // Ensure "Türk Lirası" always at top, then follow the specified order
+                val order = listOf("TRY", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
+                typeAssets.sortedWith(compareBy<com.example.cuzdan.data.local.entity.Asset> { asset ->
+                    if (asset.name == "Türk Lirası") -1 else {
+                        val index = order.indexOf(asset.symbol)
+                        if (index == -1) Int.MAX_VALUE else index
+                    }
+                })
+            } else typeAssets
+
             ReportCategory(
                 name = getLocalizedAssetTypeName(type, resolveContext),
                 totalValue = convCatValue,
                 changePerc = catPLPerc,
                 changeAbs = catPLAbs,
-                assets = typeAssets
+                assets = reportAssets
             )
         }
 

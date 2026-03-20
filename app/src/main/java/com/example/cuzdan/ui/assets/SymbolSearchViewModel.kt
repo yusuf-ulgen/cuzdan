@@ -25,7 +25,8 @@ data class SymbolSearchUiState(
     val results: List<MarketAsset> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val currency: String = "TL"
+    val currency: String = "TL",
+    val isFavoritesOnly: Boolean = false
 )
 
 @HiltViewModel
@@ -52,17 +53,21 @@ class SymbolSearchViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val marketAssets = repository.getMarketAssetsOnce(type)
-                if (marketAssets.isEmpty()) {
+                val shouldRefresh = marketAssets.isEmpty() || (type == AssetType.NAKIT && marketAssets.size <= 1)
+                
+                if (shouldRefresh) {
                     repository.refreshMarketAssets(type).collect { resource ->
                         if (resource is com.example.cuzdan.util.Resource.Success) {
                             val refreshedAssets = repository.getMarketAssetsOnce(type)
-                            _uiState.update { it.copy(results = transformAssets(refreshedAssets, type), isLoading = false) }
+                            val finalAssets = if (_uiState.value.isFavoritesOnly) refreshedAssets.filter { it.isFavorite } else refreshedAssets
+                            _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                         } else if (resource is com.example.cuzdan.util.Resource.Error) {
                             _uiState.update { it.copy(isLoading = false, error = resource.message) }
                         }
                     }
                 } else {
-                    _uiState.update { it.copy(results = transformAssets(marketAssets, type), isLoading = false) }
+                    val finalAssets = if (_uiState.value.isFavoritesOnly) marketAssets.filter { it.isFavorite } else marketAssets
+                    _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = "${context.getString(R.string.error_loading)}: ${e.localizedMessage}") }
@@ -80,7 +85,33 @@ class SymbolSearchViewModel @Inject constructor(
             delay(500)
             _uiState.update { it.copy(isLoading = true) }
             val searchResults = repository.searchAssets(query, type)
-            _uiState.update { it.copy(results = transformAssets(searchResults, type), isLoading = false) }
+            val finalAssets = if (_uiState.value.isFavoritesOnly) searchResults.filter { it.isFavorite } else searchResults
+            _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
+        }
+    }
+
+    fun toggleFavoritesOnly(type: AssetType) {
+        _uiState.update { it.copy(isFavoritesOnly = !it.isFavoritesOnly) }
+        loadInitialSymbols(type)
+    }
+
+    fun toggleFavorite(asset: MarketAsset, type: AssetType) {
+        viewModelScope.launch {
+            repository.toggleFavorite(asset.symbol, asset.assetType, !asset.isFavorite)
+            // Local state'i güncelle (Re-load initial symbols en garantisi ama performans için manual map de olabilir)
+            val updatedResults = _uiState.value.results.map {
+                if (it.symbol == asset.symbol && it.assetType == asset.assetType) {
+                    it.copy(isFavorite = !it.isFavorite)
+                } else it
+            }
+            
+            val filteredResults = if (_uiState.value.isFavoritesOnly) {
+                updatedResults.filter { it.isFavorite }
+            } else {
+                updatedResults
+            }
+            
+            _uiState.update { it.copy(results = filteredResults) }
         }
     }
 

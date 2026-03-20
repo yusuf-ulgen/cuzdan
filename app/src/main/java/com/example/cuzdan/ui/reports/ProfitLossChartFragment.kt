@@ -12,10 +12,23 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import com.example.cuzdan.R
+import com.example.cuzdan.data.local.entity.PortfolioHistory
+import com.example.cuzdan.util.formatCurrency
+import com.google.android.material.datepicker.MaterialDatePicker
+import dagger.hilt.android.AndroidEntryPoint
+import java.math.BigDecimal
+import java.text.SimpleDateFormat
+import java.util.*
+
+@AndroidEntryPoint
 class ProfitLossChartFragment : Fragment() {
 
     private var _binding: FragmentProfitLossChartBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: ProfitLossChartViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,109 +37,152 @@ class ProfitLossChartFragment : Fragment() {
     ): View {
         _binding = FragmentProfitLossChartBinding.inflate(inflater, container, false)
         
-        setupChart()
-        
-        binding.btnBack.setOnClickListener {
-            findNavController().navigateUp()
-        }
+        setupListeners()
+        observeState()
         
         return binding.root
     }
 
-    private fun setupChart() {
-        val entries = listOf(
-            Entry(0f, 1000f),
-            Entry(1f, 1100f),
-            Entry(2f, 950f),
-            Entry(3f, 1200f),
-            Entry(4f, 1800f),
-            Entry(5f, 1750f),
-            Entry(6f, 1600f),
-            Entry(7f, 1900f)
-        )
+    private fun setupListeners() {
+        binding.btnBack.setOnClickListener {
+            findNavController().navigateUp()
+        }
+        
+        binding.layoutPeriodSelector.setOnClickListener {
+            showPeriodMenu()
+        }
+    }
 
-        val accentViolet = resources.getColor(com.example.cuzdan.R.color.accent_violet, null)
-        val accentVioletGlow = resources.getColor(com.example.cuzdan.R.color.accent_violet_glow, null)
+    private fun observeState() {
+        lifecycleScope.launchWhenStarted {
+            viewModel.uiState.collect { state ->
+                binding.progressLoader.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+                
+                binding.textPeriodLabel.text = when(state.period) {
+                    ChartPeriod.SevenDays -> "Son 7 Gün"
+                    ChartPeriod.OneMonth -> "Son 1 Ay"
+                    ChartPeriod.AllTime -> "Tüm Zamanlar"
+                    is ChartPeriod.Custom -> {
+                        val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
+                        "${sdf.format(Date(state.period.startDate))} - ${sdf.format(Date(state.period.endDate))}"
+                    }
+                }
 
-        val dataSet = LineDataSet(entries, "Kar/Zarar").apply {
-            color = accentViolet
-            lineWidth = 3f
-            setDrawCircles(false)
-            setDrawCircleHole(false)
-            setDrawValues(false)
-            mode = LineDataSet.Mode.CUBIC_BEZIER
-            cubicIntensity = 0.2f
+                if (state.dataPoints.isNotEmpty()) {
+                    updateChart(state.dataPoints)
+                    updateSummary(state.dataPoints)
+                }
+            }
+        }
+    }
+
+    private fun updateSummary(data: List<PortfolioHistory>) {
+        val last = data.last()
+        val first = data.first()
+        
+        binding.textTotalBalance.text = last.totalValue.formatCurrency(last.currency)
+        
+        val diff = last.totalValue.subtract(first.totalValue)
+        val perc = if (first.totalValue > BigDecimal.ZERO) {
+            diff.divide(first.totalValue, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
+        } else BigDecimal.ZERO
+        
+        val color = if (diff >= BigDecimal.ZERO) 
+            resources.getColor(R.color.accent_green, null) 
+        else 
+            resources.getColor(R.color.accent_red, null)
             
-            setDrawFilled(true)
-            fillDrawable = resources.getDrawable(com.example.cuzdan.R.drawable.bg_chart_gradient, null)
+        binding.textDailyChange.apply {
+            text = "${diff.formatCurrency(last.currency, showSign = true)} (%${perc.setScale(2, java.math.RoundingMode.HALF_UP)})"
+            setTextColor(color)
+        }
+    }
+
+    private fun showPeriodMenu() {
+        val options = arrayOf("Son 7 Gün", "Son 1 Ay", "Tüm Zamanlar", "Özel Tarih Aralığı")
+        androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
+            .setTitle("Tarih Aralığı Seçin")
+            .setItems(options) { _, which ->
+                when(which) {
+                    0 -> viewModel.setPeriod(ChartPeriod.SevenDays)
+                    1 -> viewModel.setPeriod(ChartPeriod.OneMonth)
+                    2 -> viewModel.setPeriod(ChartPeriod.AllTime)
+                    3 -> showCustomDatePicker()
+                }
+            }
+            .show()
+    }
+
+    private fun showCustomDatePicker() {
+        val dialog = CustomDateRangePickerDialog { start, end ->
+            viewModel.setPeriod(ChartPeriod.Custom(start, end))
+        }
+        dialog.show(childFragmentManager, CustomDateRangePickerDialog.TAG)
+    }
+
+    private fun updateChart(data: List<PortfolioHistory>) {
+        val entries = data.mapIndexed { index, history ->
+            Entry(index.toFloat(), history.totalValue.toFloat())
         }
 
-        binding.lineChart.apply {
-            data = LineData(dataSet)
-            description.isEnabled = false
-            legend.isEnabled = false
-            setTouchEnabled(true)
-            setScaleEnabled(false)
-            setPinchZoom(false)
-            setDrawGridBackground(false)
-            
-            xAxis.apply {
-                isEnabled = false
-            }
-            axisLeft.apply {
-                isEnabled = false
-            }
-            axisRight.apply {
-                isEnabled = false
-            }
-            
-            animateX(1200)
-        }
+        val accentViolet = resources.getColor(R.color.accent_violet, null)
 
-        // Setup the big chart (the main one)
-        val bigDataSet = LineDataSet(entries, "Total").apply {
+        val dataSet = LineDataSet(entries, "Total").apply {
             color = accentViolet
-            lineWidth = 5f
+            lineWidth = 4f
             setDrawCircles(true)
             setCircleColor(accentViolet)
-            circleRadius = 4f
-            setCircleHoleColor(resources.getColor(com.example.cuzdan.R.color.bg_dark_start, null))
-            setDrawCircleHole(true)
-            circleHoleRadius = 2f
-            
+            circleRadius = 3f
+            setDrawCircleHole(false)
             setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
             cubicIntensity = 0.15f
             
             setDrawFilled(true)
-            fillDrawable = resources.getDrawable(com.example.cuzdan.R.drawable.bg_chart_gradient, null)
+            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient, null)
         }
 
         binding.bigLineChart.apply {
-            data = LineData(bigDataSet)
+            this.data = LineData(dataSet)
             description.isEnabled = false
             legend.isEnabled = false
             setTouchEnabled(true)
             setScaleEnabled(true)
             setPinchZoom(true)
             
+            // Set Marker
+            val mv = ChartMarkerView(requireContext(), data)
+            mv.chartView = this
+            marker = mv
+            
             xAxis.apply {
-                textColor = resources.getColor(com.example.cuzdan.R.color.text_secondary, null)
+                textColor = resources.getColor(R.color.text_secondary, null)
                 position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
                 setDrawGridLines(false)
-                axisLineColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
+                axisLineColor = resources.getColor(R.color.divider_color, null)
+                
+                // Add labels if possible (every few points)
+                valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                    val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
+                    override fun getFormattedValue(value: Float): String {
+                        val idx = value.toInt()
+                        return if (idx >= 0 && idx < data.size) {
+                            sdf.format(Date(data[idx].date))
+                        } else ""
+                    }
+                }
             }
             axisLeft.apply {
-                textColor = resources.getColor(com.example.cuzdan.R.color.text_secondary, null)
+                textColor = resources.getColor(R.color.text_secondary, null)
                 setDrawGridLines(true)
-                gridColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
+                gridColor = resources.getColor(R.color.divider_color, null)
                 gridLineWidth = 0.5f
-                axisLineColor = resources.getColor(com.example.cuzdan.R.color.divider_color, null)
-                labelCount = 6
+                axisLineColor = resources.getColor(R.color.divider_color, null)
             }
             axisRight.isEnabled = false
             
-            animateX(1500)
+            invalidate()
+            animateX(1000)
         }
     }
 

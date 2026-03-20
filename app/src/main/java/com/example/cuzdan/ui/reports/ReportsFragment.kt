@@ -120,6 +120,11 @@ class ReportsFragment : Fragment() {
             binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency)
             binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency)
             binding.textDailyChangePerc.text = String.format("%%%+.2f", state.totalProfitPerc)
+            
+            // Update daily change icon
+            binding.imageDailyChangeArrow.setImageResource(R.drawable.ic_arrow_drop_down)
+            binding.imageDailyChangeArrow.rotation = if (isPositive) 180f else 0f
+            binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
         }
         
         // Currency icon update

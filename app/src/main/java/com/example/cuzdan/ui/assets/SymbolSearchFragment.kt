@@ -52,6 +52,10 @@ class SymbolSearchFragment : Fragment() {
             }
         }
 
+        binding.btnFavorites.setOnClickListener {
+            viewModel.toggleFavoritesOnly(type)
+        }
+
         setupRecyclerView()
         setupSearch()
         observeViewModel()
@@ -77,15 +81,22 @@ class SymbolSearchFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = MarketAdapter { selectedAsset ->
-            val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
-                symbol = selectedAsset.symbol,
-                name = selectedAsset.name,
-                assetType = selectedAsset.assetType.name,
-                currency = selectedAsset.currency
-            )
-            findNavController().navigate(action)
-        }
+        val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
+        adapter = MarketAdapter(
+            showChange = false,
+            onItemClick = { selectedAsset ->
+                val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
+                    symbol = selectedAsset.symbol,
+                    name = selectedAsset.name,
+                    assetType = selectedAsset.assetType.name,
+                    currency = selectedAsset.currency
+                )
+                findNavController().navigate(action)
+            },
+            onFavoriteClick = { asset ->
+                viewModel.toggleFavorite(asset, type)
+            }
+        )
         binding.recyclerSymbols.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerSymbols.adapter = adapter
     }
@@ -108,6 +119,7 @@ class SymbolSearchFragment : Fragment() {
                 binding.progressBar.visibility = if (state.isLoading) View.VISIBLE else View.GONE
 
                 binding.btnCurrencySwitcher.setImageResource(if (state.currency == "TL") R.drawable.ic_tl else R.drawable.ic_usd)
+                binding.btnFavorites.setImageResource(if (state.isFavoritesOnly) R.drawable.ic_star else R.drawable.ic_star_outline)
                 adapter.setItems(state.results)
                 
                 if (state.error != null) {

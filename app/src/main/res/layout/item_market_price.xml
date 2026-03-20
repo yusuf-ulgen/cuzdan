@@ -42,44 +42,74 @@
 
         <TextView
             android:id="@+id/text_market_name"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="sans-serif-black"
             android:textColor="?attr/textPrimary"
             android:textSize="16sp"
-
-            app:layout_constraintBottom_toTopOf="@id/text_market_symbol"
-            app:layout_constraintEnd_toStartOf="@id/text_market_price"
             app:layout_constraintStart_toEndOf="@id/view_icon_bg"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Bitcoin" />
+            tools:text="THYAO" />
+
+        <ImageView
+            android:id="@+id/image_market_favorite"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:padding="6dp"
+            android:layout_marginStart="2dp"
+            android:src="@drawable/ic_star_outline"
+            app:layout_constraintStart_toEndOf="@id/text_market_name"
+            app:layout_constraintTop_toTopOf="@id/text_market_name"
+            app:layout_constraintBottom_toBottomOf="@id/text_market_name"
+            app:tint="@color/accent_violet_light" />
+
+        <TextView
+            android:id="@+id/text_market_full_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:alpha="0.6"
+            android:fontFamily="sans-serif"
+            android:maxLines="1"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:singleLine="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:textColor="?attr/textPrimary"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toStartOf="@id/text_market_price"
+            app:layout_constraintStart_toStartOf="@id/text_market_name"
+            app:layout_constraintTop_toBottomOf="@id/text_market_name"
+            tools:text="Türk Hava Yolları A.O." />
 
         <TextView
             android:id="@+id/text_market_symbol"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:alpha="0.7"
             android:fontFamily="sans-serif"
             android:textColor="?attr/textSecondary"
             android:textSize="11dp"
-
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:visibility="gone"
             app:layout_constraintStart_toStartOf="@id/text_market_name"
-            app:layout_constraintTop_toBottomOf="@id/text_market_name"
+            app:layout_constraintTop_toBottomOf="@id/text_market_full_name"
             tools:text="BTC/USDT" />
+
 
         <TextView
             android:id="@+id/text_market_price"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
+            android:fontFamily="sans-serif-black"
             android:textColor="?attr/textPrimary"
             android:textSize="16sp"
-
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="$65.430,20" />
+            tools:text="₺15,73" />
 
         <TextView
             android:id="@+id/text_market_change"

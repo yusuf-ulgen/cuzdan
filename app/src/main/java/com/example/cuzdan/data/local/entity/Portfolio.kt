@@ -8,5 +8,6 @@ data class Portfolio(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val isIncludedInTotal: Boolean = true
+    val isIncludedInTotal: Boolean = true,
+    val createdAt: Long = System.currentTimeMillis()
 )

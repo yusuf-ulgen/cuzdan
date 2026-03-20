@@ -8,10 +8,12 @@ import java.math.BigDecimal
 data class MarketAsset(
     val symbol: String,
     val name: String,
+    val fullName: String? = null,
     val currentPrice: BigDecimal,
     val dailyChangePercentage: BigDecimal,
     val assetType: AssetType,
     val currency: String = "TRY",
+    val isFavorite: Boolean = false,
     val lastUpdated: Long = System.currentTimeMillis()
 )
 

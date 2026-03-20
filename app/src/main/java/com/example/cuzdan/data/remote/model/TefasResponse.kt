@@ -3,7 +3,7 @@ package com.example.cuzdan.data.remote.model
 import com.google.gson.annotations.SerializedName
 
 data class TefasRequest(
-    @SerializedName("fontip")
+    @SerializedName("fontipi")
     val fundType: String,
     @SerializedName("tarih")
     val date: String

@@ -26,6 +26,7 @@ hiltWork = "1.2.0"
 mpAndroidChart = "v3.1.0"
 biometric = "1.2.0-alpha05"
 securityCrypto = "1.1.0-alpha06"
+coil = "2.6.0"
 
 
 [libraries]
@@ -66,6 +67,7 @@ androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", vers
 mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpAndroidChart" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 
 
 [plugins]

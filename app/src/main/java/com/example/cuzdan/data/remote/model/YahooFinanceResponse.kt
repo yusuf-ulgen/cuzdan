@@ -44,7 +44,11 @@ data class Meta(
     @SerializedName("symbol")
     val symbol: String,
     @SerializedName("currency")
-    val currency: String
+    val currency: String,
+    @SerializedName("shortName")
+    val shortName: String? = null,
+    @SerializedName("longName")
+    val longName: String? = null
 )
 
 

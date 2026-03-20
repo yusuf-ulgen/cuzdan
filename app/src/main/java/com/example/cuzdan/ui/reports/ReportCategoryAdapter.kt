@@ -117,33 +117,37 @@ class ReportAssetInlineAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val asset = assets[position]
         holder.binding.apply {
-            tvAssetSymbol.text = asset.symbol
             tvAssetName.text = asset.name
             
-            // Note: Simplification - we assume the values passed to adapters are already converted by viewmodel
             val totalValue = asset.amount.multiply(asset.currentPrice)
+            val cost = asset.amount.multiply(asset.averageBuyPrice)
+            val profitLoss = totalValue.subtract(cost)
+            val isProfit = profitLoss >= BigDecimal.ZERO
             
-            if (isPrivacyEnabled) {
-                tvAssetPrice.text = "**** $currency"
-                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
-                tvAssetChange.text = "***"
-                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
-            } else {
-                tvAssetPrice.text = totalValue.formatCurrency(currency)
-                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
-                
-                val cost = asset.amount.multiply(asset.averageBuyPrice)
-                val profitLoss = totalValue.subtract(cost)
-                val isProfit = profitLoss >= BigDecimal.ZERO
-                
-                val profitPerc = if (cost.compareTo(BigDecimal.ZERO) > 0) {
-                    profitLoss.divide(cost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
-                } else BigDecimal.ZERO
+            val profitPerc = if (cost.compareTo(BigDecimal.ZERO) > 0) {
+                profitLoss.divide(cost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
+            } else BigDecimal.ZERO
 
-                tvAssetChange.text = String.format("%s %%%+.1f", if (isProfit) "▲" else "▼", profitPerc)
+            val color = if (isProfit) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
+            val colorInt = holder.itemView.context.getColor(color)
+
+            if (isPrivacyEnabled) {
+                tvAssetSymbol.text = "%***"
+                tvAssetChange.text = "**** $currency"
+                tvAssetPrice.text = "****"
                 
-                val color = if (isProfit) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
-                tvAssetChange.setTextColor(holder.itemView.context.getColor(color))
+                tvAssetSymbol.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+            } else {
+                tvAssetSymbol.text = String.format("%%%+.1f", profitPerc)
+                tvAssetSymbol.setTextColor(colorInt)
+                
+                tvAssetChange.text = totalValue.formatCurrency(currency)
+                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                
+                tvAssetPrice.text = profitLoss.formatCurrency(currency, showSign = true)
+                tvAssetPrice.setTextColor(colorInt)
             }
         }
     }

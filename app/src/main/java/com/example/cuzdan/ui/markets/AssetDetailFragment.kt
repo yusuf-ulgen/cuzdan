@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.cuzdan.R
+import android.content.res.ColorStateList
 import com.example.cuzdan.databinding.FragmentAssetDetailBinding
 import com.example.cuzdan.util.formatCurrency
 import com.github.mikephil.charting.data.Entry
@@ -48,7 +49,7 @@ class AssetDetailFragment : Fragment() {
         setupListeners()
         observeState()
         
-        if (args.assetType == "NAKIT") {
+        if (args.assetType == "NAKIT" && args.symbol == "TRY") {
             binding.layoutCostContainer.visibility = View.GONE
             binding.textAmountLabel.text = "TL"
         }
@@ -62,6 +63,14 @@ class AssetDetailFragment : Fragment() {
         binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
         }
+        binding.btnDelete.setOnClickListener {
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Varlığı Sil")
+                .setMessage("Bu varlığı portföyünüzden silmek istediğinize emin misiniz?")
+                .setPositiveButton("Sil") { _, _ -> viewModel.deleteAsset() }
+                .setNegativeButton("İptal", null)
+                .show()
+        }
     }
 
 
@@ -71,7 +80,7 @@ class AssetDetailFragment : Fragment() {
             val costStr = binding.editCost.text.toString()
             
             if (amountStr.isEmpty()) {
-                binding.editAmount.error = getString(R.string.error_loading) // Uygun bir hata mesajı
+                binding.editAmount.error = "Miktar boş olamaz"
                 return@setOnClickListener
             }
             
@@ -81,14 +90,31 @@ class AssetDetailFragment : Fragment() {
             viewModel.saveAsset(amount, cost, args.assetType)
         }
 
+        binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                val type = if (checkedId == R.id.btnBuy) TransactionType.BUY else TransactionType.SELL
+                viewModel.setTransactionType(type)
+                
+                if (type == TransactionType.SELL) {
+                    binding.layoutCostContainer.visibility = View.GONE
+                    binding.btnSave.text = "SATIŞI KAYDET"
+                    binding.btnSave.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.accent_red, null))
+                } else {
+                    if (args.assetType != "NAKIT" || args.symbol != "TRY") {
+                        binding.layoutCostContainer.visibility = View.VISIBLE
+                    }
+                    binding.btnSave.text = "ALIŞI KAYDET"
+                    binding.btnSave.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.accent_violet, null))
+                }
+            }
+        }
+
         binding.chartRangeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 when (checkedId) {
                     R.id.btnRange1W -> viewModel.updateRange("1w")
                     R.id.btnRange1M -> viewModel.updateRange("1mo")
                     R.id.btnRange1Y -> viewModel.updateRange("1y")
-
-                    // Varsayılan 1D butonu eklenirse buraya eklenebilir
                 }
             }
         }
@@ -100,8 +126,12 @@ class AssetDetailFragment : Fragment() {
                 viewModel.uiState.collect { state ->
                     updateUI(state)
                     if (state.isSaved) {
-                        Toast.makeText(requireContext(), "Varlık başarıyla eklendi", Toast.LENGTH_SHORT).show()
-                        findNavController().navigate(R.id.navigation_wallet)
+                        Toast.makeText(requireContext(), "Varlık başarıyla güncellendi", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
+                    }
+                    if (state.isDeleted) {
+                        Toast.makeText(requireContext(), "Varlık silindi", Toast.LENGTH_SHORT).show()
+                        findNavController().navigateUp()
                     }
                     if (state.errorMessage != null) {
                         Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT).show()
@@ -113,6 +143,10 @@ class AssetDetailFragment : Fragment() {
 
     private fun updateUI(state: AssetDetailUiState) {
         binding.textCurrentPrice.text = state.currentPrice.formatCurrency()
+        binding.textPortfolioName.text = "Portföy: ${state.portfolioName}"
+        
+        // Show held amount
+        binding.textCurrentAmountHeld.text = "Eldeki: ${state.currentAmount.toPlainString()}"
         
         val isPositive = state.dailyChangePercentage >= BigDecimal.ZERO
         binding.textPriceChange.text = String.format("%%%+.2f", state.dailyChangePercentage)

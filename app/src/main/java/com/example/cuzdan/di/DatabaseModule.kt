@@ -6,6 +6,7 @@ import com.example.cuzdan.data.local.AppDatabase
 import com.example.cuzdan.data.local.dao.AssetDao
 import com.example.cuzdan.data.local.dao.PortfolioDao
 import com.example.cuzdan.data.local.dao.MarketAssetDao
+import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
 
 import dagger.Module
 import dagger.Provides
@@ -24,6 +25,12 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE portfolios ADD COLUMN createdAt INTEGER NOT NULL DEFAULT " + System.currentTimeMillis())
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -36,7 +43,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "cuzdan_db"
         )
-        .addMigrations(MIGRATION_5_6)
+        .addMigrations(MIGRATION_5_6, MIGRATION_8_9)
         .fallbackToDestructiveMigration()
         .build()
     }
@@ -54,6 +61,11 @@ object DatabaseModule {
     @Provides
     fun provideMarketAssetDao(database: AppDatabase): MarketAssetDao {
         return database.marketAssetDao()
+    }
+
+    @Provides
+    fun providePortfolioHistoryDao(database: AppDatabase): PortfolioHistoryDao {
+        return database.portfolioHistoryDao()
     }
 }
 

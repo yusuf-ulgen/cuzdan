@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import javax.inject.Inject
 
+enum class TransactionType { BUY, SELL }
+
 data class AssetDetailUiState(
     val symbol: String = "",
     val name: String = "",
@@ -25,7 +27,12 @@ data class AssetDetailUiState(
     val history: List<Pair<Long, Double>> = emptyList(),
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
-    val errorMessage: String? = null
+    val isDeleted: Boolean = false,
+    val errorMessage: String? = null,
+    val currentAmount: BigDecimal = BigDecimal.ZERO,
+    val averageBuyPrice: BigDecimal = BigDecimal.ZERO,
+    val portfolioName: String = "Ana Portföy",
+    val transactionType: TransactionType = TransactionType.BUY
 )
 
 
@@ -40,11 +47,26 @@ class AssetDetailViewModel @Inject constructor(
     val uiState: StateFlow<AssetDetailUiState> = _uiState.asStateFlow()
 
     fun init(symbol: String, name: String, typeString: String, currency: String = "TRY") {
-        if (_uiState.value.symbol.isNotEmpty()) return // Zaten initialize edilmişse çalışma
+        if (_uiState.value.symbol.isNotEmpty()) return 
         
         _uiState.update { it.copy(symbol = symbol, name = name, currency = currency) }
         loadHistory(symbol)
         observeCurrentPrice(symbol)
+        loadExistingAsset(symbol)
+    }
+
+    private fun loadExistingAsset(symbol: String) {
+        viewModelScope.launch {
+            val portfolioId = prefManager.getSelectedPortfolioId().let { if (it == -1L) 1L else it }
+            val portfolio = portfolioRepository.getPortfolioById(portfolioId)
+            val existing = repository.getAssetBySymbolAndPortfolioId(symbol, portfolioId)
+            
+            _uiState.update { it.copy(
+                currentAmount = existing?.amount ?: BigDecimal.ZERO,
+                averageBuyPrice = existing?.averageBuyPrice ?: BigDecimal.ZERO,
+                portfolioName = portfolio?.name ?: "Ana Portföy"
+            ) }
+        }
     }
 
     fun updateRange(range: String) {
@@ -85,23 +107,49 @@ class AssetDetailViewModel @Inject constructor(
         }
     }
 
-    fun saveAsset(amount: BigDecimal, avgCost: BigDecimal, typeString: String) {
+    fun setTransactionType(type: TransactionType) {
+        _uiState.update { it.copy(transactionType = type) }
+    }
+
+    fun saveAsset(enteredAmount: BigDecimal, enteredCost: BigDecimal, typeString: String) {
         viewModelScope.launch {
             val state = _uiState.value
+            val currentAmount = state.currentAmount
+            val transactionType = state.transactionType
+            
+            val newAmount = if (transactionType == TransactionType.BUY) {
+                currentAmount.add(enteredAmount)
+            } else {
+                if (currentAmount < enteredAmount) {
+                    _uiState.update { it.copy(errorMessage = "Yetersiz bakiye! Mevcut: $currentAmount") }
+                    return@launch
+                }
+                currentAmount.subtract(enteredAmount)
+            }
+
             var portfolioId = prefManager.getSelectedPortfolioId()
-            if (portfolioId == -1L) portfolioId = 1L // Ana Portföy varsayılan
+            if (portfolioId == -1L) portfolioId = 1L 
 
             val assetType = AssetType.valueOf(typeString)
-            
-            // Nakit ise fiyat her zaman 1 (Sabit)
             val isCash = assetType == AssetType.NAKIT
+            
+            // Ortalama maliyet hesabı
+            val newAvgCost = if (transactionType == TransactionType.BUY) {
+                if (newAmount > BigDecimal.ZERO) {
+                    val totalCost = (currentAmount * state.averageBuyPrice) + (enteredAmount * enteredCost)
+                    totalCost.divide(newAmount, 8, java.math.RoundingMode.HALF_UP)
+                } else enteredCost
+            } else {
+                state.averageBuyPrice // Satışta maliyet değişmez
+            }
+
             val finalCurrentPrice = if (isCash) BigDecimal.ONE else state.currentPrice
-            val finalAvgCost = if (isCash) BigDecimal.ONE else avgCost
+            val finalAvgCost = if (isCash) BigDecimal.ONE else newAvgCost
             
             val asset = Asset(
                 symbol = state.symbol,
                 name = state.name,
-                amount = amount,
+                amount = newAmount,
                 averageBuyPrice = finalAvgCost,
                 currentPrice = finalCurrentPrice,
                 dailyChangePercentage = if (isCash) BigDecimal.ZERO else state.dailyChangePercentage,
@@ -110,8 +158,20 @@ class AssetDetailViewModel @Inject constructor(
                 currency = if (isCash) "TRY" else state.currency
             )
 
-            repository.upsertAsset(asset)
-            _uiState.update { it.copy(isSaved = true) }
+            repository.addAsset(asset)
+            _uiState.update { it.copy(isSaved = true, currentAmount = newAmount, averageBuyPrice = finalAvgCost) }
+        }
+    }
+
+    fun deleteAsset() {
+        viewModelScope.launch {
+            val state = _uiState.value
+            val portfolioId = prefManager.getSelectedPortfolioId().let { if (it == -1L) 1L else it }
+            val asset = repository.getAssetBySymbolAndPortfolioId(state.symbol, portfolioId)
+            if (asset != null) {
+                repository.deleteAsset(asset)
+            }
+            _uiState.update { it.copy(isDeleted = true) }
         }
     }
 }

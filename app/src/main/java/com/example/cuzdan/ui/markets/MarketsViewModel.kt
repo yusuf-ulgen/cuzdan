@@ -25,6 +25,7 @@ data class MarketsUiState(
     val isLoading: Boolean = false,
     val selectedType: AssetType = AssetType.BIST,
     val searchQuery: String = "",
+    val isFavoritesOnly: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -36,21 +37,29 @@ class MarketsViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     private val _selectedType = MutableStateFlow(AssetType.BIST)
+    private val _isFavoritesOnly = MutableStateFlow(false)
     private val _isLoading = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<MarketsUiState> = combine(
-
         _selectedType.flatMapLatest { repository.getMarketAssetsFlow(it) },
         _searchQuery,
         _selectedType,
+        _isFavoritesOnly,
         _isLoading,
         _errorMessage
-    ) { prices, query, type, loading, error ->
+    ) { array ->
+        val prices = array[0] as List<MarketAsset>
+        val query = array[1] as String
+        val type = array[2] as AssetType
+        val favoritesOnly = array[3] as Boolean
+        val loading = array[4] as Boolean
+        val error = array[5] as String?
+
         val filtered = prices.filter { asset ->
-            asset.name.contains(query, ignoreCase = true) || 
-            asset.symbol.contains(query, ignoreCase = true)
+            (asset.name.contains(query, ignoreCase = true) || asset.symbol.contains(query, ignoreCase = true)) &&
+            (!favoritesOnly || asset.isFavorite)
         }
         MarketsUiState(
             prices = prices,
@@ -58,6 +67,7 @@ class MarketsViewModel @Inject constructor(
             isLoading = loading,
             selectedType = type,
             searchQuery = query,
+            isFavoritesOnly = favoritesOnly,
             errorMessage = error
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MarketsUiState())
@@ -94,6 +104,16 @@ class MarketsViewModel @Inject constructor(
 
     fun search(query: String) {
         _searchQuery.value = query
+    }
+
+    fun toggleFavoritesOnly() {
+        _isFavoritesOnly.value = !_isFavoritesOnly.value
+    }
+
+    fun toggleFavorite(asset: MarketAsset) {
+        viewModelScope.launch {
+            repository.toggleFavorite(asset.symbol, asset.assetType, !asset.isFavorite)
+        }
     }
 }
 

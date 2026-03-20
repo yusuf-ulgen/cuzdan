@@ -57,24 +57,23 @@
         android:id="@+id/tvAssetChange"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/accent_green"
-        android:textSize="13sp"
-        android:fontFamily="sans-serif-black"
+        android:textColor="?attr/textPrimary"
+        android:textSize="14sp"
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="+%18,9" />
+        tools:text="₺1.457,00" />
 
     <TextView
         android:id="@+id/tvAssetPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/textPrimary"
-        android:textSize="13sp"
-
+        android:textColor="@color/accent_green"
+        android:textSize="12sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvAssetChange"
-        tools:text="₺99,36" />
+        tools:text="+₺294,00" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

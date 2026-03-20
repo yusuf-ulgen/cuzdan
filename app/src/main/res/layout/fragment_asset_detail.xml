@@ -28,12 +28,38 @@
         android:fontFamily="sans-serif-black"
         android:text="Varlık Detayı"
         android:textColor="?attr/textPrimary"
-        android:textSize="24sp"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toTopOf="@id/text_portfolio_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btn_back"
+        app:layout_constraintVertical_chainStyle="packed" />
 
+    <TextView
+        android:id="@+id/text_portfolio_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Portföy: Ana Portföy"
+        android:textColor="?attr/textSecondary"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/btn_back" />
+        app:layout_constraintTop_toBottomOf="@id/text_title_detail" />
+
+    <ImageButton
+        android:id="@+id/btn_delete"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_icon_circle"
+        android:padding="12dp"
+        android:src="@drawable/ic_delete"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btn_back"
+        app:layout_constraintBottom_toBottomOf="@id/btn_back"
+        app:tint="@color/accent_red" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -185,8 +211,18 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Miktar"
+                            android:text="İşlem Miktarı"
                             android:textColor="@color/text_secondary"
+                            android:fontFamily="sans-serif-medium" />
+
+                        <TextView
+                            android:id="@+id/textCurrentAmountHeld"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Eldeki: 0.00"
+                            android:textColor="@color/accent_violet_light"
+                            android:textSize="12sp"
+                            android:layout_marginEnd="8dp"
                             android:fontFamily="sans-serif-medium" />
 
                         <TextView
@@ -244,11 +280,44 @@
 
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleTransactionType"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@+id/btnBuy">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBuy"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="ALIŞ (EKLE)"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="?attr/textPrimary"
+                    app:strokeColor="?attr/surfaceGlassStrong" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSell"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="SATIŞ (AZALT)"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="?attr/textPrimary"
+                    app:strokeColor="?attr/surfaceGlassStrong" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:layout_marginTop="32dp"
                 android:layout_marginBottom="32dp"
                 android:backgroundTint="@color/accent_violet"
                 android:fontFamily="sans-serif-black"

@@ -45,16 +45,21 @@ class MarketsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = MarketAdapter { asset ->
-            val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
-                symbol = asset.symbol,
-                name = asset.name,
-                assetType = asset.assetType.name,
-                currency = asset.currency
-            )
-
-            findNavController().navigate(action)
-        }
+        adapter = MarketAdapter(
+            showChange = true,
+            onItemClick = { asset ->
+                val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
+                    symbol = asset.symbol,
+                    name = asset.name,
+                    assetType = asset.assetType.name,
+                    currency = asset.currency
+                )
+                findNavController().navigate(action)
+            },
+            onFavoriteClick = { asset ->
+                viewModel.toggleFavorite(asset)
+            }
+        )
         binding.recyclerMarkets.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerMarkets.adapter = adapter
     }
@@ -62,6 +67,10 @@ class MarketsFragment : Fragment() {
     private fun setupListeners() {
         binding.swipeRefreshMarkets.setOnRefreshListener {
             viewModel.refreshPrices()
+        }
+
+        binding.btnFavorites.setOnClickListener {
+            viewModel.toggleFavoritesOnly()
         }
 
         binding.editSearch.addTextChangedListener(object : TextWatcher {
@@ -93,6 +102,7 @@ class MarketsFragment : Fragment() {
                 viewModel.uiState.collect { state ->
                     adapter.setItems(state.filteredPrices)
                     binding.swipeRefreshMarkets.isRefreshing = state.isLoading
+                    binding.btnFavorites.setImageResource(if (state.isFavoritesOnly) R.drawable.ic_star else R.drawable.ic_star_outline)
                     
                     if (state.isLoading) {
                         binding.shimmerMarkets.startShimmer()

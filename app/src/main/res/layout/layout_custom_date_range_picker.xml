@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="32dp"
+    android:background="@drawable/bg_pill_dark">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tarih Aralığı Seç"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="28dp"
+        android:layout_gravity="center_horizontal"/>
+
+    <!-- Start Date -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Başlangıç Tarihi"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="10dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp">
+
+        <Spinner
+            android:id="@+id/spinnerStartDay"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_spinner"
+            android:layout_marginEnd="6dp"
+            android:paddingStart="12dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerStartMonth"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.5"
+            android:background="@drawable/bg_spinner"
+            android:layout_marginEnd="6dp"
+            android:paddingStart="12dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerStartYear"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.2"
+            android:background="@drawable/bg_spinner"
+            android:paddingStart="12dp"/>
+    </LinearLayout>
+
+    <!-- End Date -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bitiş Tarihi"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:letterSpacing="0.05"
+        android:layout_marginBottom="10dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="32dp">
+
+        <Spinner
+            android:id="@+id/spinnerEndDay"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_spinner"
+            android:layout_marginEnd="6dp"
+            android:paddingStart="12dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerEndMonth"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.5"
+            android:background="@drawable/bg_spinner"
+            android:layout_marginEnd="6dp"
+            android:paddingStart="12dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerEndYear"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.2"
+            android:background="@drawable/bg_spinner"
+            android:paddingStart="12dp"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnSaveRange"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="KAYDET"
+        android:textSize="16sp"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:backgroundTint="@color/accent_violet"
+        android:background="@drawable/bg_button_pill"
+        android:elevation="4dp"/>
+</LinearLayout>

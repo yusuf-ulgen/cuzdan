@@ -1,6 +1,7 @@
 package com.example.cuzdan.data.repository
 
 import com.example.cuzdan.data.local.dao.AssetDao
+import com.example.cuzdan.data.local.dao.PortfolioDao
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.data.remote.api.BinanceApi
@@ -9,6 +10,8 @@ import com.example.cuzdan.data.remote.api.TefasApi
 import com.example.cuzdan.data.remote.model.TefasRequest
 import com.example.cuzdan.data.remote.model.YahooQuote
 import com.example.cuzdan.data.local.dao.MarketAssetDao
+import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
+import com.example.cuzdan.data.local.entity.PortfolioHistory
 import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -30,9 +33,11 @@ import javax.inject.Singleton
 class AssetRepository @Inject constructor(
     private val assetDao: AssetDao,
     private val marketAssetDao: MarketAssetDao,
+    private val portfolioHistoryDao: PortfolioHistoryDao,
     private val binanceApi: BinanceApi,
     private val yahooFinanceApi: YahooFinanceApi,
-    private val tefasApi: TefasApi
+    private val tefasApi: TefasApi,
+    private val portfolioDao: PortfolioDao
 ) {
     /**
      * Tüm kripto varlıkları Flow olarak döner.
@@ -306,13 +311,17 @@ class AssetRepository @Inject constructor(
                     binanceApi.getAllTickers()
                         .filter { it.symbol.endsWith("USDT") }
                         .map { ticker ->
+                            val symbol = ticker.symbol
+                            val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.KRIPTO)
                             MarketAsset(
-                                symbol = ticker.symbol,
-                                name = ticker.symbol.replace("USDT", ""),
+                                symbol = symbol,
+                                name = symbol.replace("USDT", ""),
+                                fullName = symbol.replace("USDT", ""),
                                 currentPrice = BigDecimal(ticker.lastPrice),
                                 dailyChangePercentage = BigDecimal(ticker.priceChangePercent).setScale(2, RoundingMode.HALF_UP),
                                 assetType = AssetType.KRIPTO,
-                                currency = "USD"
+                                currency = "USD",
+                                isFavorite = existing?.isFavorite ?: false
                             )
                         }
                 }
@@ -369,30 +378,34 @@ class AssetRepository @Inject constructor(
                                     calendar.add(java.util.Calendar.DATE, -1)
                                 }
                                 
+                                val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.FON)
                                 MarketAsset(
                                     symbol = symbol,
                                     name = fundName,
+                                    fullName = fundName,
                                     currentPrice = price,
                                     dailyChangePercentage = BigDecimal.ZERO,
                                     assetType = AssetType.FON,
-                                    currency = "TRY"
+                                    currency = "TRY",
+                                    isFavorite = existing?.isFavorite ?: false
                                 )
                             }
                         }.awaitAll()
                     }
                 }
                 AssetType.NAKIT -> {
-                    // Check if fresh (< 30 mins)
-                    val existing = marketAssetDao.getMarketAssetsByTypeOnce(AssetType.NAKIT)
-                    val lastUpdate = existing.firstOrNull()?.lastUpdated ?: 0L
-                    if (System.currentTimeMillis() - lastUpdate < 30 * 60 * 1000 && existing.isNotEmpty()) {
-                        emit(Resource.Success(Unit))
-                        return@flow
-                    }
-
-                    val cashPairs = listOf("USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X")
+                    Log.d("AssetRepo", "[NAKIT] Refreshing...")
+                    val cashPairs = listOf("USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X", "GBPUSD=X")
                     val marketAssets = mutableListOf<MarketAsset>()
-                    marketAssets.add(MarketAsset("TRY", "Türk Lirası", BigDecimal.ONE, BigDecimal.ZERO, AssetType.NAKIT, "TRY"))
+                    marketAssets.add(MarketAsset(
+                        symbol = "TRY",
+                        name = "Türk Lirası",
+                        fullName = "Türk Lirası",
+                        currentPrice = BigDecimal.ONE,
+                        dailyChangePercentage = BigDecimal.ZERO,
+                        assetType = AssetType.NAKIT,
+                        currency = "TRY"
+                    ))
                     
                     kotlinx.coroutines.coroutineScope {
                         cashPairs.map { symbol ->
@@ -400,8 +413,15 @@ class AssetRepository @Inject constructor(
                                 try {
                                     val response = yahooFinanceApi.getChartData(symbol)
                                     val result = response.chart.result?.firstOrNull()?.meta
-                                    val code = symbol.take(3)
+                                    Log.d("AssetRepo", "[NAKIT] Fetched $symbol: ${result?.regularMarketPrice}")
+                                    val code = if (symbol.contains("TRY")) symbol.take(3) else symbol.replace("=X", "")
                                     val price = result?.regularMarketPrice ?: BigDecimal.ONE
+                                    val prevClose = result?.previousClose ?: price
+                                    val change = if (prevClose > BigDecimal.ZERO) {
+                                        price.subtract(prevClose).divide(prevClose, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+                                    } else BigDecimal.ZERO
+
+                                    val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(code, AssetType.NAKIT)
                                     MarketAsset(
                                         symbol = code,
                                         name = when(code) {
@@ -410,17 +430,32 @@ class AssetRepository @Inject constructor(
                                             "GBP" -> "İngiliz Sterlini"
                                             "CHF" -> "İsviçre Frangı"
                                             "JPY" -> "Japon Yeni"
+                                            "GBPUSD" -> "GBP/USD"
+                                            else -> code
+                                        },
+                                        fullName = when(code) {
+                                            "USD" -> "Amerikan Doları"
+                                            "EUR" -> "Euro"
+                                            "GBP" -> "İngiliz Sterlini"
+                                            "CHF" -> "İsviçre Frangı"
+                                            "JPY" -> "Japon Yeni"
+                                            "GBPUSD" -> "GBP/USD"
                                             else -> code
                                         },
                                         currentPrice = price.setScale(4, RoundingMode.HALF_UP),
-                                        dailyChangePercentage = BigDecimal.ZERO,
+                                        dailyChangePercentage = change.setScale(2, RoundingMode.HALF_UP),
                                         assetType = AssetType.NAKIT,
-                                        currency = "TRY"
+                                        currency = "TRY",
+                                        isFavorite = existing?.isFavorite ?: false
                                     )
-                                } catch (e: Exception) { null }
+                                } catch (e: Exception) { 
+                                    Log.e("AssetRepo", "[NAKIT] Error fetching $symbol: ${e.message}")
+                                    null 
+                                }
                             }
                         }.awaitAll().filterNotNull().forEach { marketAssets.add(it) }
                     }
+                    Log.d("AssetRepo", "[NAKIT] Refresh DONE. Total: ${marketAssets.size}")
                     marketAssets
                 }
                 else -> {
@@ -455,16 +490,21 @@ class AssetRepository @Inject constructor(
                                         val m = resp.chart.result?.firstOrNull()?.meta
                                         if (m != null) {
                                             val current = m.regularMarketPrice
-                                            val prev = m.previousClose ?: current
+                                            val prev = m.previousClose
                                             val change = if (prev > BigDecimal.ZERO) {
                                                 (current - prev).divide(prev, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
                                             } else BigDecimal.ZERO
 
+                                            val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
                                             marketAssets.add(cleanMarketAssetNaming(MarketAsset(
-                                                sym, sym, 
-                                                current.setScale(2, RoundingMode.HALF_UP),
-                                                change.setScale(2, RoundingMode.HALF_UP), 
-                                                type, "TRY"
+                                                symbol = sym,
+                                                name = sym.replace(".IS", ""),
+                                                fullName = m.longName ?: m.shortName,
+                                                currentPrice = current.setScale(2, RoundingMode.HALF_UP),
+                                                dailyChangePercentage = change.setScale(2, RoundingMode.HALF_UP), 
+                                                assetType = type, 
+                                                currency = "TRY",
+                                                isFavorite = existing?.isFavorite ?: false
                                             ), type))
                                         }
                                     } catch (e: Exception) { 
@@ -505,16 +545,21 @@ class AssetRepository @Inject constructor(
                                             val m = resp.chart.result?.firstOrNull()?.meta
                                             if (m != null) {
                                                 val current = m.regularMarketPrice
-                                                val prev = m.previousClose ?: current
+                                                val prev = m.previousClose
                                                 val change = if (prev > BigDecimal.ZERO) {
                                                     (current - prev).divide(prev, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
                                                 } else BigDecimal.ZERO
 
+                                                val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
                                                 val asset = cleanMarketAssetNaming(MarketAsset(
-                                                    sym, sym, 
-                                                    current.setScale(2, RoundingMode.HALF_UP),
-                                                    change.setScale(2, RoundingMode.HALF_UP),
-                                                    type, "TRY"
+                                                    symbol = sym,
+                                                    name = sym.replace(".IS", ""),
+                                                    fullName = m.longName ?: m.shortName,
+                                                    currentPrice = current.setScale(2, RoundingMode.HALF_UP),
+                                                    dailyChangePercentage = change.setScale(2, RoundingMode.HALF_UP),
+                                                    assetType = type,
+                                                    currency = "TRY",
+                                                    isFavorite = existing?.isFavorite ?: false
                                                 ), type)
                                                 marketAssetDao.insertMarketAssets(listOf(asset))
                                                 // Log.v("AssetRepo", "[BIST Background] Added: $sym")
@@ -536,13 +581,16 @@ class AssetRepository @Inject constructor(
                                         val response = yahooFinanceApi.getChartData(symbol)
                                         val result = response.chart.result?.firstOrNull()?.meta
                                         if (result != null) {
+                                            val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, type)
                                             marketAssets.add(cleanMarketAssetNaming(MarketAsset(
                                                 symbol = symbol,
                                                 name = symbol,
-                                                currentPrice = (result.regularMarketPrice ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
+                                                fullName = result.longName ?: result.shortName,
+                                                currentPrice = result.regularMarketPrice.setScale(2, RoundingMode.HALF_UP),
                                                 dailyChangePercentage = BigDecimal.ZERO,
                                                 assetType = type,
-                                                currency = "TRY"
+                                                currency = "TRY",
+                                                isFavorite = existing?.isFavorite ?: false
                                             ), type))
                                         }
                                     } catch (e: Exception) { }
@@ -559,6 +607,7 @@ class AssetRepository @Inject constructor(
                             marketAssets.add(MarketAsset(
                                 symbol = "GRAM_ALTIN",
                                 name = "Gram Altın",
+                                fullName = "Gram Altın",
                                 currentPrice = gramPrice.setScale(2, RoundingMode.HALF_UP),
                                 dailyChangePercentage = onsAsset.dailyChangePercentage,
                                 assetType = AssetType.EMTIA,
@@ -573,9 +622,13 @@ class AssetRepository @Inject constructor(
                 }
             }
             
-            if (assets.isNotEmpty() && type != AssetType.BIST) {
-                marketAssetDao.deleteMarketAssetsByType(type)
-                marketAssetDao.insertMarketAssets(assets)
+            if (assets.isNotEmpty()) {
+                if (type != AssetType.BIST) {
+                    // Try to avoid full delete if possible, but for NAKIT and FON it's small enough.
+                    // However, we want to PRESERVE favorites, so we use REPLACE-based insert
+                    // and we already merged the isFavorite flag above.
+                    marketAssetDao.insertMarketAssets(assets)
+                }
                 Log.d("AssetRepo", "[$type] Final update DONE with ${assets.size} assets")
             } else if (assets.isEmpty()) {
                 Log.e("AssetRepo", "[$type] Fetched empty list, not updating DB to prevent data loss.")
@@ -605,6 +658,7 @@ class AssetRepository @Inject constructor(
                             MarketAsset(
                                 symbol = it.symbol,
                                 name = it.symbol.replace("USDT", ""),
+                                fullName = it.symbol.replace("USDT", ""),
                                 currentPrice = BigDecimal(it.lastPrice),
                                 dailyChangePercentage = BigDecimal(it.priceChangePercent).setScale(2, RoundingMode.HALF_UP),
                                 assetType = AssetType.KRIPTO
@@ -627,6 +681,7 @@ class AssetRepository @Inject constructor(
                             MarketAsset(
                                 symbol = quote.symbol,
                                 name = quote.shortName ?: quote.longName ?: quote.symbol,
+                                fullName = quote.longName ?: quote.shortName ?: quote.symbol,
                                 currentPrice = (quote.regularMarketPrice ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
                                 dailyChangePercentage = (quote.regularMarketChangePercent ?: BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP),
                                 assetType = type,
@@ -721,8 +776,95 @@ class AssetRepository @Inject constructor(
         assetDao.insertAsset(asset)
     }
 
+    suspend fun getAssetBySymbolAndPortfolioId(symbol: String, portfolioId: Long): Asset? {
+        return assetDao.getAssetBySymbolAndPortfolioId(symbol, portfolioId)
+    }
+
+    suspend fun deleteAsset(asset: Asset) {
+        assetDao.deleteAsset(asset)
+    }
+
+    suspend fun toggleFavorite(symbol: String, type: AssetType, isFavorite: Boolean) {
+        marketAssetDao.updateFavorite(symbol, type, isFavorite)
+    }
+
+    /**
+     * Portföy için tarihsel bir veri noktası kaydeder.
+     */
+    suspend fun recordPortfolioSnapshot(portfolioId: Long, totalValue: BigDecimal, currency: String) {
+        val now = System.currentTimeMillis()
+        portfolioHistoryDao.insert(PortfolioHistory(
+            portfolioId = portfolioId,
+            date = now,
+            totalValue = totalValue,
+            currency = currency
+        ))
+    }
+
+    /**
+     * Portföyün yerel olarak kaydedilmiş geçmişini döner.
+     */
+    fun getPortfolioHistory(portfolioId: Long): Flow<List<PortfolioHistory>> {
+        return portfolioHistoryDao.getAllHistory(portfolioId)
+    }
+
+    /**
+     * Geçmiş verisi olmayan durumlar için Yahoo verileriyle portföy geçmişini rekonstrukte eder.
+     */
+    suspend fun reconstructPortfolioHistory(portfolioId: Long, range: String): List<PortfolioHistory> = coroutineScope {
+        val assets = assetDao.getAssetsByPortfolioId(portfolioId).first()
+        if (assets.isEmpty()) return@coroutineScope emptyList()
+
+        val interval = when(range) {
+            "7d" -> "1h"
+            "1mo" -> "1d"
+            else -> "1d"
+        }
+
+        // Tüm varlıkların geçmiş fiyatlarını çek
+        val histories = assets.map { asset ->
+            async {
+                asset to getAssetHistory(asset.symbol, range, interval)
+            }
+        }.awaitAll()
+
+        // USD ve EUR kurlarını çek (Kuru normalize etmek için)
+        val usdHistory = getAssetHistory("TRY=X", range, interval)
+        val eurHistory = getAssetHistory("EURTRY=X", range, interval)
+
+        // Ortak bir zaman çizelgesi (Timestamps) oluştur (En çok veri noktası olanı baz al)
+        val allTimestamps = histories.flatMap { it.second.map { p -> p.first } }.distinct().sorted()
+
+        allTimestamps.map { ts ->
+            var totalValueBase = BigDecimal.ZERO
+            
+            histories.forEach { (asset, history) ->
+                val priceAtTs = history.find { it.first == ts }?.second 
+                    ?: history.findLast { it.first <= ts }?.second // Veri yoksa bir önceki değeri al
+                    ?: 0.0
+                
+                val rateAtTs = when(asset.currency) {
+                    "USD" -> usdHistory.find { it.first == ts }?.second ?: usdHistory.findLast { it.first <= ts }?.second ?: 32.5
+                    "EUR" -> eurHistory.find { it.first == ts }?.second ?: eurHistory.findLast { it.first <= ts }?.second ?: 35.2
+                    else -> 1.0
+                }
+                
+                val value = asset.amount.multiply(BigDecimal(priceAtTs.toString())).multiply(BigDecimal(rateAtTs.toString()))
+                totalValueBase = totalValueBase.add(value)
+            }
+
+            PortfolioHistory(
+                portfolioId = portfolioId,
+                date = ts,
+                totalValue = totalValueBase,
+                currency = "TRY"
+            )
+        }
+    }
+
     private fun cleanMarketAssetNaming(asset: MarketAsset, type: AssetType): MarketAsset {
         var name = asset.name
+        var fullName = asset.fullName ?: asset.name
         var symbol = asset.symbol
         val cleanSymbol = symbol.uppercase()
 
@@ -731,6 +873,19 @@ class AssetRepository @Inject constructor(
                 name = name.replace(".IS", "").trim()
             }
             type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
+                // Set clean full name first
+                val localizedFullName = when {
+                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "Amerikan Doları"
+                    cleanSymbol.startsWith("EURTRY") -> "Euro"
+                    cleanSymbol.startsWith("GBPTRY") -> "İngiliz Sterlini"
+                    cleanSymbol.startsWith("CHFTRY") -> "İsviçre Frangı"
+                    cleanSymbol.startsWith("JPYTRY") -> "Japon Yeni"
+                    cleanSymbol.startsWith("AUDTRY") -> "Avustralya Doları"
+                    cleanSymbol.startsWith("CADTRY") -> "Kanada Doları"
+                    else -> fullName
+                }
+                fullName = localizedFullName
+
                 name = when {
                     cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> if (type == AssetType.NAKIT) "Amerikan Doları" else "USD/TRY"
                     cleanSymbol.startsWith("EURTRY") -> if (type == AssetType.NAKIT) "Euro" else "EUR/TRY"
@@ -755,22 +910,22 @@ class AssetRepository @Inject constructor(
             }
             type == AssetType.EMTIA -> {
                 name = when {
-                    cleanSymbol.startsWith("GC=F") -> "Altın (Ons)"
-                    cleanSymbol.startsWith("SI=F") -> "Gümüş"
+                    cleanSymbol.startsWith("GC=F") || cleanSymbol == "GOLD" -> "Altın (Ons)"
+                    cleanSymbol.startsWith("SI=F") || cleanSymbol == "SILVER" -> "Gümüş"
                     cleanSymbol.startsWith("PL=F") -> "Platin"
                     cleanSymbol.startsWith("PA=F") -> "Paladyum"
                     cleanSymbol.startsWith("HG=F") -> "Bakır"
                     cleanSymbol == "GRAM_ALTIN" -> "Gram Altın"
                     else -> name
                 }
+                fullName = name // Remove dates/technical info
             }
         }
 
-        return asset.copy(name = name, symbol = symbol)
+        return asset.copy(name = name, fullName = fullName, symbol = symbol)
     }
 
     private fun cleanAssetNaming(asset: Asset, type: AssetType): Asset {
-
         var name = asset.name
         var symbol = asset.symbol
         val cleanSymbol = symbol.uppercase()
@@ -804,8 +959,8 @@ class AssetRepository @Inject constructor(
             }
             type == AssetType.EMTIA -> {
                 name = when {
-                    cleanSymbol.startsWith("GC=F") -> "Altın (Ons)"
-                    cleanSymbol.startsWith("SI=F") -> "Gümüş"
+                    cleanSymbol.startsWith("GC=F") || cleanSymbol == "GOLD" -> "Altın (Ons)"
+                    cleanSymbol.startsWith("SI=F") || cleanSymbol == "SILVER" -> "Gümüş"
                     cleanSymbol.startsWith("PL=F") -> "Platin"
                     cleanSymbol.startsWith("PA=F") -> "Paladyum"
                     cleanSymbol.startsWith("HG=F") -> "Bakır"
@@ -817,6 +972,8 @@ class AssetRepository @Inject constructor(
 
         return asset.copy(name = name, symbol = symbol)
     }
+
+    suspend fun getPortfolioById(id: Long) = portfolioDao.getPortfolioById(id)
 
     companion object {
         private val ALL_BIST_SYMBOLS = listOf(

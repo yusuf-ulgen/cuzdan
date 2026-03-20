@@ -84,6 +84,7 @@ dependencies {
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.mpandroidchart)
+    implementation(libs.coil.kt)
 
 
     testImplementation(libs.junit)

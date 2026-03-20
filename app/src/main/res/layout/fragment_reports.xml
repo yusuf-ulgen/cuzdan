@@ -85,68 +85,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Portfolio Switcher -->
-            <ImageView
-                android:id="@+id/btn_prev_portfolio"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="16dp"
-                android:padding="8dp"
-                android:src="@drawable/ic_chevron_left"
-                app:layout_constraintBottom_toBottomOf="@id/layout_portfolio_picker"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@id/layout_portfolio_picker"
-                app:tint="@color/text_secondary" />
-
-            <LinearLayout
-                android:id="@+id/layout_portfolio_picker"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
-                android:background="@drawable/bg_pill_dark"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                app:layout_constraintEnd_toStartOf="@id/btn_next_portfolio"
-                app:layout_constraintStart_toEndOf="@id/btn_prev_portfolio"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <TextView
-                    android:id="@+id/text_portfolio_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/total_portfolios"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/ic_dashboard_black_24dp"
-                    app:tint="@color/text_secondary" />
-            </LinearLayout>
-
-            <ImageView
-                android:id="@+id/btn_next_portfolio"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginEnd="16dp"
-                android:padding="8dp"
-                android:src="@drawable/ic_chevron_right"
-                app:layout_constraintBottom_toBottomOf="@id/layout_portfolio_picker"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/layout_portfolio_picker"
-                app:tint="@color/text_secondary" />
-
-            <!-- Main Title Dropdown -->
+            <!-- Main Title -->
             <LinearLayout
                 android:id="@+id/layout_main_header"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="32dp"
                 android:background="@drawable/bg_header_dropdown"
                 android:gravity="center"
                 android:orientation="horizontal"
@@ -154,7 +98,7 @@
                 android:paddingVertical="12dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layout_portfolio_picker">
+                app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
                     android:id="@+id/text_main_header"
@@ -164,14 +108,48 @@
                     android:textColor="?attr/textPrimary"
                     android:textSize="24sp"
                     android:textStyle="bold" />
+            </LinearLayout>
 
+            <!-- Portfolio Switcher (Compact Pill) -->
+            <LinearLayout
+                android:id="@+id/layout_portfolio_picker"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_pill_dark"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/layout_main_header">
 
                 <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/ic_arrow_drop_down"
-                    app:tint="@color/white" />
+                    android:id="@+id/btn_prev_portfolio"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="?attr/textPrimary" />
+
+                <TextView
+                    android:id="@+id/text_portfolio_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:fontFamily="sans-serif-black"
+                    android:text="@string/total_portfolios"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="16sp" />
+
+                <ImageView
+                    android:id="@+id/btn_next_portfolio"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="4dp"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="?attr/textPrimary" />
             </LinearLayout>
 
             <!-- Total Amount Section -->
@@ -185,7 +163,7 @@
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/layout_main_header"
+                app:layout_constraintTop_toBottomOf="@id/layout_portfolio_picker"
                 tools:text="-60 TL" />
 
 
@@ -241,10 +219,11 @@
                     tools:text="%103,8" />
 
                 <ImageView
+                    android:id="@+id/image_daily_change_arrow"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:layout_marginStart="8dp"
-                    android:src="@drawable/ic_reports"
+                    android:src="@drawable/ic_arrow_drop_down"
                     app:tint="@color/accent_red" />
             </LinearLayout>
 
