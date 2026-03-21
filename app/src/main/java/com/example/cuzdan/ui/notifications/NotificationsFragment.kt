@@ -53,19 +53,18 @@ class NotificationsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         val settings = listOf(
-            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark"),
-            SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled()),
-            // Abonelik kaldırıldı
-            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English"),
-            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency()),
-            SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled()),
+            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark", iconRes = R.drawable.ic_dashboard_black_24dp),
+            SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled(), iconRes = R.drawable.ic_notifications_black_24dp),
+            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English", iconRes = R.drawable.ic_reports),
+            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency(), iconRes = R.drawable.ic_currency),
+            SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled(), iconRes = R.drawable.ic_wallet),
 
-            SettingItem(6, getString(R.string.settings_device_management)),
-            SettingItem(7, getString(R.string.settings_faq)),
-            SettingItem(8, getString(R.string.settings_support)),
-            SettingItem(9, getString(R.string.settings_recommend)),
-            SettingItem(10, getString(R.string.settings_agreement)),
-            SettingItem(11, getString(R.string.settings_legal))
+            SettingItem(6, getString(R.string.settings_device_management), iconRes = R.drawable.ic_settings),
+            SettingItem(7, getString(R.string.settings_faq), iconRes = R.drawable.ic_reports),
+            SettingItem(8, getString(R.string.settings_support), iconRes = R.drawable.ic_wallet),
+            SettingItem(9, getString(R.string.settings_recommend), iconRes = R.drawable.ic_menu),
+            SettingItem(10, getString(R.string.settings_agreement), iconRes = R.drawable.ic_assets),
+            SettingItem(11, getString(R.string.settings_legal), iconRes = R.drawable.ic_assets)
         )
 
         val adapter = SettingsAdapter(

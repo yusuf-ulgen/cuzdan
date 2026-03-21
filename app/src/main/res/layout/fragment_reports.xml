@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:text="19:30"
-                android:textColor="@color/text_secondary"
+                android:textColor="?attr/textSecondary"
                 android:textSize="10sp"
                 tools:text="19:30" />
 
@@ -44,7 +44,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
                 android:text="OFFLINE"
-                android:textColor="@color/accent_red"
+                android:textColor="?attr/pill_red_text"
                 android:textSize="10sp"
                 android:visibility="gone"
                 tools:visibility="visible" />
@@ -54,7 +54,7 @@
             android:id="@+id/btn_currency_switcher"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:background="@drawable/bg_icon_circle"
+            android:background="@drawable/bg_icon"
             android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_tl"
@@ -65,7 +65,7 @@
             android:layout_width="44dp"
             android:layout_height="44dp"
             android:layout_marginStart="8dp"
-            android:background="@drawable/bg_icon_circle"
+            android:background="@drawable/bg_icon"
             android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_eye_on"
@@ -116,7 +116,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:background="@drawable/bg_pill_dark"
+                android:background="@drawable/bg_pill"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:paddingHorizontal="12dp"
@@ -172,10 +172,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:background="@drawable/bg_pill_dark"
+                android:background="@drawable/bg_pill"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
-                android:textColor="@color/accent_red"
+                android:textColor="?attr/pill_red_text"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="gone"
@@ -190,7 +190,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/bg_pill_dark"
+                android:background="@drawable/bg_pill"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
@@ -203,7 +203,7 @@
                     android:id="@+id/text_daily_change_abs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/accent_red"
+                    android:textColor="?attr/pill_red_text"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     tools:text="- 1.643" />
@@ -213,7 +213,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:textColor="@color/accent_red"
+                    android:textColor="?attr/pill_red_text"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     tools:text="%103,8" />
@@ -224,7 +224,7 @@
                     android:layout_height="20dp"
                     android:layout_marginStart="8dp"
                     android:src="@drawable/ic_arrow_drop_down"
-                    app:tint="@color/accent_red" />
+                    app:tint="?attr/pill_red_text" />
             </LinearLayout>
 
             <TextView
@@ -232,7 +232,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/label_daily_change"
-                android:textColor="@color/text_secondary"
+                android:textColor="?attr/textSecondary"
                 android:textSize="10sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

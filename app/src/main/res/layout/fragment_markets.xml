@@ -25,13 +25,13 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginEnd="24dp"
-        android:background="@drawable/bg_icon_circle"
+        android:background="@drawable/bg_icon"
         android:padding="12dp"
         android:src="@drawable/ic_star_outline"
         app:layout_constraintBottom_toBottomOf="@id/text_markets_header"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_markets_header"
-        app:tint="@color/accent_violet_light" />
+        app:tint="?attr/accentColor" />
 
 
     <!-- Search Box -->
@@ -62,8 +62,8 @@
             android:layout_marginStart="12dp"
             android:background="@android:color/transparent"
             android:hint="@string/asset_search_hint"
-            android:textColor="@color/white"
-            android:textColorHint="@color/text_secondary"
+            android:textColor="?attr/textPrimary"
+            android:textColorHint="?attr/textSecondary"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -92,9 +92,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/filter_all"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_bist"
@@ -102,9 +103,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_stocks"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_crypto"
@@ -112,9 +114,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_crypto"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_currency"
@@ -122,9 +125,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_currency"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_emtia"
@@ -132,9 +136,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_commodity"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_fon"
@@ -142,9 +147,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/asset_type_fund"
-                android:textColor="@color/white"
-                app:chipBackgroundColor="@color/surface_card_light"
-                app:chipStrokeWidth="0dp" />
+                android:textColor="?attr/textPrimary"
+                app:chipBackgroundColor="?attr/surfaceGlassStrong"
+                app:chipStrokeColor="?attr/surfaceGlass"
+                app:chipStrokeWidth="1dp" />
 
         </com.google.android.material.chip.ChipGroup>
     </HorizontalScrollView>

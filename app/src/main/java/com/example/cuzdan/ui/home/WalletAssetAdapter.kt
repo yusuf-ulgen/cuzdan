@@ -45,12 +45,16 @@ class WalletAssetAdapter(
             // But here we format with the chosen symbol.
             val totalValue = asset.amount.multiply(asset.currentPrice)
             
+            val textPrimaryValue = android.util.TypedValue()
+            holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
+            val textPrimaryColor = textPrimaryValue.data
+
             if (isPrivacyEnabled) {
                 tvAssetPrice.text = "**** $currency"
-                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetPrice.setTextColor(textPrimaryColor)
             } else {
                 tvAssetPrice.text = totalValue.formatCurrency(currency)
-                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetPrice.setTextColor(textPrimaryColor)
             }
             
             val totalCost = asset.amount.multiply(asset.averageBuyPrice)
@@ -64,7 +68,7 @@ class WalletAssetAdapter(
             val color = when {
                 sign > 0 -> com.example.cuzdan.R.color.accent_green
                 sign < 0 -> com.example.cuzdan.R.color.accent_red
-                else -> com.example.cuzdan.R.color.white
+                else -> textPrimaryColor
             }
             val arrow = when {
                 sign > 0 -> "▲"

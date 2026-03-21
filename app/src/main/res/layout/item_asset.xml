@@ -3,14 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="4dp"
-    android:paddingVertical="8dp">
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_card"
+    android:elevation="2dp">
 
     <View
         android:id="@+id/viewIconBg"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:background="@drawable/bg_circle_accent"
+        android:background="@drawable/bg_icon"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -68,7 +71,7 @@
         android:id="@+id/tvAssetPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/accent_green"
+        android:textColor="?attr/pill_green_text"
         android:textSize="12sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"

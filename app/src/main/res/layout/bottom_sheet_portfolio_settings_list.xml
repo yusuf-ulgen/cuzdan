@@ -4,15 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottom_sheet"
+    android:background="@drawable/bg_bottom_sheet_light"
     android:paddingBottom="32dp">
 
     <View
         android:id="@+id/view_handle"
         android:layout_width="40dp"
         android:layout_height="4dp"
-        android:layout_marginTop="8dp"
-        android:background="#40FFFFFF"
+        android:layout_marginTop="12dp"
+        android:background="?attr/divider_light"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -25,23 +25,23 @@
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
         android:text="Portföy Seçimi"
-        android:textColor="@color/white"
-        android:textSize="28sp"
+        android:textColor="?attr/textPrimary"
+        android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/view_handle" />
 
     <ImageButton
         android:id="@+id/btn_close"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginEnd="24dp"
-        android:background="#20FFFFFF"
+        android:background="@drawable/bg_icon"
         android:padding="8dp"
         android:src="@drawable/ic_close"
         app:layout_constraintBottom_toBottomOf="@id/text_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_title"
-        app:tint="@color/white" />
+        app:tint="?attr/iconTint" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_portfolios_settings"

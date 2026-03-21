@@ -51,14 +51,26 @@ class ReportCategoryAdapter(
                 textCategoryChangePerc.text = String.format("%%%+.1f", item.changePerc)
                 textCategoryChangeAbs.text = item.changeAbs.formatCurrency(currency)
 
-                val color = if (item.changeAbs >= BigDecimal.ZERO) {
-                    com.example.cuzdan.R.color.accent_green
+                val colorAttr = if (item.changeAbs >= BigDecimal.ZERO) {
+                    com.example.cuzdan.R.attr.pill_green_text
                 } else {
-                    com.example.cuzdan.R.color.accent_red
+                    com.example.cuzdan.R.attr.pill_red_text
                 }
-                val colorInt = holder.itemView.context.getColor(color)
-                textCategoryValue.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                val bgAttr = if (item.changeAbs >= BigDecimal.ZERO) {
+                    com.example.cuzdan.R.attr.pill_green_bg
+                } else {
+                    com.example.cuzdan.R.attr.pill_red_bg
+                }
+
+                val typedValue = android.util.TypedValue()
+                holder.itemView.context.theme.resolveAttribute(colorAttr, typedValue, true)
+                val colorInt = typedValue.data
+                holder.itemView.context.theme.resolveAttribute(bgAttr, typedValue, true)
+                val bgInt = typedValue.data
+
+                textCategoryValue.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
                 textCategoryChangePerc.setTextColor(colorInt)
+                textCategoryChangePerc.setBackgroundColor(bgInt)
                 textCategoryChangeAbs.setTextColor(colorInt)
             }
             
@@ -137,14 +149,13 @@ class ReportAssetInlineAdapter(
                 tvAssetPrice.text = "****"
                 
                 tvAssetSymbol.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
-                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetChange.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
                 tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
             } else {
-                tvAssetSymbol.text = String.format("%%%+.1f", profitPerc)
                 tvAssetSymbol.setTextColor(colorInt)
                 
                 tvAssetChange.text = totalValue.formatCurrency(currency)
-                tvAssetChange.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                tvAssetChange.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
                 
                 tvAssetPrice.text = profitLoss.formatCurrency(currency, showSign = true)
                 tvAssetPrice.setTextColor(colorInt)

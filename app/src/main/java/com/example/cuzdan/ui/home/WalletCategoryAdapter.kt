@@ -44,11 +44,18 @@ class WalletCategoryAdapter(
                 val color = when {
                     sign > 0 -> com.example.cuzdan.R.color.accent_green
                     sign < 0 -> com.example.cuzdan.R.color.accent_red
-                    else -> com.example.cuzdan.R.color.white
+                    else -> {
+                        val typedValue = android.util.TypedValue()
+                        holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, typedValue, true)
+                        typedValue.data
+                    }
                 }
-                val colorInt = holder.itemView.context.getColor(color)
+                val colorInt = if (color is Int) color else holder.itemView.context.getColor(color as Int)
                 
-                textCategoryTotal.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.white))
+                val textPrimaryValue = android.util.TypedValue()
+                holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
+                textCategoryTotal.setTextColor(textPrimaryValue.data)
+                
                 textCategoryChangeAbs.setTextColor(colorInt)
                 textCategoryChangePerc.setTextColor(colorInt)
             }

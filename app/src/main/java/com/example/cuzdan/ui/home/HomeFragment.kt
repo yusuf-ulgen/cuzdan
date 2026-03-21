@@ -111,7 +111,7 @@ class HomeFragment : Fragment() {
 
         binding.donutChart.setSegments(state.donutSegments)
         binding.donutChart.setLabelColor(
-            requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.black else R.color.white)
+            requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.text_primary_light else R.color.white)
         )
 
 
@@ -127,11 +127,12 @@ class HomeFragment : Fragment() {
             binding.textDailyChangePerc.text = "$changeStr ($percStr)"
             
             val isPositive = state.dailyChangeAbs >= java.math.BigDecimal.ZERO
-            val color = if (isPositive) R.color.accent_green else R.color.accent_red
-            val colorInt = requireContext().getColor(color)
+            val textColor = if (isPositive) R.color.pill_green_text else R.color.pill_red_text
+            val bgColor = if (isPositive) R.color.pill_green_bg else R.color.pill_red_bg
             
-            binding.textTotalBalance.setTextColor(requireContext().getColor(R.color.white))
-            binding.textDailyChangePerc.setTextColor(colorInt)
+            binding.textTotalBalance.setTextColor(requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.text_primary_light else R.color.white))
+            binding.textDailyChangePerc.setTextColor(requireContext().getColor(textColor))
+            binding.layoutDailyChangePill.backgroundTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(bgColor))
         }
 
 

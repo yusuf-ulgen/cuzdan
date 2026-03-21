@@ -38,6 +38,9 @@ class PriceSyncManager @Inject constructor(
                     // Update BIST, Currency, Gold (Yahoo)
                     repository.refreshYahooPrices().collect { /* result handled in repo/db */ }
                     
+                    // Update TEFAS Funds
+                    repository.refreshOwnedFundPrices().collect { /* result handled in repo/db */ }
+                    
                     _syncStatus.value = SyncStatus(lastUpdate = System.currentTimeMillis(), isOffline = false)
                     Log.d("PriceSyncManager", "Batch price update completed")
                 } catch (e: Exception) {

@@ -101,7 +101,7 @@ class ReportsViewModel @Inject constructor(
     }
 
     private fun mergeDuplicateAssets(assets: List<Asset>): List<Asset> {
-        return assets.groupBy { it.symbol }.map { (symbol, symbolAssets) ->
+        return assets.groupBy { it.symbol }.map { (_, symbolAssets) ->
             if (symbolAssets.size == 1) return@map symbolAssets.first()
             var totalAmount = BigDecimal.ZERO
             var totalCost = BigDecimal.ZERO
@@ -170,16 +170,35 @@ class ReportsViewModel @Inject constructor(
             } else BigDecimal.ZERO
 
 
-            val reportAssets = if (type == AssetType.NAKIT) {
-                // Ensure "Türk Lirası" always at top, then follow the specified order
-                val order = listOf("TRY", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
-                typeAssets.sortedWith(compareBy<com.example.cuzdan.data.local.entity.Asset> { asset ->
-                    if (asset.name == "Türk Lirası") -1 else {
-                        val index = order.indexOf(asset.symbol)
-                        if (index == -1) Int.MAX_VALUE else index
+            val reportAssets = when (type) {
+                AssetType.NAKIT -> {
+                    // TL -> USD -> EUR -> Diğerleri (belirlenen sıraya göre)
+                    val order = listOf("TRY", "TL", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
+                    typeAssets.sortedWith(compareBy<com.example.cuzdan.data.local.entity.Asset> { asset ->
+                        val symbol = asset.symbol.uppercase()
+                        val name = asset.name.lowercase()
+                        if (symbol == "TRY" || symbol == "TL" || symbol == "₺" || symbol.contains("TRY") || symbol.contains("TL") || symbol.contains("₺") || 
+                            name.contains("türk lirası") || name.contains("tl") || name.contains("türk") || name == "türk lirasi") {
+                            -1
+                        } else {
+                            val index = order.indexOf(symbol)
+                            if (index == -1) Int.MAX_VALUE else index
+                        }
+                    })
+                }
+                AssetType.KRIPTO -> {
+                    // Kripto varlıkları havuz büyüklüğüne (toplam değer) göre azalan şekilde sırala
+                    typeAssets.sortedByDescending { asset ->
+                        val assetRate = when (asset.currency) {
+                            "USD" -> usdRate ?: BigDecimal("32.5")
+                            "EUR" -> eurRate ?: BigDecimal("35.2")
+                            else -> BigDecimal.ONE
+                        }
+                        asset.amount.multiply(asset.currentPrice).multiply(assetRate)
                     }
-                })
-            } else typeAssets
+                }
+                else -> typeAssets
+            }
 
             ReportCategory(
                 name = getLocalizedAssetTypeName(type, resolveContext),

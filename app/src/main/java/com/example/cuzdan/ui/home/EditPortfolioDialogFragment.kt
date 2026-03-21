@@ -86,7 +86,7 @@ class EditPortfolioDialogFragment : DialogFragment() {
         binding.btnSave.setOnClickListener {
             val name = binding.editPortfolioName.text.toString().trim()
             if (name.isEmpty()) {
-                binding.inputLayoutName.error = "Lütfen bir isim girin"
+                binding.editPortfolioName.error = "Lütfen bir isim girin"
             } else {
                 val includeTotal = binding.switchIncludeTotal.isChecked
                 

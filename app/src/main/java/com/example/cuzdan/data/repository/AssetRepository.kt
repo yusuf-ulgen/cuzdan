@@ -236,16 +236,19 @@ class AssetRepository @Inject constructor(
         try {
             val fundAssets = getFundAssets().first()
             if (fundAssets.isEmpty()) {
+                Log.d("AssetRepo", "[FON] No owned funds to refresh.")
                 emit(Resource.Success(Unit))
                 return@flow
             }
 
+            Log.d("AssetRepo", "[FON] Refreshing ${fundAssets.size} owned funds...")
             val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
             
             fundAssets.forEach { asset ->
                 val calendar = java.util.Calendar.getInstance()
                 var price = BigDecimal.ZERO
                 // Son 5 gün içinde fiyat ara (Hafta sonu/Tatil kontrolü)
+                Log.d("AssetRepo", "[FON] Fetching price for ${asset.symbol} (${asset.name})")
                 for (i in 0..5) {
                     try {
                         val dateStr = sdf.format(calendar.time)
@@ -256,11 +259,12 @@ class AssetRepository @Inject constructor(
                             val parsedPrice = parseTefasPrice(rawPrice)
                             if (parsedPrice > BigDecimal.ZERO) {
                                 price = parsedPrice
+                                Log.d("AssetRepo", "[FON] Success: ${asset.symbol} price=$price (Date: $dateStr)")
                                 break
                             }
                         }
                     } catch (e: Exception) {
-                        Log.e("AssetRepo", "Fund update failed for ${asset.symbol}: ${e.message}")
+                        Log.e("AssetRepo", "[FON] Try $i failed for ${asset.symbol}: ${e.message}")
                     }
                     calendar.add(java.util.Calendar.DATE, -1)
                 }
@@ -268,18 +272,22 @@ class AssetRepository @Inject constructor(
                 if (price > BigDecimal.ZERO) {
                     assetDao.updateAsset(asset.copy(
                         currentPrice = price,
-                        dailyChangePercentage = BigDecimal.ZERO, // TEFAS günlük değişim vermiyor, hesaplanmalı veya 0 bırakılmalı
+                        dailyChangePercentage = BigDecimal.ZERO, 
                         currency = "TRY"
                     ))
+                } else {
+                    Log.w("AssetRepo", "[FON] Could not find any price for ${asset.symbol} in last 5 days.")
                 }
             }
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
+            Log.e("AssetRepo", "[FON] Global error refreshing funds: ${e.message}")
             emit(Resource.Error(e.message ?: "Fon fiyatları güncellenemedi"))
         }
     }
 
     private fun parseTefasPrice(rawPriceAny: Any?): BigDecimal {
+        Log.v("AssetRepo", "[FON] Parsing price: $rawPriceAny (${rawPriceAny?.javaClass?.simpleName})")
         return when (rawPriceAny) {
             is Number -> BigDecimal(rawPriceAny.toString())
             is String -> {
@@ -293,10 +301,14 @@ class AssetRepository @Inject constructor(
                         BigDecimal(cleanStr)
                     }
                 } catch (e: Exception) {
+                    Log.e("AssetRepo", "[FON] Parse error for string '$rawPriceAny': ${e.message}")
                     BigDecimal.ZERO
                 }
             }
-            else -> BigDecimal.ZERO
+            else -> {
+                if (rawPriceAny != null) Log.w("AssetRepo", "[FON] Unknown price type: ${rawPriceAny.javaClass.simpleName}")
+                BigDecimal.ZERO
+            }
         }
     }
 

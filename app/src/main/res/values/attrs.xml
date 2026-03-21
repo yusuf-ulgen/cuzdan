@@ -8,4 +8,9 @@
     <attr name="accentColor" format="color" />
     <attr name="accentGlow" format="color" />
     <attr name="iconTint" format="color" />
+    <attr name="divider_light" format="color" />
+    <attr name="pill_red_bg" format="color" />
+    <attr name="pill_red_text" format="color" />
+    <attr name="pill_green_bg" format="color" />
+    <attr name="pill_green_text" format="color" />
 </resources>

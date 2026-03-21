@@ -149,10 +149,13 @@ class AssetDetailFragment : Fragment() {
         binding.textCurrentAmountHeld.text = "Eldeki: ${state.currentAmount.toPlainString()}"
         
         val isPositive = state.dailyChangePercentage >= BigDecimal.ZERO
+        val colorAttr = if (isPositive) com.example.cuzdan.R.attr.pill_green_text else com.example.cuzdan.R.attr.pill_red_text
+        val typedValue = android.util.TypedValue()
+        requireContext().theme.resolveAttribute(colorAttr, typedValue, true)
+        val colorInt = typedValue.data
+
         binding.textPriceChange.text = String.format("%%%+.2f", state.dailyChangePercentage)
-        binding.textPriceChange.setTextColor(
-            resources.getColor(if (isPositive) R.color.accent_green else R.color.accent_red, null)
-        )
+        binding.textPriceChange.setTextColor(colorInt)
         
         setupChart(state.history)
     }
@@ -168,7 +171,7 @@ class AssetDetailFragment : Fragment() {
             Entry(index.toFloat(), pair.second.toFloat())
         }
 
-        val accentViolet = resources.getColor(R.color.accent_violet, null)
+        val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
         val dataSet = LineDataSet(entries, "Fiyat").apply {
             color = accentViolet
@@ -180,7 +183,7 @@ class AssetDetailFragment : Fragment() {
             cubicIntensity = 0.15f
             
             setDrawFilled(true)
-            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient, null)
+            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient_light, null)
         }
 
         binding.priceChart.apply {
@@ -190,7 +193,11 @@ class AssetDetailFragment : Fragment() {
             
             xAxis.isEnabled = false
             axisLeft.apply {
-                textColor = Color.WHITE
+                val textColorAttr = com.example.cuzdan.R.attr.textSecondary
+                val typedValue = android.util.TypedValue()
+                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
+
+                textColor = typedValue.data
                 setDrawGridLines(false)
                 axisLineColor = Color.TRANSPARENT
             }

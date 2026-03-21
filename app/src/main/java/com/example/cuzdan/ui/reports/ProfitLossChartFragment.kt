@@ -87,14 +87,14 @@ class ProfitLossChartFragment : Fragment() {
             diff.divide(first.totalValue, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
         } else BigDecimal.ZERO
         
-        val color = if (diff >= BigDecimal.ZERO) 
-            resources.getColor(R.color.accent_green, null) 
-        else 
-            resources.getColor(R.color.accent_red, null)
+        val colorAttr = if (diff >= BigDecimal.ZERO) com.example.cuzdan.R.attr.pill_green_text else com.example.cuzdan.R.attr.pill_red_text
+        val typedValue = android.util.TypedValue()
+        requireContext().theme.resolveAttribute(colorAttr, typedValue, true)
+        val colorInt = typedValue.data
             
         binding.textDailyChange.apply {
             text = "${diff.formatCurrency(last.currency, showSign = true)} (%${perc.setScale(2, java.math.RoundingMode.HALF_UP)})"
-            setTextColor(color)
+            setTextColor(colorInt)
         }
     }
 
@@ -125,21 +125,18 @@ class ProfitLossChartFragment : Fragment() {
             Entry(index.toFloat(), history.totalValue.toFloat())
         }
 
-        val accentViolet = resources.getColor(R.color.accent_violet, null)
+        val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
         val dataSet = LineDataSet(entries, "Total").apply {
             color = accentViolet
             lineWidth = 4f
-            setDrawCircles(true)
-            setCircleColor(accentViolet)
-            circleRadius = 3f
-            setDrawCircleHole(false)
+            setDrawCircles(false)
             setDrawValues(false)
             mode = LineDataSet.Mode.CUBIC_BEZIER
             cubicIntensity = 0.15f
             
             setDrawFilled(true)
-            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient, null)
+            fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient_light, null)
         }
 
         binding.bigLineChart.apply {
@@ -156,10 +153,18 @@ class ProfitLossChartFragment : Fragment() {
             marker = mv
             
             xAxis.apply {
-                textColor = resources.getColor(R.color.text_secondary, null)
+                val textColorAttr = com.example.cuzdan.R.attr.textSecondary
+                val dividerColorAttr = com.example.cuzdan.R.attr.divider_light
+                val typedValue = android.util.TypedValue()
+                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
+                val colorSecondary = typedValue.data
+                requireContext().theme.resolveAttribute(dividerColorAttr, typedValue, true)
+                val colorDivider = typedValue.data
+
+                textColor = colorSecondary
                 position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
                 setDrawGridLines(false)
-                axisLineColor = resources.getColor(R.color.divider_color, null)
+                axisLineColor = colorDivider
                 
                 // Add labels if possible (every few points)
                 valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
@@ -173,11 +178,19 @@ class ProfitLossChartFragment : Fragment() {
                 }
             }
             axisLeft.apply {
-                textColor = resources.getColor(R.color.text_secondary, null)
+                val textColorAttr = com.example.cuzdan.R.attr.textSecondary
+                val dividerColorAttr = com.example.cuzdan.R.attr.divider_light
+                val typedValue = android.util.TypedValue()
+                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
+                val colorSecondary = typedValue.data
+                requireContext().theme.resolveAttribute(dividerColorAttr, typedValue, true)
+                val colorDivider = typedValue.data
+
+                textColor = colorSecondary
                 setDrawGridLines(true)
-                gridColor = resources.getColor(R.color.divider_color, null)
+                gridColor = colorDivider
                 gridLineWidth = 0.5f
-                axisLineColor = resources.getColor(R.color.divider_color, null)
+                axisLineColor = colorDivider
             }
             axisRight.isEnabled = false
             

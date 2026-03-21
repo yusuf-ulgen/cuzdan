@@ -212,7 +212,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun mergeDuplicateAssets(assets: List<Asset>): List<Asset> {
-        return assets.groupBy { it.symbol }.map { (symbol, symbolAssets) ->
+        return assets.groupBy { it.symbol }.map { (_, symbolAssets) ->
             if (symbolAssets.size == 1) return@map symbolAssets.first()
             var totalAmount = BigDecimal.ZERO
             var totalCost = BigDecimal.ZERO
@@ -279,13 +279,41 @@ class HomeViewModel @Inject constructor(
             } else BigDecimal.ZERO
 
 
+            val sortedAssets = when (type) {
+                AssetType.NAKIT -> {
+                    val order = listOf("TRY", "TL", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
+                    typeAssets.sortedWith(compareBy<com.example.cuzdan.data.local.entity.Asset> { asset ->
+                        val symbol = asset.symbol.uppercase()
+                        val name = asset.name.lowercase()
+                        if (symbol == "TRY" || symbol == "TL" || symbol == "₺" || symbol.contains("TRY") || symbol.contains("TL") || symbol.contains("₺") || 
+                            name.contains("türk lirası") || name.contains("tl") || name.contains("türk") || name == "türk lirasi") {
+                            -1
+                        } else {
+                            val index = order.indexOf(symbol)
+                            if (index == -1) Int.MAX_VALUE else index
+                        }
+                    })
+                }
+                AssetType.KRIPTO -> {
+                    typeAssets.sortedByDescending { asset ->
+                        val assetRate = when (asset.currency) {
+                            "USD" -> usdRate ?: BigDecimal("32.5")
+                            "EUR" -> eurRate ?: BigDecimal("35.2")
+                            else -> BigDecimal.ONE
+                        }
+                        asset.amount.multiply(asset.currentPrice).multiply(assetRate)
+                    }
+                }
+                else -> typeAssets
+            }
+
              WalletCategorySummary(
                 type = type,
                 title = getLocalizedAssetTypeName(type, resolveContext),
                 totalValue = convCatValue,
                 totalProfitLoss = convCatValue.subtract(convCatCost),
                 profitLossPerc = catPLPerc,
-                assets = typeAssets,
+                assets = sortedAssets,
                 isExpanded = expandedCategory == type
             )
         }
@@ -345,16 +373,16 @@ class HomeViewModel @Inject constructor(
     private fun getCategoryColor(type: AssetType): Int {
         return when(type) {
             AssetType.KRIPTO -> 0xFF8B5CF6.toInt() // Violet
-            AssetType.BIST -> 0xFFD8B4FE.toInt()   // Light Violet
-            AssetType.DOVIZ -> 0xFF6366F1.toInt()  // Indigo
-            AssetType.EMTIA -> 0xFFA78BFA.toInt()  // Soft Purple
-            AssetType.NAKIT -> 0xFF4F46E5.toInt()  // Deep Indigo
+            AssetType.BIST -> 0xFFDDD6FE.toInt()   // Lavender
+            AssetType.DOVIZ -> 0xFF93C5FD.toInt()  // Blue
+            AssetType.EMTIA -> 0xFF818CF8.toInt()  // Indigo
+            AssetType.NAKIT -> 0xFFF472B6.toInt()  // Pink
             AssetType.FON -> 0xFFC084FC.toInt()    // Bright Purple
         }
     }
 
     private fun getAssetColor(index: Int): Int {
-        val colors = listOf(0xFF8B5CF6, 0xFFD8B4FE, 0xFF6366F1, 0xFFA78BFA, 0xFF4F46E5, 0xFFC084FC)
+        val colors = listOf(0xFF8B5CF6, 0xFFDDD6FE, 0xFF93C5FD, 0xFF818CF8, 0xFFF472B6, 0xFFC084FC)
         return colors[index % colors.size].toInt()
     }
 

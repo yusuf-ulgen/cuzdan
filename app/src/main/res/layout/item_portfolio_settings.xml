@@ -5,9 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="6dp"
-    app:cardBackgroundColor="#F5F6F8"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
+    app:cardBackgroundColor="?attr/surfaceGlassStrong"
+    app:cardCornerRadius="28dp"
+    app:cardElevation="2dp"
     app:strokeWidth="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -20,7 +20,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-bold"
-            android:textColor="#1A237E"
+            android:textColor="?attr/textPrimary"
             android:textSize="17sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/image_chevron"
@@ -36,7 +36,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="#D1D5DB" />
+            app:tint="?attr/textSecondary" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

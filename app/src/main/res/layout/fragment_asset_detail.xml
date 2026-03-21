@@ -13,7 +13,7 @@
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:background="@drawable/bg_icon_circle"
+        android:background="@drawable/bg_icon"
         android:padding="12dp"
         android:src="@drawable/ic_chevron_left"
         app:layout_constraintStart_toStartOf="parent"
@@ -53,13 +53,13 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginEnd="16dp"
-        android:background="@drawable/bg_icon_circle"
+        android:background="@drawable/bg_icon"
         android:padding="12dp"
         android:src="@drawable/ic_delete"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/btn_back"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
-        app:tint="@color/accent_red" />
+        app:tint="?attr/accentColor" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -78,11 +78,10 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                app:cardBackgroundColor="?attr/surfaceGlass"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/surfaceGlassStrong"
-                app:strokeWidth="1.5dp">
+                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
 
@@ -108,7 +107,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="+0.00%"
-                        android:textColor="@color/accent_green"
+                        android:textColor="?attr/pill_green_text"
                         android:textSize="14sp"
                         app:layout_constraintBottom_toBottomOf="@id/text_current_price"
                         app:layout_constraintStart_toEndOf="@id/text_current_price"
@@ -188,11 +187,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="?attr/surfaceGlass"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="0dp"
-                app:strokeColor="?attr/surfaceGlassStrong"
-                app:strokeWidth="1.5dp">
+                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp"
+                app:strokeWidth="0dp">
 
 
                 <LinearLayout
@@ -220,7 +218,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Eldeki: 0.00"
-                            android:textColor="@color/accent_violet_light"
+                            android:textColor="?attr/accentColor"
                             android:textSize="12sp"
                             android:layout_marginEnd="8dp"
                             android:fontFamily="sans-serif-medium" />
@@ -230,7 +228,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Adet"
-                            android:textColor="@color/accent_violet_light"
+                            android:textColor="?attr/accentColor"
                             android:textSize="12sp"
                             android:fontFamily="sans-serif-medium" />
                     </LinearLayout>
