@@ -8,6 +8,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.example.cuzdan.util.NotificationHelper
+import com.example.cuzdan.worker.PriceAlertWorker
 import com.example.cuzdan.worker.PriceSyncWorker
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -26,6 +28,7 @@ class CuzdanApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        NotificationHelper.createNotificationChannel(this)
         setupPeriodicWork()
     }
 
@@ -46,6 +49,16 @@ class CuzdanApplication : Application(), Configuration.Provider {
             "PriceSyncWork",
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
+        )
+
+        val alertWorkRequest = PeriodicWorkRequestBuilder<PriceAlertWorker>(15, TimeUnit.MINUTES)
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "PriceAlertWork",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            alertWorkRequest
         )
     }
 

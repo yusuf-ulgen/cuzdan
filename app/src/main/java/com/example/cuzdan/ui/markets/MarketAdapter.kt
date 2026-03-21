@@ -12,11 +12,13 @@ import java.text.NumberFormat
 import java.util.Locale
 import coil.load
 import coil.transform.CircleCropTransformation
+import android.view.View
+import com.example.cuzdan.util.HapticManager
 
 class MarketAdapter(
     private var items: List<MarketAsset> = emptyList(),
     private val showChange: Boolean = true,
-    private val onItemClick: (MarketAsset) -> Unit,
+    private val onItemClick: (MarketAsset, View, View) -> Unit,
     private val onFavoriteClick: ((MarketAsset) -> Unit)? = null
 ) : RecyclerView.Adapter<MarketAdapter.ViewHolder>() {
 
@@ -109,7 +111,8 @@ class MarketAdapter(
             }
 
             root.setOnClickListener {
-                onItemClick.invoke(item)
+                HapticManager.tap(it)
+                onItemClick(item, viewIconBg, textMarketName)
             }
 
             imageMarketFavorite.setImageResource(

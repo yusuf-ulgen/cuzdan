@@ -1,4 +1,6 @@
 package com.example.cuzdan.ui.home
+ 
+import com.example.cuzdan.data.local.entity.Asset
 
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +12,8 @@ import com.example.cuzdan.util.formatCurrency
 
 class WalletCategoryAdapter(
     private var items: List<WalletCategorySummary> = emptyList(),
-    private val onExpandToggle: (WalletCategorySummary) -> Unit
+    private val onExpandToggle: (WalletCategorySummary) -> Unit,
+    private val onAssetClick: (Asset, android.view.View, android.view.View) -> Unit = { _, _, _ -> }
 ) : RecyclerView.Adapter<WalletCategoryAdapter.ViewHolder>() {
 
     private var isPrivacyEnabled: Boolean = false
@@ -64,7 +67,7 @@ class WalletCategoryAdapter(
             recyclerChildAssets.visibility = if (isExpanded) View.VISIBLE else View.GONE
             
             if (isExpanded) {
-                val childAdapter = WalletAssetAdapter(item.assets, isPrivacyEnabled, currency, item.totalValue)
+                val childAdapter = WalletAssetAdapter(item.assets, isPrivacyEnabled, currency, item.totalValue, onAssetClick)
                 recyclerChildAssets.layoutManager = LinearLayoutManager(holder.itemView.context)
                 recyclerChildAssets.adapter = childAdapter
             }

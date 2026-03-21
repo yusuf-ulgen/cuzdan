@@ -89,6 +89,8 @@
                 app:cardBackgroundColor="?attr/surfaceGlass"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
+                android:clickable="true"
+                android:stateListAnimator="@animator/scale_on_press"
                 app:layout_constraintTop_toBottomOf="@id/llBalance">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -139,6 +141,8 @@
                 app:cardBackgroundColor="?attr/surfaceGlass"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
+                android:clickable="true"
+                android:stateListAnimator="@animator/scale_on_press"
                 app:layout_constraintTop_toBottomOf="@id/cardTL">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -189,6 +193,8 @@
                 app:cardBackgroundColor="?attr/surfaceGlass"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
+                android:clickable="true"
+                android:stateListAnimator="@animator/scale_on_press"
                 app:layout_constraintTop_toBottomOf="@id/cardBIST">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
@@ -230,18 +236,37 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView
-                android:id="@+id/tvAssetsTitle"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/layout_assets_header"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:layout_marginTop="24dp"
-                android:text="Varlıklarım"
-                android:textColor="?attr/textPrimary"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/cardEmtia" />
+                android:layout_marginHorizontal="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                app:layout_constraintTop_toBottomOf="@id/cardEmtia">
+
+                <TextView
+                    android:id="@+id/tvAssetsTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Varlıklarım"
+                    android:textColor="?attr/textPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_show_heatmap"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Isı Haritası"
+                    android:textColor="?attr/accentColor"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:padding="8dp"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+            </LinearLayout>
 
             <!-- Shimmer Placeholder -->
             <com.facebook.shimmer.ShimmerFrameLayout
@@ -249,7 +274,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/tvAssetsTitle"
+                app:layout_constraintTop_toBottomOf="@id/layout_assets_header"
                 app:shimmer_auto_start="true">
 
                 <LinearLayout
@@ -268,7 +293,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:nestedScrollingEnabled="false"
-                app:layout_constraintTop_toBottomOf="@id/tvAssetsTitle"
+                app:layout_constraintTop_toBottomOf="@id/layout_assets_header"
                 tools:listitem="@layout/item_asset" />
 
             <TextView
@@ -281,7 +306,7 @@
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvAssetsTitle" />
+                app:layout_constraintTop_toBottomOf="@id/layout_assets_header" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

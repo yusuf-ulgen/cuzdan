@@ -7,13 +7,17 @@
     android:paddingVertical="12dp"
     android:layout_marginBottom="8dp"
     android:background="@drawable/bg_card"
-    android:elevation="2dp">
+    android:elevation="2dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:stateListAnimator="@animator/scale_on_press">
 
     <View
         android:id="@+id/viewIconBg"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:background="@drawable/bg_icon"
+        android:transitionName="shared_asset_icon"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -36,9 +40,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
         android:textColor="?attr/textPrimary"
-        android:textSize="14sp"
-
-        android:fontFamily="sans-serif-medium"
+        android:textSize="15sp"
+        android:fontFamily="sans-serif-black"
+        android:transitionName="shared_asset_name"
         app:layout_constraintEnd_toStartOf="@+id/tvAssetChange"
         app:layout_constraintStart_toEndOf="@id/viewIconBg"
         app:layout_constraintTop_toTopOf="parent"

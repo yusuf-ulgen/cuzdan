@@ -13,4 +13,5 @@
     <attr name="pill_red_text" format="color" />
     <attr name="pill_green_bg" format="color" />
     <attr name="pill_green_text" format="color" />
+    <attr name="sheetBackground" format="reference" />
 </resources>

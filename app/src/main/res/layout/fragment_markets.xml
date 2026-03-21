@@ -21,15 +21,28 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
-        android:id="@+id/btn_favorites"
+        android:id="@+id/btn_sort"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginEnd="24dp"
         android:background="@drawable/bg_icon"
         android:padding="12dp"
-        android:src="@drawable/ic_star_outline"
+        android:src="@drawable/ic_sort"
         app:layout_constraintBottom_toBottomOf="@id/text_markets_header"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/text_markets_header"
+        app:tint="?attr/iconTint" />
+
+    <ImageButton
+        android:id="@+id/btn_favorites"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_icon"
+        android:padding="12dp"
+        android:src="@drawable/ic_star_outline"
+        app:layout_constraintBottom_toBottomOf="@id/text_markets_header"
+        app:layout_constraintEnd_toStartOf="@id/btn_sort"
         app:layout_constraintTop_toTopOf="@id/text_markets_header"
         app:tint="?attr/accentColor" />
 

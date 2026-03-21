@@ -17,7 +17,9 @@ import java.math.BigDecimal
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
-
+enum class MarketsSortType {
+    NAME_ASC, NAME_DESC, PRICE_ASC, PRICE_DESC, CHANGE_ASC, CHANGE_DESC
+}
 
 data class MarketsUiState(
     val prices: List<MarketAsset> = emptyList(),
@@ -26,6 +28,7 @@ data class MarketsUiState(
     val selectedType: AssetType = AssetType.BIST,
     val searchQuery: String = "",
     val isFavoritesOnly: Boolean = false,
+    val sortType: MarketsSortType = MarketsSortType.NAME_ASC,
     val errorMessage: String? = null
 )
 
@@ -38,6 +41,7 @@ class MarketsViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     private val _selectedType = MutableStateFlow(AssetType.BIST)
     private val _isFavoritesOnly = MutableStateFlow(false)
+    private val _sortType = MutableStateFlow(MarketsSortType.NAME_ASC)
     private val _isLoading = MutableStateFlow(false)
     private val _errorMessage = MutableStateFlow<String?>(null)
 
@@ -47,6 +51,7 @@ class MarketsViewModel @Inject constructor(
         _searchQuery,
         _selectedType,
         _isFavoritesOnly,
+        _sortType,
         _isLoading,
         _errorMessage
     ) { array ->
@@ -54,12 +59,22 @@ class MarketsViewModel @Inject constructor(
         val query = array[1] as String
         val type = array[2] as AssetType
         val favoritesOnly = array[3] as Boolean
-        val loading = array[4] as Boolean
-        val error = array[5] as String?
+        val sortType = array[4] as MarketsSortType
+        val loading = array[5] as Boolean
+        val error = array[6] as String?
 
         val filtered = prices.filter { asset ->
             (asset.name.contains(query, ignoreCase = true) || asset.symbol.contains(query, ignoreCase = true)) &&
             (!favoritesOnly || asset.isFavorite)
+        }.let { list ->
+            when (sortType) {
+                MarketsSortType.NAME_ASC -> list.sortedBy { it.name }
+                MarketsSortType.NAME_DESC -> list.sortedByDescending { it.name }
+                MarketsSortType.PRICE_ASC -> list.sortedBy { it.currentPrice }
+                MarketsSortType.PRICE_DESC -> list.sortedByDescending { it.currentPrice }
+                MarketsSortType.CHANGE_ASC -> list.sortedBy { it.dailyChangePercentage }
+                MarketsSortType.CHANGE_DESC -> list.sortedByDescending { it.dailyChangePercentage }
+            }
         }
         MarketsUiState(
             prices = prices,
@@ -68,6 +83,7 @@ class MarketsViewModel @Inject constructor(
             selectedType = type,
             searchQuery = query,
             isFavoritesOnly = favoritesOnly,
+            sortType = sortType,
             errorMessage = error
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MarketsUiState())
@@ -114,6 +130,10 @@ class MarketsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.toggleFavorite(asset.symbol, asset.assetType, !asset.isFavorite)
         }
+    }
+
+    fun setSortType(sortType: MarketsSortType) {
+        _sortType.value = sortType
     }
 }
 

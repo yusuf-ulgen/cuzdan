@@ -10,6 +10,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
+import com.example.cuzdan.data.local.entity.Asset
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.FragmentHomeBinding
@@ -50,9 +53,21 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = WalletCategoryAdapter(emptyList()) { category ->
+        adapter = WalletCategoryAdapter(emptyList(), { category ->
             viewModel.toggleCategoryExpansion(category.type)
-        }
+        }, { asset: Asset, iconView: View, nameView: View ->
+            val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
+                symbol = asset.symbol,
+                name = asset.name,
+                assetType = asset.assetType.name,
+                currency = viewModel.uiState.value.currency
+            )
+            val extras = FragmentNavigatorExtras(
+                iconView to "shared_asset_icon",
+                nameView to "shared_asset_name"
+            )
+            findNavController().navigate(action, extras)
+        })
         binding.recyclerWalletCategories.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerWalletCategories.adapter = adapter
     }
@@ -80,6 +95,9 @@ class HomeFragment : Fragment() {
         }
         binding.textPortfolioName.setOnClickListener {
             PortfolioManagementBottomSheet().show(parentFragmentManager, "PortfolioManagement")
+        }
+        binding.btnHeatmap.setOnClickListener {
+            findNavController().navigate(R.id.action_navigation_home_to_heatmapFragment)
         }
     }
 

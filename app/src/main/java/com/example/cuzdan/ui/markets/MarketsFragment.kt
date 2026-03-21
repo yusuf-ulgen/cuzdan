@@ -6,12 +6,14 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.AssetType
@@ -47,14 +49,18 @@ class MarketsFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = MarketAdapter(
             showChange = true,
-            onItemClick = { asset ->
+            onItemClick = { asset, iconView, nameView ->
                 val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
                     symbol = asset.symbol,
                     name = asset.name,
                     assetType = asset.assetType.name,
                     currency = asset.currency
                 )
-                findNavController().navigate(action)
+                val extras = FragmentNavigatorExtras(
+                    iconView to "shared_asset_icon",
+                    nameView to "shared_asset_name"
+                )
+                findNavController().navigate(action, extras)
             },
             onFavoriteClick = { asset ->
                 viewModel.toggleFavorite(asset)
@@ -71,6 +77,10 @@ class MarketsFragment : Fragment() {
 
         binding.btnFavorites.setOnClickListener {
             viewModel.toggleFavoritesOnly()
+        }
+
+        binding.btnSort.setOnClickListener {
+            showSortMenu(it)
         }
 
         binding.editSearch.addTextChangedListener(object : TextWatcher {
@@ -116,6 +126,31 @@ class MarketsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun showSortMenu(view: View) {
+        val popup = PopupMenu(requireContext(), view)
+        popup.menu.add(0, 0, 0, "İsim (A-Z)")
+        popup.menu.add(0, 1, 1, "İsim (Z-A)")
+        popup.menu.add(0, 2, 2, "Fiyat (Düşükten Yükseğe)")
+        popup.menu.add(0, 3, 3, "Fiyat (Yüksekten Düşüğe)")
+        popup.menu.add(0, 4, 4, "Değişim (En Çok Düşen)")
+        popup.menu.add(0, 5, 5, "Değişim (En Çok Artan)")
+
+        popup.setOnMenuItemClickListener { item ->
+            val sortType = when (item.itemId) {
+                0 -> MarketsSortType.NAME_ASC
+                1 -> MarketsSortType.NAME_DESC
+                2 -> MarketsSortType.PRICE_ASC
+                3 -> MarketsSortType.PRICE_DESC
+                4 -> MarketsSortType.CHANGE_ASC
+                5 -> MarketsSortType.CHANGE_DESC
+                else -> MarketsSortType.NAME_ASC
+            }
+            viewModel.setSortType(sortType)
+            true
+        }
+        popup.show()
     }
 
     override fun onDestroyView() {

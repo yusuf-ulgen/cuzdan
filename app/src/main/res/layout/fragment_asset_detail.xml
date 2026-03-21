@@ -29,6 +29,7 @@
         android:text="Varlık Detayı"
         android:textColor="?attr/textPrimary"
         android:textSize="22sp"
+        android:transitionName="shared_asset_name"
         app:layout_constraintBottom_toTopOf="@id/text_portfolio_name"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,6 +49,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_title_detail" />
 
+    <ImageView
+        android:id="@+id/iv_asset_icon_detail"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:transitionName="shared_asset_icon"
+        android:src="@drawable/ic_asset_placeholder"
+        app:tint="?attr/iconTint"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_portfolio_name" />
+
+    <ImageButton
+        android:id="@+id/btn_alert"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/bg_icon"
+        android:padding="12dp"
+        android:src="@drawable/ic_notifications"
+        app:layout_constraintEnd_toStartOf="@id/btn_delete"
+        app:layout_constraintTop_toTopOf="@id/btn_back"
+        app:layout_constraintBottom_toBottomOf="@id/btn_back"
+        app:tint="?attr/accentColor" />
+
     <ImageButton
         android:id="@+id/btn_delete"
         android:layout_width="48dp"
@@ -66,7 +92,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_back">
+        app:layout_constraintTop_toBottomOf="@id/iv_asset_icon_detail">
 
         <LinearLayout
             android:layout_width="match_parent"

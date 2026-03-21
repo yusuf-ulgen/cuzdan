@@ -7,6 +7,7 @@ import com.example.cuzdan.data.local.dao.AssetDao
 import com.example.cuzdan.data.local.dao.PortfolioDao
 import com.example.cuzdan.data.local.dao.MarketAssetDao
 import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
+import com.example.cuzdan.data.local.dao.PriceAlertDao
 
 import dagger.Module
 import dagger.Provides
@@ -66,6 +67,11 @@ object DatabaseModule {
     @Provides
     fun providePortfolioHistoryDao(database: AppDatabase): PortfolioHistoryDao {
         return database.portfolioHistoryDao()
+    }
+
+    @Provides
+    fun providePriceAlertDao(database: AppDatabase): PriceAlertDao {
+        return database.priceAlertDao()
     }
 }
 

@@ -5,14 +5,17 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.databinding.ItemAssetBinding
+import com.example.cuzdan.util.HapticManager
 import com.example.cuzdan.util.formatCurrency
+import android.view.View
 import java.math.BigDecimal
 
 class WalletAssetAdapter(
     private var assets: List<Asset> = emptyList(),
     private val isPrivacyEnabled: Boolean = false,
     private val currency: String = "TL",
-    private val categoryTotal: java.math.BigDecimal? = null
+    private val categoryTotal: java.math.BigDecimal? = null,
+    private val onItemClick: (Asset, View, View) -> Unit = { _, _, _ -> }
 ) : RecyclerView.Adapter<WalletAssetAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemAssetBinding) : RecyclerView.ViewHolder(binding.root)
@@ -78,6 +81,11 @@ class WalletAssetAdapter(
 
             tvAssetChange.text = String.format("%s %%%+.1f", arrow, profitPerc)
             tvAssetChange.setTextColor(holder.itemView.context.getColor(color))
+            
+            root.setOnClickListener {
+                HapticManager.tap(it)
+                onItemClick(asset, viewIconBg, tvAssetName)
+            }
         }
     }
 

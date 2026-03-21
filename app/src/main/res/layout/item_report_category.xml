@@ -9,7 +9,10 @@
     app:cardBackgroundColor="?attr/surfaceGlassStrong"
     app:cardCornerRadius="28dp"
     app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:strokeWidth="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:stateListAnimator="@animator/scale_on_press">
 
 
     <androidx.constraintlayout.widget.ConstraintLayout

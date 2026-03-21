@@ -12,7 +12,7 @@
         android:title="@string/nav_reports" />
 
     <item
-        android:id="@+id/navigation_wallet"
+        android:id="@+id/navigation_home"
         android:icon="@drawable/ic_wallet"
         android:title="@string/nav_wallet" />
 

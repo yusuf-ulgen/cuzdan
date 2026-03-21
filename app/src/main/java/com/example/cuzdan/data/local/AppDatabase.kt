@@ -12,9 +12,15 @@ import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.data.local.dao.MarketAssetDao
 import com.example.cuzdan.data.local.entity.PortfolioHistory
 import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
+import com.example.cuzdan.data.local.entity.PriceAlert
+import com.example.cuzdan.data.local.dao.PriceAlertDao
 
 
-@Database(entities = [Asset::class, Portfolio::class, MarketAsset::class, PortfolioHistory::class], version = 9, exportSchema = false)
+@Database(
+    entities = [Asset::class, Portfolio::class, MarketAsset::class, PortfolioHistory::class, PriceAlert::class],
+    version = 10,
+    exportSchema = false
+)
 
 @TypeConverters(BigDecimalConverter::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -22,5 +28,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun portfolioDao(): PortfolioDao
     abstract fun marketAssetDao(): MarketAssetDao
     abstract fun portfolioHistoryDao(): PortfolioHistoryDao
+    abstract fun priceAlertDao(): PriceAlertDao
 }
 

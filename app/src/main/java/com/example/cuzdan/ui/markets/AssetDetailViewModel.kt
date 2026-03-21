@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cuzdan.data.local.entity.Asset
 import com.example.cuzdan.data.local.entity.AssetType
+import com.example.cuzdan.data.local.entity.PriceAlert
 import com.example.cuzdan.data.repository.AssetRepository
 import com.example.cuzdan.data.repository.PortfolioRepository
 import com.example.cuzdan.util.PreferenceManager
@@ -172,6 +173,12 @@ class AssetDetailViewModel @Inject constructor(
                 repository.deleteAsset(asset)
             }
             _uiState.update { it.copy(isDeleted = true) }
+        }
+    }
+
+    fun setPriceAlert(alert: PriceAlert) {
+        viewModelScope.launch {
+            repository.insertPriceAlert(alert)
         }
     }
 }

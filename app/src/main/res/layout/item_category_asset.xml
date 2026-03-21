@@ -8,7 +8,10 @@
     app:cardBackgroundColor="?attr/surfaceGlass"
     app:cardCornerRadius="20dp"
     app:cardElevation="0dp"
-    app:strokeWidth="0dp">
+    app:strokeWidth="0dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:stateListAnimator="@animator/scale_on_press">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"

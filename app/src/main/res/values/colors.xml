@@ -61,4 +61,13 @@
     <color name="pastel_blue">#93C5FD</color>
     <color name="pastel_indigo">#818CF8</color>
     <color name="pastel_pink">#F472B6</color>
+    <color name="accent_gold">#FFD700</color>
+
+    <!-- Heatmap Colors -->
+    <color name="heatmap_green_intense">#2E7D32</color>
+    <color name="heatmap_green_medium">#4CAF50</color>
+    <color name="heatmap_green_light">#81C784</color>
+    <color name="heatmap_red_intense">#C62828</color>
+    <color name="heatmap_red_medium">#F44336</color>
+    <color name="heatmap_red_light">#E57373</color>
 </resources>

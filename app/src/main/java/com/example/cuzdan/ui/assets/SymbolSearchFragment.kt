@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import com.example.cuzdan.R
+import androidx.navigation.fragment.FragmentNavigatorExtras
 
 @AndroidEntryPoint
 class SymbolSearchFragment : Fragment() {
@@ -84,14 +85,18 @@ class SymbolSearchFragment : Fragment() {
         val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
         adapter = MarketAdapter(
             showChange = false,
-            onItemClick = { selectedAsset ->
+            onItemClick = { selectedAsset, iconView, nameView ->
                 val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
                     symbol = selectedAsset.symbol,
                     name = selectedAsset.name,
                     assetType = selectedAsset.assetType.name,
                     currency = selectedAsset.currency
                 )
-                findNavController().navigate(action)
+                val extras = FragmentNavigatorExtras(
+                    iconView to "asset_icon_${selectedAsset.symbol}",
+                    nameView to "asset_name_${selectedAsset.symbol}"
+                )
+                findNavController().navigate(action, extras)
             },
             onFavoriteClick = { asset ->
                 viewModel.toggleFavorite(asset, type)

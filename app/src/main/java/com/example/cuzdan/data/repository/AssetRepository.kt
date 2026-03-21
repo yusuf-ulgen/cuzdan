@@ -10,8 +10,11 @@ import com.example.cuzdan.data.remote.api.TefasApi
 import com.example.cuzdan.data.remote.model.TefasRequest
 import com.example.cuzdan.data.remote.model.YahooQuote
 import com.example.cuzdan.data.local.dao.MarketAssetDao
-import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
 import com.example.cuzdan.data.local.entity.PortfolioHistory
+import com.example.cuzdan.data.local.dao.PortfolioHistoryDao
+import com.example.cuzdan.data.local.entity.PriceAlert
+import com.example.cuzdan.data.local.dao.PriceAlertDao
+import com.example.cuzdan.data.local.entity.PriceAlertCondition
 import com.example.cuzdan.data.local.entity.MarketAsset
 import com.example.cuzdan.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +40,8 @@ class AssetRepository @Inject constructor(
     private val binanceApi: BinanceApi,
     private val yahooFinanceApi: YahooFinanceApi,
     private val tefasApi: TefasApi,
-    private val portfolioDao: PortfolioDao
+    private val portfolioDao: PortfolioDao,
+    private val priceAlertDao: PriceAlertDao
 ) {
     /**
      * Tüm kripto varlıkları Flow olarak döner.
@@ -799,6 +803,20 @@ class AssetRepository @Inject constructor(
     suspend fun toggleFavorite(symbol: String, type: AssetType, isFavorite: Boolean) {
         marketAssetDao.updateFavorite(symbol, type, isFavorite)
     }
+
+    // Price Alert Methods
+    fun getAllPriceAlerts(): Flow<List<PriceAlert>> = priceAlertDao.getAllAlerts()
+    
+    fun getAlertsForAsset(symbol: String, type: AssetType): Flow<List<PriceAlert>> = 
+        priceAlertDao.getAlertsForAsset(symbol, type)
+
+    suspend fun insertPriceAlert(alert: PriceAlert) = priceAlertDao.insertAlert(alert)
+    
+    suspend fun deletePriceAlert(alert: PriceAlert) = priceAlertDao.deleteAlert(alert)
+    
+    suspend fun markAlertAsTriggered(alertId: Long) = priceAlertDao.markAsTriggered(alertId)
+    
+    suspend fun getActivePriceAlerts() = priceAlertDao.getActiveAlerts()
 
     /**
      * Portföy için tarihsel bir veri noktası kaydeder.

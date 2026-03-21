@@ -9,7 +9,8 @@
     app:cardBackgroundColor="?attr/surfaceGlassStrong"
     app:cardCornerRadius="28dp"
     app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:strokeWidth="0dp"
+    android:stateListAnimator="@animator/scale_on_press">
 
 
 
@@ -23,6 +24,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/bg_icon"
+            android:transitionName="shared_asset_icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -47,6 +49,7 @@
             android:fontFamily="sans-serif-black"
             android:textColor="?attr/textPrimary"
             android:textSize="16sp"
+            android:transitionName="shared_asset_name"
             app:layout_constraintStart_toEndOf="@id/view_icon_bg"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="THYAO" />
