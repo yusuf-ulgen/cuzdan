@@ -53,18 +53,18 @@ class NotificationsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         val settings = listOf(
-            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark", iconRes = R.drawable.ic_dashboard_black_24dp),
-            SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled(), iconRes = R.drawable.ic_notifications_black_24dp),
-            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English", iconRes = R.drawable.ic_reports),
-            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency(), iconRes = R.drawable.ic_currency),
-            SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled(), iconRes = R.drawable.ic_wallet),
+            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark", iconRes = R.drawable.ic_p_theme),
+            SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled(), iconRes = R.drawable.ic_p_notif),
+            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English", iconRes = R.drawable.ic_p_lang),
+            SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency(), iconRes = R.drawable.ic_p_cur),
+            SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled(), iconRes = R.drawable.ic_p_bio),
 
-            SettingItem(6, getString(R.string.settings_device_management), iconRes = R.drawable.ic_settings),
-            SettingItem(7, getString(R.string.settings_faq), iconRes = R.drawable.ic_reports),
-            SettingItem(8, getString(R.string.settings_support), iconRes = R.drawable.ic_wallet),
-            SettingItem(9, getString(R.string.settings_recommend), iconRes = R.drawable.ic_menu),
-            SettingItem(10, getString(R.string.settings_agreement), iconRes = R.drawable.ic_assets),
-            SettingItem(11, getString(R.string.settings_legal), iconRes = R.drawable.ic_assets)
+            SettingItem(6, getString(R.string.settings_device_management), iconRes = R.drawable.ic_p_res),
+            SettingItem(7, getString(R.string.settings_faq), iconRes = R.drawable.ic_p_faq),
+            SettingItem(8, getString(R.string.settings_support), iconRes = R.drawable.ic_p_sup),
+            SettingItem(9, getString(R.string.settings_recommend), iconRes = R.drawable.ic_p_sha),
+            SettingItem(10, getString(R.string.settings_agreement), iconRes = R.drawable.ic_p_agr),
+            SettingItem(11, getString(R.string.settings_legal), iconRes = R.drawable.ic_p_agr)
         )
 
         val adapter = SettingsAdapter(
@@ -92,9 +92,6 @@ class NotificationsFragment : Fragment() {
 
             5 -> {
                 prefManager.setBiometricsEnabled(isChecked)
-                if (isChecked) {
-                    Toast.makeText(context, "Biyometrik veriler için bildirim izni istenecek.", Toast.LENGTH_SHORT).show()
-                }
             }
         }
     }
@@ -113,7 +110,7 @@ class NotificationsFragment : Fragment() {
     }
 
     private fun showLanguageDialog() {
-        val languages = arrayOf("Türkçe", "English")
+        val languages = arrayOf(getString(R.string.label_turkish), getString(R.string.label_english))
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_language)
             .setItems(languages) { _, which ->
@@ -131,7 +128,6 @@ class NotificationsFragment : Fragment() {
             .setItems(currencies) { _, which ->
                 prefManager.setHomeCurrency(currencies[which])
                 setupRecyclerView()
-                Toast.makeText(context, "Para birimi değiştirildi: ${currencies[which]}", Toast.LENGTH_SHORT).show()
             }
             .show()
     }
@@ -153,9 +149,14 @@ class NotificationsFragment : Fragment() {
     }
 
     private fun showFAQDialog() {
+        val faqContent = "<b>${getString(R.string.faq_q1)}</b><br/>" +
+                "${getString(R.string.faq_a1)}<br/><br/>" +
+                "<b>${getString(R.string.faq_q2)}</b><br/>" +
+                "${getString(R.string.faq_a2)}"
+                
         AgreementBottomSheet.newInstance(
             title = getString(R.string.faq_title),
-            content = "${getString(R.string.faq_q1)}\n${getString(R.string.faq_a1)}\n\n${getString(R.string.faq_q2)}\n${getString(R.string.faq_a2)}",
+            content = faqContent,
             isReadOnly = true
         ).show(parentFragmentManager, "FAQ")
     }

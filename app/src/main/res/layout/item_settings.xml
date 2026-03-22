@@ -20,8 +20,8 @@
 
         <View
             android:id="@+id/view_icon_bg"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="@drawable/bg_icon"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -29,14 +29,13 @@
 
         <ImageView
             android:id="@+id/image_setting_icon"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:src="@drawable/ic_settings"
             app:layout_constraintBottom_toBottomOf="@id/view_icon_bg"
             app:layout_constraintEnd_toEndOf="@id/view_icon_bg"
             app:layout_constraintStart_toStartOf="@id/view_icon_bg"
-            app:layout_constraintTop_toTopOf="@id/view_icon_bg"
-            app:tint="?attr/iconTint" />
+            app:layout_constraintTop_toTopOf="@id/view_icon_bg" />
 
         <TextView
             android:id="@+id/text_setting_title"

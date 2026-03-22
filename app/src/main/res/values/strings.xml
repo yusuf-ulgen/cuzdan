@@ -11,7 +11,7 @@
     <string name="settings_language">Dil</string>
     <string name="settings_biometrics">Biyometrik Giriş</string>
     <string name="settings_device_management">Hesap Sıfırlama</string>
-    <string name="settings_faq">Sıkça Sorulan Sorular</string>
+    <string name="settings_faq">SSS</string>
     <string name="settings_support">Destek</string>
     <string name="settings_recommend">Arkadaşına Öner</string>
     <string name="settings_agreement">Kullanıcı Sözleşmesi</string>
@@ -25,11 +25,11 @@
     <string name="dialog_confirm">Onayla</string>
     <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
     
-    <string name="user_agreement_text">Cüzdan Uygulaması Kullanıcı Sözleşmesi: 1. Hizmet Kapsamı: Bu uygulama, varlıklarınızı takip etmeniz için finansal bir araç sunar. 2. Veri Güvenliği: Tüm verileriniz yerel cihazınızda saklanır. Uygulama geliştiricisi, cihazınızdaki veri kaybından sorumlu değildir. 3. Sorumluluk Reddi: Sunulan veriler bilgilendirme amaçlıdır; yatırım tavsiyesi değildir. Finansal kararlarınızın sorumluluğu tamamen size aittir. 4. Güncellemeler: Uygulama sahibi, sözleşme şartlarını dilediği zaman güncelleme hakkını saklı tutar.</string>
+    <string name="user_agreement_text">Cüzdan Uygulaması Kullanıcı Sözleşmesi:<br/><br/>1. Hizmet Kapsamı: Bu uygulama, varlıklarınızı takip etmeniz için finansal bir araç sunar.<br/><br/>2. Veri Güvenliği: Tüm verileriniz yerel cihazınızda saklanır. Uygulama geliştiricisi, cihazınızdaki veri kaybından sorumlu değildir.<br/><br/>3. Sorumluluk Reddi: Sunulan veriler bilgilendirme amaçlıdır; yatırım tavsiyesi değildir. Finansal kararlarınızın sorumluluğu tamamen size aittir.<br/><br/>4. Güncellemeler: Uygulama sahibi, sözleşme şartlarını dilediği zaman güncelleme hakkını saklı tutar.</string>
     <string name="legal_warning_text">Yasal Uyarı: Bu uygulama üzerinden sunulan hiçbir veri, grafik veya analiz yatırım danışmanlığı kapsamında değildir. Piyasa verileri gecikmeli olabilir. İşlem yapmadan önce lütfen lisanslı bir finansman uzmanına danışınız.</string>
     <string name="login_description">Varlıklarınıza güvenli erişim için lütfen biyometrik doğrulama yapın.</string>
     
-    <string name="faq_title">Sıkça Sorulan Sorular</string>
+    <string name="faq_title">SSS</string>
     <string name="faq_q1">Cüzdan uygulaması nedir?</string>
     <string name="faq_a1">Cüzdan, tüm finansal varlıklarınızı (altın, borsa, kripto) tek bir noktadan takip etmenizi sağlayan profesyonel bir portföy yönetim aracıdır.</string>
     <string name="faq_q2">Verilerim nerede saklanıyor?</string>
@@ -39,7 +39,7 @@
     <string name="button_accept">Kabul Et ve Devam Et</string>
     <string name="reset_warning_title">Hesabı Sıfırla</string>
     <string name="reset_warning_message">Hesabınızı sıfırlamak istediğinize emin misiniz? Bu işlem sonucunda tüm portföyleriniz ve varlıklarınız GERİ DÖNDÜRÜLEMEZ şekilde silinecektir.</string>
-
+ 
     <!-- Navigation Labels -->
     <string name="nav_assets">Varlıklar</string>
     <string name="nav_reports">Raporlar</string>
@@ -49,7 +49,7 @@
     <string name="nav_add_asset">Varlık Ekle</string>
     <string name="nav_select_asset">Varlık Seç</string>
     <string name="nav_profit_loss_chart">Kar/Zarar Grafiği</string>
-
+ 
     <!-- Layout & UI Labels -->
     <string name="label_daily_change">GÜNLÜK DEĞİŞİM</string>
     <string name="label_distribution">Dağılım</string>
@@ -63,7 +63,7 @@
     <string name="asset_type_commodity">Emtia</string>
     <string name="asset_type_cash">Nakit</string>
     <string name="asset_type_fund">Fon</string>
-
+ 
     <!-- Asset Detail & Search Labels -->
     <string name="label_enter_asset">Varlık Gir</string>
     <string name="label_amount">Miktar</string>
@@ -74,10 +74,10 @@
     <string name="range_1_month">1 Ay</string>
     <string name="asset_search_hint">Varlık ara…</string>
     <string name="subheader_select_asset">Portföyüne eklemek istediğin varlığı seç</string>
-    <string name="total_portfolios_warning_title">Portföyler Toplamı</string>
+    <string name="total_portfolios_warning_title">Portföyler Totalı</string>
     <string name="total_portfolios_warning_message">Şu an portföyler toplamındasınız. Buraya ekleme yapamazsınız, lütfen bir portföye geçiş yapın.</string>
     <string name="error_loading">Yükleme hatası</string>
-
+ 
     <!-- Markets & Currency -->
     <string name="filter_all">Hepsi</string>
     <string name="title_select_currency">Para Birimi Seç</string>
@@ -86,4 +86,6 @@
     <string name="currency_eur">Euro (€)</string>
     <string name="asset_title_template">%1$s Varlıkları</string>
     <string name="error_prefix">Hata</string>
+    <string name="label_turkish">Türkçe</string>
+    <string name="label_english">İngilizce</string>
 </resources>

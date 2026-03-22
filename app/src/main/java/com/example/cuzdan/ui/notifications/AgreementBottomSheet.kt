@@ -38,21 +38,31 @@ class AgreementBottomSheet : BottomSheetDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         
         binding.textTitle.text = title
-        binding.textContent.text = content
+        binding.textContent.text = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            android.text.Html.fromHtml(content ?: "", android.text.Html.FROM_HTML_MODE_COMPACT)
+        } else {
+            android.text.Html.fromHtml(content ?: "")
+        }
         
         if (isReadOnly) {
             binding.checkAgreement.visibility = View.GONE
             binding.btnAccept.text = getString(R.string.dialog_confirm)
             binding.btnAccept.isEnabled = true
         } else {
-            binding.checkAgreement.setOnCheckedChangeListener { _, isChecked ->
-                binding.btnAccept.isEnabled = isChecked
-            }
+            binding.btnAccept.isEnabled = true
+            // Checkbox listener was just for enabling/disabling, can remove or keep for other visual feedback
         }
 
         binding.btnAccept.setOnClickListener {
-            onAccepted?.invoke()
-            dismiss()
+            if (isReadOnly || binding.checkAgreement.isChecked) {
+                onAccepted?.invoke()
+                dismiss()
+            } else {
+                com.google.android.material.snackbar.Snackbar.make(binding.root, "Lütfen sözleşmeyi kabul edin.", com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
+                    .setBackgroundTint(resources.getColor(R.color.purple_500, null))
+                    .setTextColor(resources.getColor(R.color.white, null))
+                    .show()
+            }
         }
     }
 

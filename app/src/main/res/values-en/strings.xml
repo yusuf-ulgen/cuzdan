@@ -11,7 +11,7 @@
     <string name="settings_language">Language</string>
     <string name="settings_biometrics">Biometric Login</string>
     <string name="settings_device_management">Account Reset</string>
-    <string name="settings_faq">FAQ</string>
+    <string name="settings_faq">SSS</string>
     <string name="settings_support">Support</string>
     <string name="settings_recommend">Recommend to a Friend</string>
     <string name="settings_agreement">User Agreement</string>
@@ -25,11 +25,11 @@
     <string name="dialog_confirm">Confirm</string>
     <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
 
-    <string name="user_agreement_text">Cuzdan App User Agreement: 1. Scope of Service: This app provides a financial tool to track your assets. 2. Data Security: All your data is stored locally on your device. The app developer is not responsible for data loss on your device. 3. Disclaimer: The data presented is for informational purposes only; it is not investment advice. You are solely responsible for your financial decisions. 4. Updates: The app owner reserves the right to update the terms of the agreement at any time.</string>
+    <string name="user_agreement_text">Cuzdan App User Agreement:<br/><br/>1. Scope of Service: This app provides a financial tool to track your assets.<br/><br/>2. Data Security: All your data is stored locally on your device. The app developer is not responsible for data loss on your device.<br/><br/>3. Disclaimer: The data presented is for informational purposes only; it is not investment advice. You are solely responsible for your financial decisions.<br/><br/>4. Updates: The app owner reserves the right to update the terms of the agreement at any time.</string>
     <string name="legal_warning_text">Legal Warning: No data, charts, or analysis provided through this application are within the scope of investment consultancy. Market data may be delayed. Please consult a licensed financial expert before making transactions.</string>
     <string name="login_description">Please perform biometric authentication for secure access to your assets.</string>
 
-    <string name="faq_title">Frequently Asked Questions</string>
+    <string name="faq_title">SSS</string>
     <string name="faq_q1">What is Cuzdan app?</string>
     <string name="faq_a1">Cuzdan is a professional portfolio management tool that allows you to track all your financial assets (gold, stock market, crypto) from a single point.</string>
     <string name="faq_q2">Where is my data stored?</string>
@@ -86,4 +86,6 @@
     <string name="currency_eur">Euro (€)</string>
     <string name="asset_title_template">%1$s Assets</string>
     <string name="error_prefix">Error</string>
+    <string name="label_turkish">Turkish</string>
+    <string name="label_english">English</string>
 </resources>
