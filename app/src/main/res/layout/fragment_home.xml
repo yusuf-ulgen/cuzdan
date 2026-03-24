@@ -130,7 +130,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
                 android:fontFamily="sans-serif-black"
-                android:text="Portföyüm"
+                android:text="@string/total_portfolios"
                 android:visibility="visible"
                 android:textColor="?attr/textPrimary"
                 android:textSize="15sp" />
@@ -207,7 +207,7 @@
                 android:layout_marginTop="8dp"
                 android:alpha="0.4"
                 android:fontFamily="sans-serif-black"
-                android:text="GÜNLÜK DEĞİŞİM"
+                android:text="@string/label_daily_change_header"
                 android:textColor="?attr/textPrimary"
                 android:textSize="11sp" />
         </LinearLayout>

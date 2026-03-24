@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-black"
-        android:text="Yeni Portföy"
+        android:text="@string/portfolio_add_title"
         android:textColor="?attr/textPrimary"
         android:textSize="20sp" />
 
@@ -20,7 +20,7 @@
         android:layout_height="56dp"
         android:layout_marginTop="20dp"
         android:background="@drawable/bg_input_field"
-        android:hint="Portföy Adı"
+        android:hint="@string/portfolio_name_hint"
         android:paddingHorizontal="16dp"
         android:textColor="?attr/textPrimary"
         android:textColorHint="?attr/textSecondary"
@@ -32,7 +32,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:checked="true"
-        android:text="Portföyler Toplamına Dahil Et"
+        android:text="@string/portfolio_include_total"
         android:textColor="?attr/textPrimary"
         android:fontFamily="sans-serif-medium"
         app:thumbTint="?attr/accentColor"
@@ -45,7 +45,7 @@
         android:layout_marginTop="32dp"
         android:backgroundTint="?attr/accentColor"
         android:fontFamily="sans-serif-black"
-        android:text="KAYDET"
+        android:text="@string/btn_save"
         android:textColor="@color/white"
         app:cornerRadius="30dp" />
 

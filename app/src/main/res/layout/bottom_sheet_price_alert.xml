@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
-        android:text="Fiyat Alarmı Kur"
+        android:text="@string/alert_title"
         android:textColor="?attr/textPrimary"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,7 +42,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Güncel Fiyat"
+        android:text="@string/alert_current_price"
         android:textColor="?attr/textSecondary"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -64,7 +64,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Hedef Fiyat"
+        android:text="@string/alert_target_price"
         android:textColor="?attr/textSecondary"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -88,7 +88,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="Alarm Koşulu"
+        android:text="@string/alert_condition"
         android:textColor="?attr/textSecondary"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -110,8 +110,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="ÜSTÜNE ÇIKINCA"
-            android:textSize="12sp"
+            android:text="@string/alert_above"
+            android:textSize="11sp"
+            app:strokeColor="?attr/surfaceGlassStrong" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_equals"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="@string/alert_equals"
+            android:textSize="11sp"
             app:strokeColor="?attr/surfaceGlassStrong" />
 
         <com.google.android.material.button.MaterialButton
@@ -120,8 +130,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="ALTINA DÜŞÜNCE"
-            android:textSize="12sp"
+            android:text="@string/alert_below"
+            android:textSize="11sp"
             app:strokeColor="?attr/surfaceGlassStrong" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -134,7 +144,7 @@
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/accent_violet"
         android:fontFamily="sans-serif-black"
-        android:text="ALARM KUR"
+        android:text="@string/alert_save"
         android:textColor="@color/white"
         app:cornerRadius="30dp"
         app:layout_constraintBottom_toBottomOf="parent"

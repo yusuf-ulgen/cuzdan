@@ -42,20 +42,20 @@ class PriceAlertBottomSheet(
         binding.btnSaveAlert.setOnClickListener {
             val targetStr = binding.editTargetPrice.text.toString()
             if (targetStr.isBlank()) {
-                binding.editTargetPrice.error = "Fiyat giriniz"
+                binding.editTargetPrice.error = getString(R.string.alert_error_price)
                 return@setOnClickListener
             }
 
             val targetPrice = targetStr.toBigDecimalOrNull()
             if (targetPrice == null) {
-                binding.editTargetPrice.error = "Geçersiz fiyat"
+                binding.editTargetPrice.error = getString(R.string.alert_error_invalid)
                 return@setOnClickListener
             }
 
-            val condition = if (binding.toggleCondition.checkedButtonId == R.id.btn_above) {
-                PriceAlertCondition.ABOVE
-            } else {
-                PriceAlertCondition.BELOW
+            val condition = when (binding.toggleCondition.checkedButtonId) {
+                R.id.btn_above -> PriceAlertCondition.ABOVE
+                R.id.btn_equals -> PriceAlertCondition.EQUALS
+                else -> PriceAlertCondition.BELOW
             }
 
             val alert = PriceAlert(

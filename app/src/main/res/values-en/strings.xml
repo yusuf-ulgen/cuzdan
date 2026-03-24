@@ -9,9 +9,10 @@
     <string name="settings_notifications">Notifications</string>
     <string name="settings_currency">Currency</string>
     <string name="settings_language">Language</string>
+    <string name="settings_dark_theme">Dark Theme</string>
     <string name="settings_biometrics">Biometric Login</string>
     <string name="settings_device_management">Account Reset</string>
-    <string name="settings_faq">SSS</string>
+    <string name="settings_faq">FAQ</string>
     <string name="settings_support">Support</string>
     <string name="settings_recommend">Recommend to a Friend</string>
     <string name="settings_agreement">User Agreement</string>
@@ -25,11 +26,17 @@
     <string name="dialog_confirm">Confirm</string>
     <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
 
-    <string name="user_agreement_text">Cuzdan App User Agreement:<br/><br/>1. Scope of Service: This app provides a financial tool to track your assets.<br/><br/>2. Data Security: All your data is stored locally on your device. The app developer is not responsible for data loss on your device.<br/><br/>3. Disclaimer: The data presented is for informational purposes only; it is not investment advice. You are solely responsible for your financial decisions.<br/><br/>4. Updates: The app owner reserves the right to update the terms of the agreement at any time.</string>
+    <string name="user_agreement_text"><![CDATA[
+<b>Cuzdan App User Agreement</b><br/><br/>
+<b>1. Scope of Service</b><br/>This app provides a financial tool to track your assets.<br/><br/>
+<b>2. Data Security</b><br/>All your data is stored locally on your device. The app developer is not responsible for data loss on your device.<br/><br/>
+<b>3. Disclaimer</b><br/>The data presented is for informational purposes only; it is not investment advice. You are solely responsible for your financial decisions.<br/><br/>
+<b>4. Updates</b><br/>The app owner reserves the right to update the terms of the agreement at any time.
+    ]]></string>
     <string name="legal_warning_text">Legal Warning: No data, charts, or analysis provided through this application are within the scope of investment consultancy. Market data may be delayed. Please consult a licensed financial expert before making transactions.</string>
     <string name="login_description">Please perform biometric authentication for secure access to your assets.</string>
 
-    <string name="faq_title">SSS</string>
+    <string name="faq_title">FAQ</string>
     <string name="faq_q1">What is Cuzdan app?</string>
     <string name="faq_a1">Cuzdan is a professional portfolio management tool that allows you to track all your financial assets (gold, stock market, crypto) from a single point.</string>
     <string name="faq_q2">Where is my data stored?</string>
@@ -84,8 +91,79 @@
     <string name="currency_try">Turkish Lira (₺)</string>
     <string name="currency_usd">US Dollar ($)</string>
     <string name="currency_eur">Euro (€)</string>
+    <string name="currency_gbp">British Pound</string>
+    <string name="currency_chf">Swiss Franc</string>
+    <string name="currency_jpy">Japanese Yen</string>
+    <string name="currency_aud">Australian Dollar</string>
+    <string name="currency_cad">Canadian Dollar</string>
+    <string name="commodity_gold">Gold</string>
+    <string name="commodity_gold_oz">Gold (Oz)</string>
+    <string name="commodity_gram_gold">Gram Gold</string>
+    <string name="commodity_silver">Silver</string>
+    <string name="commodity_copper">Copper</string>
+    <string name="commodity_platinum">Platinum</string>
+    <string name="commodity_palladium">Palladium</string>
     <string name="asset_title_template">%1$s Assets</string>
     <string name="error_prefix">Error</string>
     <string name="label_turkish">Turkish</string>
     <string name="label_english">English</string>
+
+    <!-- Sort Menu -->
+    <string name="sort_name_asc">Name (A-Z)</string>
+    <string name="sort_name_desc">Name (Z-A)</string>
+    <string name="sort_price_asc">Price (Low to High)</string>
+    <string name="sort_price_desc">Price (High to Low)</string>
+    <string name="sort_change_asc">Change (Most Fallen)</string>
+    <string name="sort_change_desc">Change (Most Risen)</string>
+
+    <!-- Price Alert -->
+    <string name="alert_title">Set Price Alert</string>
+    <string name="alert_current_price">Current Price</string>
+    <string name="alert_target_price">Target Price</string>
+    <string name="alert_condition">Alert Condition</string>
+    <string name="alert_above">RISES ABOVE</string>
+    <string name="alert_below">FALLS BELOW</string>
+    <string name="alert_equals">EQUALS</string>
+    <string name="alert_save">SET ALERT</string>
+    <string name="alert_error_price">Please enter a price</string>
+    <string name="alert_error_invalid">Invalid price</string>
+
+    <!-- Asset Detail -->
+    <string name="detail_title">Asset Detail</string>
+    <string name="detail_portfolio_prefix">Portfolio: %1$s</string>
+    <string name="detail_quantity_cost">Quantity and Cost</string>
+    <string name="detail_transaction_amount">Transaction Amount</string>
+    <string name="detail_held_amount">Held: %1$s</string>
+    <string name="detail_unit_cost_optional">Unit Cost (Optional)</string>
+    <string name="detail_buy">BUY (ADD)</string>
+    <string name="detail_sell">SELL (REDUCE)</string>
+    <string name="detail_save">SAVE</string>
+    <string name="detail_unit">Units</string>
+
+    <!-- Support Dialog -->
+    <string name="support_subject">Support Request</string>
+    <string name="support_email_chooser">Send email…</string>
+    <string name="support_fill_all_fields">Please fill in all fields.</string>
+    <string name="support_share_text">You should try the Cuzdan app! %1$s</string>
+
+    <!-- Home -->
+    <string name="label_heatmap_coming_soon">Heat Map Coming Soon</string>
+    <string name="label_heatmap_page_title">Profit/Loss Heat Map</string>
+    <string name="label_daily_change_header">DAILY CHANGE</string>
+    <string name="portfolio_add_title">New Portfolio</string>
+    <string name="portfolio_name_hint">Portfolio Name</string>
+    <string name="portfolio_include_total">Include in Total Portfolios</string>
+    <string name="label_profit_loss_chart">Profit/Loss Change</string>
+    <string name="label_total_portfolios_sub">Total Portfolios</string>
+    <string name="period_7_days">Last 7 Days</string>
+    <string name="period_1_month">Last 1 Month</string>
+    <string name="period_all_time">All Time</string>
+    <string name="period_custom">Custom Date Range</string>
+    <string name="dialog_select_period">Select Date Range</string>
+    <string name="my_portfolios">My Portfolios</string>
+    <string name="agreement_not_accepted">Please accept the agreement.</string>
+    <string name="agreement_must_accept_exit_warning">You must accept the agreement to use the app. Exiting without accepting will close the application.</string>
+    <string name="agreement_exit_confirm">Confirm Exit</string>
+    <string name="agreement_go_back">Go Back</string>
+    <string name="agreement_exit">Exit App</string>
 </resources>

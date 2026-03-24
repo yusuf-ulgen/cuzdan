@@ -52,23 +52,34 @@ class MarketAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.binding.apply {
-            textMarketName.text = getLocalizedAssetName(item.name, root.context)
-            
-            if (item.fullName != null && item.fullName != item.name) {
+            val isDoviz = item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ
+
+            if (isDoviz && item.fullName != null) {
+                // For currencies: show full name (e.g. "Euro") as main text, symbol (EUR/TRY) as subtitle
+                textMarketName.text = getLocalizedAssetName(item.fullName, root.context)
                 textMarketFullName.visibility = android.view.View.VISIBLE
-                if (textMarketFullName.text != item.fullName) {
-                    textMarketFullName.text = item.fullName
-                }
-                if (!textMarketFullName.isSelected) {
-                    textMarketFullName.isSelected = true // Enable marquee
-                }
+                textMarketFullName.text = item.name  // e.g. "EUR/TRY"
+                textMarketFullName.isSelected = true
+                textMarketSymbol.visibility = android.view.View.GONE
             } else {
-                textMarketFullName.visibility = android.view.View.GONE
+                textMarketName.text = getLocalizedAssetName(item.name, root.context)
+
+                if (item.fullName != null && item.fullName != item.name) {
+                    textMarketFullName.visibility = android.view.View.VISIBLE
+                    if (textMarketFullName.text != item.fullName) {
+                        textMarketFullName.text = item.fullName
+                    }
+                    if (!textMarketFullName.isSelected) {
+                        textMarketFullName.isSelected = true
+                    }
+                } else {
+                    textMarketFullName.visibility = android.view.View.GONE
+                }
+
+                val hideSymbol = shouldHideSymbol(item)
+                textMarketSymbol.text = if (hideSymbol) "" else item.symbol
+                textMarketSymbol.visibility = if (hideSymbol) android.view.View.GONE else android.view.View.VISIBLE
             }
-            
-            val hideSymbol = shouldHideSymbol(item)
-            textMarketSymbol.text = if (hideSymbol) "" else item.symbol
-            textMarketSymbol.visibility = if (hideSymbol) android.view.View.GONE else android.view.View.VISIBLE
             
             val formattedPrice = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
                 minimumFractionDigits = 2
@@ -222,20 +233,28 @@ class MarketAdapter(
     }
 
     private fun getLocalizedAssetName(name: String, context: android.content.Context): String {
+        // Use string resources for locale-aware names (TR → Turkish names, EN → English names)
+        val try_name = context.getString(R.string.currency_try).replace(" (₺)", "")
+        val usd_name = context.getString(R.string.currency_usd).replace(" ($)", "")
+        val eur_name = context.getString(R.string.currency_eur).replace(" (€)", "")
         return when {
-            name == "Türk Lirası" -> context.getString(R.string.currency_try).replace(" (₺)", "")
-            name == "Amerikan Doları" || name == "US Dollar" -> "Amerikan Doları"
-            name == "Euro" -> "Euro"
-            name == "İngiliz Sterlini" || name == "British Pound" -> "İngiliz Sterlini"
-            name == "İsviçre Frangı" || name == "Swiss Franc" -> "İsviçre Frangı"
-            name == "Japon Yeni" || name == "Japanese Yen" -> "Japon Yeni"
-            name == "Avustralya Doları" || name == "Australian Dollar" -> "Avustralya Doları"
-            name == "Kanada Doları" || name == "Canadian Dollar" -> "Kanada Doları"
-            name == "Gold" || name.contains("Gold", true) -> "Altın"
-            name == "Silver" || name.contains("Silver", true) -> "Gümüş"
-            name == "Copper" || name.contains("Copper", true) -> "Bakır"
-            name == "Platinum" || name.contains("Platinum", true) -> "Platin"
-            name == "Palladium" || name.contains("Palladium", true) -> "Paladyum"
+            name == "Türk Lirası" || name == "Turkish Lira" -> try_name
+            name == "Amerikan Doları" || name == "US Dollar" || name == "American Dollar" || name == "United States Dollar" -> usd_name
+            name == "Euro" -> eur_name
+            // These will use English names in EN locale via their own resource strings if we add them,
+            // but for simple locale-aware approach, keep English names (they are the same in both)
+            name == "İngiliz Sterlini" || name == "British Pound" -> context.getString(R.string.currency_gbp)
+            name == "İsviçre Frangı" || name == "Swiss Franc" -> context.getString(R.string.currency_chf)
+            name == "Japon Yeni" || name == "Japanese Yen" -> context.getString(R.string.currency_jpy)
+            name == "Avustralya Doları" || name == "Australian Dollar" -> context.getString(R.string.currency_aud)
+            name == "Kanada Doları" || name == "Canadian Dollar" -> context.getString(R.string.currency_cad)
+            name == "Altın (Ons)" -> context.getString(R.string.commodity_gold_oz)
+            name == "Gram Altın" -> context.getString(R.string.commodity_gram_gold)
+            name == "Altın" || name == "Gold" || name.contains("Gold", true) -> context.getString(R.string.commodity_gold)
+            name == "Gümüş" || name == "Silver" || name.contains("Silver", true) -> context.getString(R.string.commodity_silver)
+            name == "Bakır" || name == "Copper" || name.contains("Copper", true) -> context.getString(R.string.commodity_copper)
+            name == "Platin" || name == "Platinum" || name.contains("Platinum", true) -> context.getString(R.string.commodity_platinum)
+            name == "Paladyum" || name == "Palladium" || name.contains("Palladium", true) -> context.getString(R.string.commodity_palladium)
             else -> name
         }
     }

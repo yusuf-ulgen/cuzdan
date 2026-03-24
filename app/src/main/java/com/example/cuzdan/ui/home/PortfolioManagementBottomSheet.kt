@@ -83,7 +83,7 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
                     // Toplam maliyeti de ekliyorum.
                     val totalCost = state.portfolios.sumOf { it.totalCost }
                     
-                    list.add(PortfolioItem(-1, "Portföyler Toplamı", state.totalBalance, state.dailyChangeAbs, state.dailyChangePerc, totalCost))
+                    list.add(PortfolioItem(-1, requireContext().getString(R.string.label_total_portfolios_sub), state.totalBalance, state.dailyChangeAbs, state.dailyChangePerc, totalCost))
                     
                     state.portfolios.forEach { p ->
                         list.add(PortfolioItem(p.portfolio.id, p.portfolio.name, p.balance, p.dailyChangeAbs, p.dailyChangePerc, p.totalCost))

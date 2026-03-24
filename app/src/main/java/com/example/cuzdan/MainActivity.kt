@@ -90,6 +90,7 @@ class MainActivity : AppCompatActivity() {
                 title = getString(R.string.settings_agreement),
                 content = getString(R.string.user_agreement_text),
                 isReadOnly = false,
+                isMandatory = true,
                 onAccepted = {
                     prefManager.setAgreementAccepted(true)
                     checkBiometrics()

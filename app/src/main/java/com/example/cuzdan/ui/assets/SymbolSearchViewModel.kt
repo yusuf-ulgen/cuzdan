@@ -59,19 +59,29 @@ class SymbolSearchViewModel @Inject constructor(
                     repository.refreshMarketAssets(type).collect { resource ->
                         if (resource is com.example.cuzdan.util.Resource.Success) {
                             val refreshedAssets = repository.getMarketAssetsOnce(type)
-                            val finalAssets = if (_uiState.value.isFavoritesOnly) refreshedAssets.filter { it.isFavorite } else refreshedAssets
+                            val filteredAssets = filterByType(refreshedAssets, type)
+                            val finalAssets = if (_uiState.value.isFavoritesOnly) filteredAssets.filter { it.isFavorite } else filteredAssets
                             _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                         } else if (resource is com.example.cuzdan.util.Resource.Error) {
                             _uiState.update { it.copy(isLoading = false, error = resource.message) }
                         }
                     }
                 } else {
-                    val finalAssets = if (_uiState.value.isFavoritesOnly) marketAssets.filter { it.isFavorite } else marketAssets
+                    val filteredAssets = filterByType(marketAssets, type)
+                    val finalAssets = if (_uiState.value.isFavoritesOnly) filteredAssets.filter { it.isFavorite } else filteredAssets
                     _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = "${context.getString(R.string.error_loading)}: ${e.localizedMessage}") }
             }
+        }
+    }
+
+    private fun filterByType(assets: List<MarketAsset>, type: AssetType): List<MarketAsset> {
+        return if (type == AssetType.NAKIT) {
+            assets.filter { it.symbol.equals("TRY", ignoreCase = true) || it.symbol.equals("TL", ignoreCase = true) }
+        } else {
+            assets
         }
     }
 

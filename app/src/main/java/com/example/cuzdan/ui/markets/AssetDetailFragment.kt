@@ -70,10 +70,10 @@ class AssetDetailFragment : Fragment() {
         }
         binding.btnDelete.setOnClickListener {
             android.app.AlertDialog.Builder(requireContext())
-                .setTitle("Varlığı Sil")
-                .setMessage("Bu varlığı portföyünüzden silmek istediğinize emin misiniz?")
-                .setPositiveButton("Sil") { _, _ -> viewModel.deleteAsset() }
-                .setNegativeButton("İptal", null)
+                .setTitle(getString(R.string.detail_title))
+                .setMessage(getString(R.string.reset_warning_message))
+                .setPositiveButton(getString(R.string.dialog_confirm)) { _, _ -> viewModel.deleteAsset() }
+                .setNegativeButton(getString(R.string.dialog_cancel), null)
                 .show()
         }
         binding.btnAlert.setOnClickListener {
@@ -85,7 +85,7 @@ class AssetDetailFragment : Fragment() {
                 currentPrice = state.currentPrice,
                 onAlertSet = { alert ->
                     viewModel.setPriceAlert(alert)
-                    Toast.makeText(requireContext(), "Alarm kuruldu!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), R.string.alert_save, Toast.LENGTH_SHORT).show()
                 }
             )
             bottomSheet.show(childFragmentManager, PriceAlertBottomSheet.TAG)
@@ -100,7 +100,7 @@ class AssetDetailFragment : Fragment() {
             val costStr = binding.editCost.text.toString()
             
             if (amountStr.isEmpty()) {
-                binding.editAmount.error = "Miktar boş olamaz"
+                binding.editAmount.error = getString(R.string.alert_error_price)
                 return@setOnClickListener
             }
             
@@ -117,13 +117,13 @@ class AssetDetailFragment : Fragment() {
                 
                 if (type == TransactionType.SELL) {
                     binding.layoutCostContainer.visibility = View.GONE
-                    binding.btnSave.text = "SATIŞI KAYDET"
+                    binding.btnSave.text = getString(R.string.detail_sell)
                     binding.btnSave.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.accent_red, null))
                 } else {
                     if (args.assetType != "NAKIT" || args.symbol != "TRY") {
                         binding.layoutCostContainer.visibility = View.VISIBLE
                     }
-                    binding.btnSave.text = "ALIŞI KAYDET"
+                    binding.btnSave.text = getString(R.string.detail_buy)
                     binding.btnSave.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.accent_violet, null))
                 }
             }
@@ -147,12 +147,12 @@ class AssetDetailFragment : Fragment() {
                     updateUI(state)
                     if (state.isSaved) {
                         HapticManager.success(requireContext())
-                        Toast.makeText(requireContext(), "Varlık başarıyla güncellendi", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     }
                     if (state.isDeleted) {
                         HapticManager.success(requireContext())
-                        Toast.makeText(requireContext(), "Varlık silindi", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     }
                     if (state.errorMessage != null) {
@@ -166,7 +166,7 @@ class AssetDetailFragment : Fragment() {
 
     private fun updateUI(state: AssetDetailUiState) {
         binding.textCurrentPrice.text = state.currentPrice.formatCurrency()
-        binding.textPortfolioName.text = "Portföy: ${state.portfolioName}"
+        binding.textPortfolioName.text = getString(R.string.detail_portfolio_prefix, state.portfolioName)
         
         // Load icon (Simplified placeholder logic, can be enhanced with coil if url available)
         val iconRes = when(args.assetType) {
@@ -185,7 +185,7 @@ class AssetDetailFragment : Fragment() {
         binding.ivAssetIconDetail.setImageResource(iconRes)
         
         // Show held amount
-        binding.textCurrentAmountHeld.text = "Eldeki: ${state.currentAmount.toPlainString()}"
+        binding.textCurrentAmountHeld.text = getString(R.string.detail_held_amount, state.currentAmount.toPlainString())
         
         val isPositive = state.dailyChangePercentage >= BigDecimal.ZERO
         val colorAttr = if (isPositive) com.example.cuzdan.R.attr.pill_green_text else com.example.cuzdan.R.attr.pill_red_text
@@ -201,7 +201,7 @@ class AssetDetailFragment : Fragment() {
 
     private fun setupChart(history: List<Pair<Long, Double>>) {
         if (history.isEmpty()) {
-            binding.priceChart.setNoDataText("Geçmiş veri bulunamadı")
+            binding.priceChart.setNoDataText(getString(R.string.error_loading))
             binding.priceChart.invalidate()
             return
         }
@@ -212,7 +212,7 @@ class AssetDetailFragment : Fragment() {
 
         val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
-        val dataSet = LineDataSet(entries, "Fiyat").apply {
+        val dataSet = LineDataSet(entries, getString(R.string.label_profit_loss)).apply {
             color = accentViolet
             lineWidth = 3f
             setDrawCircles(false)

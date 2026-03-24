@@ -29,11 +29,9 @@ class SettingsAdapter(
             textSettingTitle.text = item.title
             
             if (item.iconRes != null) {
-                viewIconBg.visibility = View.VISIBLE
                 imageSettingIcon.visibility = View.VISIBLE
                 imageSettingIcon.setImageResource(item.iconRes)
             } else {
-                viewIconBg.visibility = View.GONE
                 imageSettingIcon.visibility = View.GONE
             }
             

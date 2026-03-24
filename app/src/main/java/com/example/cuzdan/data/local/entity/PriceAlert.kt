@@ -19,5 +19,5 @@ data class PriceAlert(
 )
 
 enum class PriceAlertCondition {
-    ABOVE, BELOW
+    ABOVE, EQUALS, BELOW
 }

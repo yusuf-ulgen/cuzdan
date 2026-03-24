@@ -53,9 +53,9 @@ class NotificationsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         val settings = listOf(
-            SettingItem(0, "Koyu Tema", hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark", iconRes = R.drawable.ic_p_theme),
+            SettingItem(0, getString(R.string.settings_dark_theme), hasSwitch = true, isSwitchChecked = prefManager.getThemeMode() == "dark", iconRes = R.drawable.ic_p_theme),
             SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled(), iconRes = R.drawable.ic_p_notif),
-            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") "Türkçe" else "English", iconRes = R.drawable.ic_p_lang),
+            SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") getString(R.string.label_turkish) else getString(R.string.label_english), iconRes = R.drawable.ic_p_lang),
             SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency(), iconRes = R.drawable.ic_p_cur),
             SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled(), iconRes = R.drawable.ic_p_bio),
 
@@ -173,13 +173,13 @@ class NotificationsFragment : Fragment() {
             if (email.isNotEmpty() && message.isNotEmpty()) {
                 val intent = Intent(Intent.ACTION_SENDTO).apply {
                     data = Uri.parse("mailto:admin@cuzdan.com")
-                    putExtra(Intent.EXTRA_SUBJECT, "Destek Talebi")
-                    putExtra(Intent.EXTRA_TEXT, "Göndüren: $email\n\nMesaj: $message")
+                    putExtra(Intent.EXTRA_SUBJECT, getString(R.string.support_subject))
+                    putExtra(Intent.EXTRA_TEXT, "From: $email\n\nMessage: $message")
                 }
-                startActivity(Intent.createChooser(intent, "E-posta gönder..."))
+                startActivity(Intent.createChooser(intent, getString(R.string.support_email_chooser)))
                 dialog.dismiss()
             } else {
-                Toast.makeText(context, "Lütfen tüm alanları doldurun.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.support_fill_all_fields, Toast.LENGTH_SHORT).show()
             }
         }
         dialog.show()
@@ -188,7 +188,7 @@ class NotificationsFragment : Fragment() {
     private fun shareApp() {
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, "Cüzdan uygulamasını denemelisin! ${getString(R.string.play_store_link)}")
+            putExtra(Intent.EXTRA_TEXT, getString(R.string.support_share_text, getString(R.string.play_store_link)))
             type = "text/plain"
         }
         startActivity(Intent.createChooser(sendIntent, null))

@@ -18,24 +18,14 @@
         android:paddingHorizontal="20dp"
         android:paddingVertical="14dp">
 
-        <View
-            android:id="@+id/view_icon_bg"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_icon"
+        <ImageView
+            android:id="@+id/image_setting_icon"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_settings"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/image_setting_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_settings"
-            app:layout_constraintBottom_toBottomOf="@id/view_icon_bg"
-            app:layout_constraintEnd_toEndOf="@id/view_icon_bg"
-            app:layout_constraintStart_toStartOf="@id/view_icon_bg"
-            app:layout_constraintTop_toTopOf="@id/view_icon_bg" />
 
         <TextView
             android:id="@+id/text_setting_title"
@@ -47,7 +37,7 @@
             android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/text_setting_value"
-            app:layout_constraintStart_toEndOf="@id/view_icon_bg"
+            app:layout_constraintStart_toEndOf="@id/image_setting_icon"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Bildirimler" />
 

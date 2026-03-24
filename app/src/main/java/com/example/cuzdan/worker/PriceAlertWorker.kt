@@ -33,15 +33,20 @@ class PriceAlertWorker @AssistedInject constructor(
                 if (currentPrice != null) {
                     val isTriggered = when (alert.condition) {
                         PriceAlertCondition.ABOVE -> currentPrice >= alert.targetPrice
+                        PriceAlertCondition.EQUALS -> currentPrice.compareTo(alert.targetPrice) == 0
                         PriceAlertCondition.BELOW -> currentPrice <= alert.targetPrice
                     }
 
                     if (isTriggered) {
-                        val conditionText = if (alert.condition == PriceAlertCondition.ABOVE) "üzerine çıktı" else "altına düştü"
+                        val conditionText = when (alert.condition) {
+                            PriceAlertCondition.ABOVE -> applicationContext.getString(com.example.cuzdan.R.string.alert_above)
+                            PriceAlertCondition.EQUALS -> applicationContext.getString(com.example.cuzdan.R.string.alert_equals)
+                            PriceAlertCondition.BELOW -> applicationContext.getString(com.example.cuzdan.R.string.alert_below)
+                        }
                         NotificationHelper.showPriceAlertNotification(
                             applicationContext,
-                            "Fiyat Alarmı: ${alert.name}",
-                            "${alert.symbol} fiyatı ${alert.targetPrice.formatCurrency()} $conditionText. Güncel: ${currentPrice.formatCurrency()}",
+                            "${alert.name} - ${alert.symbol}",
+                            "${alert.targetPrice.formatCurrency()} $conditionText. ${applicationContext.getString(com.example.cuzdan.R.string.alert_current_price)}: ${currentPrice.formatCurrency()}",
                             alert.id.toInt()
                         )
                         repository.markAlertAsTriggered(alert.id)

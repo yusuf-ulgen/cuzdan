@@ -24,7 +24,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
-        android:text="Portföylerim"
+        android:text="@string/my_portfolios"
         android:textColor="?attr/textPrimary"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"

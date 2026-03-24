@@ -59,9 +59,9 @@ class ProfitLossChartFragment : Fragment() {
                 binding.progressLoader.visibility = if (state.isLoading) View.VISIBLE else View.GONE
                 
                 binding.textPeriodLabel.text = when(state.period) {
-                    ChartPeriod.SevenDays -> "Son 7 Gün"
-                    ChartPeriod.OneMonth -> "Son 1 Ay"
-                    ChartPeriod.AllTime -> "Tüm Zamanlar"
+                    ChartPeriod.SevenDays -> getString(R.string.period_7_days)
+                    ChartPeriod.OneMonth -> getString(R.string.period_1_month)
+                    ChartPeriod.AllTime -> getString(R.string.period_all_time)
                     is ChartPeriod.Custom -> {
                         val sdf = SimpleDateFormat("dd MMM", Locale.getDefault())
                         "${sdf.format(Date(state.period.startDate))} - ${sdf.format(Date(state.period.endDate))}"
@@ -99,9 +99,14 @@ class ProfitLossChartFragment : Fragment() {
     }
 
     private fun showPeriodMenu() {
-        val options = arrayOf("Son 7 Gün", "Son 1 Ay", "Tüm Zamanlar", "Özel Tarih Aralığı")
+        val options = arrayOf(
+            getString(R.string.period_7_days),
+            getString(R.string.period_1_month),
+            getString(R.string.period_all_time),
+            getString(R.string.period_custom)
+        )
         androidx.appcompat.app.AlertDialog.Builder(requireContext(), R.style.CustomDialogTheme)
-            .setTitle("Tarih Aralığı Seçin")
+            .setTitle(getString(R.string.dialog_select_period))
             .setItems(options) { _, which ->
                 when(which) {
                     0 -> viewModel.setPeriod(ChartPeriod.SevenDays)

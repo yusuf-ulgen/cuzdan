@@ -92,7 +92,7 @@
             android:layout_marginStart="12dp"
             android:background="@android:color/transparent"
             android:fontFamily="sans-serif"
-            android:hint="Varlık ara..."
+            android:hint="@string/asset_search_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:textColor="?attr/textPrimary"

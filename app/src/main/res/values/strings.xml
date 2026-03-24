@@ -9,6 +9,7 @@
     <string name="settings_notifications">Bildirimler</string>
     <string name="settings_currency">Para Birimi</string>
     <string name="settings_language">Dil</string>
+    <string name="settings_dark_theme">Koyu Tema</string>
     <string name="settings_biometrics">Biyometrik Giriş</string>
     <string name="settings_device_management">Hesap Sıfırlama</string>
     <string name="settings_faq">SSS</string>
@@ -25,7 +26,13 @@
     <string name="dialog_confirm">Onayla</string>
     <string name="play_store_link">https://play.google.com/store/apps/details?id=com.example.cuzdan</string>
     
-    <string name="user_agreement_text">Cüzdan Uygulaması Kullanıcı Sözleşmesi:<br/><br/>1. Hizmet Kapsamı: Bu uygulama, varlıklarınızı takip etmeniz için finansal bir araç sunar.<br/><br/>2. Veri Güvenliği: Tüm verileriniz yerel cihazınızda saklanır. Uygulama geliştiricisi, cihazınızdaki veri kaybından sorumlu değildir.<br/><br/>3. Sorumluluk Reddi: Sunulan veriler bilgilendirme amaçlıdır; yatırım tavsiyesi değildir. Finansal kararlarınızın sorumluluğu tamamen size aittir.<br/><br/>4. Güncellemeler: Uygulama sahibi, sözleşme şartlarını dilediği zaman güncelleme hakkını saklı tutar.</string>
+    <string name="user_agreement_text"><![CDATA[
+<b>Cüzdan Uygulaması Kullanıcı Sözleşmesi</b><br/><br/>
+<b>1. Hizmet Kapsamı</b><br/>Bu uygulama, varlıklarınızı takip etmeniz için finansal bir araç sunar.<br/><br/>
+<b>2. Veri Güvenliği</b><br/>Tüm verileriniz yerel cihazınızda saklanır. Uygulama geliştiricisi, cihazınızdaki veri kaybından sorumlu değildir.<br/><br/>
+<b>3. Sorumluluk Reddi</b><br/>Sunulan veriler bilgilendirme amaçlıdır; yatırım tavsiyesi değildir. Finansal kararlarınızın sorumluluğu tamamen size aittir.<br/><br/>
+<b>4. Güncellemeler</b><br/>Uygulama sahibi, sözleşme şartlarını dilediği zaman güncelleme hakkını saklı tutar.
+    ]]></string>
     <string name="legal_warning_text">Yasal Uyarı: Bu uygulama üzerinden sunulan hiçbir veri, grafik veya analiz yatırım danışmanlığı kapsamında değildir. Piyasa verileri gecikmeli olabilir. İşlem yapmadan önce lütfen lisanslı bir finansman uzmanına danışınız.</string>
     <string name="login_description">Varlıklarınıza güvenli erişim için lütfen biyometrik doğrulama yapın.</string>
     
@@ -84,8 +91,78 @@
     <string name="currency_try">Türk Lirası (₺)</string>
     <string name="currency_usd">Amerikan Doları ($)</string>
     <string name="currency_eur">Euro (€)</string>
+    <string name="currency_gbp">İngiliz Sterlini</string>
+    <string name="currency_chf">İsviçre Frangı</string>
+    <string name="currency_jpy">Japon Yeni</string>
+    <string name="currency_aud">Avustralya Doları</string>
+    <string name="currency_cad">Kanada Doları</string>
+    <string name="commodity_gold">Altın</string>
+    <string name="commodity_gold_oz">Altın (Ons)</string>
+    <string name="commodity_gram_gold">Gram Altın</string>
+    <string name="commodity_silver">Gümüş</string>
+    <string name="commodity_copper">Bakır</string>
+    <string name="commodity_platinum">Platin</string>
+    <string name="commodity_palladium">Paladyum</string>
     <string name="asset_title_template">%1$s Varlıkları</string>
     <string name="error_prefix">Hata</string>
     <string name="label_turkish">Türkçe</string>
     <string name="label_english">İngilizce</string>
+
+    <!-- Sort Menu -->
+    <string name="sort_name_asc">İsim (A-Z)</string>
+    <string name="sort_name_desc">İsim (Z-A)</string>
+    <string name="sort_price_asc">Fiyat (Düşükten Yükseğe)</string>
+    <string name="sort_price_desc">Fiyat (Yüksekten Düşüğe)</string>
+    <string name="sort_change_asc">Değişim (En Çok Düşen)</string>
+    <string name="sort_change_desc">Değişim (En Çok Artan)</string>
+
+    <!-- Price Alert -->
+    <string name="alert_title">Fiyat Alarmı Kur</string>
+    <string name="alert_current_price">Güncel Fiyat</string>
+    <string name="alert_target_price">Hedef Fiyat</string>
+    <string name="alert_condition">Alarm Koşulu</string>
+    <string name="alert_above">ÜSTÜNE ÇIKINCA</string>
+    <string name="alert_below">ALTINA DÜŞÜNCE</string>
+    <string name="alert_equals">EŞİTLENİNCE</string>
+    <string name="alert_save">ALARM KUR</string>
+    <string name="alert_error_price">Fiyat giriniz</string>
+    <string name="alert_error_invalid">Geçersiz fiyat</string>
+
+    <!-- Asset Detail -->
+    <string name="detail_title">Varlık Detayı</string>
+    <string name="detail_portfolio_prefix">Portföy: %1$s</string>
+    <string name="detail_quantity_cost">Miktar ve Maliyet</string>
+    <string name="detail_transaction_amount">İşlem Miktarı</string>
+    <string name="detail_held_amount">Eldeki: %1$s</string>
+    <string name="detail_unit_cost_optional">Birim Maliyet (Opsiyonel)</string>
+    <string name="detail_buy">ALIŞ (EKLE)</string>
+    <string name="detail_sell">SATIŞ (AZALT)</string>
+    <string name="detail_save">KAYDET</string>
+    <string name="detail_unit">Adet</string>
+
+    <!-- Support Dialog -->
+    <string name="support_subject">Destek Talebi</string>
+    <string name="support_email_chooser">E-posta gönder…</string>
+    <string name="support_fill_all_fields">Lütfen tüm alanları doldurun.</string>
+    <string name="support_share_text">Cüzdan uygulamasını denemelisin! %1$s</string>
+
+    <!-- Home -->
+    <string name="label_heatmap_page_title">Kâr/Zarar Isı Haritası</string>
+    <string name="label_daily_change_header">GÜNLÜK DEĞİŞİM</string>
+    <string name="portfolio_add_title">Yeni Portföy</string>
+    <string name="portfolio_name_hint">Portföy Adı</string>
+    <string name="portfolio_include_total">Portföyler Toplamına Dahil Et</string>
+    <string name="label_profit_loss_chart">Kar/Zarar Değişimi</string>
+    <string name="label_total_portfolios_sub">Portföyler Toplamı</string>
+    <string name="period_7_days">Son 7 Gün</string>
+    <string name="period_1_month">Son 1 Ay</string>
+    <string name="period_all_time">Tüm Zamanlar</string>
+    <string name="period_custom">Özel Tarih Aralığı</string>
+    <string name="dialog_select_period">Tarih Aralığı Seçin</string>
+    <string name="my_portfolios">Portföylerim</string>
+    <string name="agreement_not_accepted">Lütfen sözleşmeyi kabul edin.</string>
+    <string name="agreement_must_accept_exit_warning">Uygulamayı kullanmak için sözleşmeyi kabul etmeniz gerekmektedir. Kabul etmeden çıkmak uygulamayı kapatacak.</string>
+    <string name="agreement_exit_confirm">Çıkışı Onayla</string>
+    <string name="agreement_go_back">Geri Dön</string>
+    <string name="agreement_exit">Uygulamadan Çık</string>
 </resources>

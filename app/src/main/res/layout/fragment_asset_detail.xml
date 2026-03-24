@@ -26,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-black"
-        android:text="Varlık Detayı"
+        android:text="@string/detail_title"
         android:textColor="?attr/textPrimary"
         android:textSize="22sp"
         android:transitionName="shared_asset_name"
@@ -204,7 +204,7 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginStart="8dp"
                 android:fontFamily="sans-serif-black"
-                android:text="Miktar ve Maliyet"
+                android:text="@string/detail_quantity_cost"
                 android:textColor="?attr/textPrimary"
                 android:textSize="20sp" />
 
@@ -235,7 +235,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="İşlem Miktarı"
+                            android:text="@string/detail_transaction_amount"
                             android:textColor="@color/text_secondary"
                             android:fontFamily="sans-serif-medium" />
 
@@ -253,7 +253,7 @@
                             android:id="@+id/textAmountLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Adet"
+                            android:text="@string/detail_unit"
                             android:textColor="?attr/accentColor"
                             android:textSize="12sp"
                             android:fontFamily="sans-serif-medium" />
@@ -282,7 +282,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="20dp"
-                            android:text="Birim Maliyet (Opsiyonel)"
+                            android:text="@string/detail_unit_cost_optional"
                             android:textColor="@color/text_secondary"
                             android:fontFamily="sans-serif-medium" />
 
@@ -320,7 +320,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="ALIŞ (EKLE)"
+                    android:text="@string/detail_buy"
                     android:fontFamily="sans-serif-black"
                     android:textColor="?attr/textPrimary"
                     app:strokeColor="?attr/surfaceGlassStrong" />
@@ -331,7 +331,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:text="SATIŞ (AZALT)"
+                    android:text="@string/detail_sell"
                     android:fontFamily="sans-serif-black"
                     android:textColor="?attr/textPrimary"
                     app:strokeColor="?attr/surfaceGlassStrong" />
@@ -345,7 +345,7 @@
                 android:layout_marginBottom="32dp"
                 android:backgroundTint="@color/accent_violet"
                 android:fontFamily="sans-serif-black"
-                android:text="KAYDET"
+                android:text="@string/detail_save"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 app:cornerRadius="30dp" />

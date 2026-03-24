@@ -130,12 +130,12 @@ class MarketsFragment : Fragment() {
 
     private fun showSortMenu(view: View) {
         val popup = PopupMenu(requireContext(), view)
-        popup.menu.add(0, 0, 0, "İsim (A-Z)")
-        popup.menu.add(0, 1, 1, "İsim (Z-A)")
-        popup.menu.add(0, 2, 2, "Fiyat (Düşükten Yükseğe)")
-        popup.menu.add(0, 3, 3, "Fiyat (Yüksekten Düşüğe)")
-        popup.menu.add(0, 4, 4, "Değişim (En Çok Düşen)")
-        popup.menu.add(0, 5, 5, "Değişim (En Çok Artan)")
+        popup.menu.add(0, 0, 0, getString(R.string.sort_name_asc))
+        popup.menu.add(0, 1, 1, getString(R.string.sort_name_desc))
+        popup.menu.add(0, 2, 2, getString(R.string.sort_price_asc))
+        popup.menu.add(0, 3, 3, getString(R.string.sort_price_desc))
+        popup.menu.add(0, 4, 4, getString(R.string.sort_change_asc))
+        popup.menu.add(0, 5, 5, getString(R.string.sort_change_desc))
 
         popup.setOnMenuItemClickListener { item ->
             val sortType = when (item.itemId) {
