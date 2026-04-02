@@ -165,4 +165,23 @@
     <string name="agreement_exit_confirm">Çıkışı Onayla</string>
     <string name="agreement_go_back">Geri Dön</string>
     <string name="agreement_exit">Uygulamadan Çık</string>
+
+    <!-- Deposit / Withdraw -->
+    <string name="deposit_btn_label">Para Yatır / Çek</string>
+    <string name="deposit_title">Para Yatır</string>
+    <string name="deposit_subtitle">Bu işlem kar/zarar hesaplamalarını etkilemez</string>
+    <string name="deposit_add">Yatır</string>
+    <string name="deposit_withdraw">Çek</string>
+    <string name="deposit_amount_label">Tutar</string>
+    <string name="deposit_current_invested">Yatırılan Sermaye (TL)</string>
+    <string name="deposit_confirm">YATIR</string>
+    <string name="deposit_success">Para yatırma işlemi başarılı</string>
+    <string name="deposit_error_empty">Tutar girin</string>
+    <string name="deposit_error_invalid">Geçersiz tutar</string>
+    <string name="deposit_error_positive">Tutar 0\'dan büyük olmalı</string>
+    <string name="deposit_error_total_mode">Portföyler toplamında işlem yapılamaz</string>
+    <string name="withdraw_title">Para Çek</string>
+    <string name="withdraw_confirm">ÇEK</string>
+    <string name="withdraw_success">Para çekme işlemi başarılı</string>
+
 </resources>

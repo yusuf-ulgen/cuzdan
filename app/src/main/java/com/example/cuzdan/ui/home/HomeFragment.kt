@@ -93,6 +93,9 @@ class HomeFragment : Fragment() {
         binding.btnAddPortfolio.setOnClickListener {
             AddPortfolioDialogFragment().show(childFragmentManager, "AddPortfolio")
         }
+        binding.btnDeposit.setOnClickListener {
+            DepositBottomSheet().show(childFragmentManager, "DepositBottomSheet")
+        }
         binding.textPortfolioName.setOnClickListener {
             PortfolioManagementBottomSheet().show(parentFragmentManager, "PortfolioManagement")
         }

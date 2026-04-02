@@ -32,6 +32,12 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE portfolios ADD COLUMN depositedAmount TEXT NOT NULL DEFAULT '0'")
+    }
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
@@ -44,7 +50,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "cuzdan_db"
         )
-        .addMigrations(MIGRATION_5_6, MIGRATION_8_9)
+        .addMigrations(MIGRATION_5_6, MIGRATION_8_9, MIGRATION_10_11)
         .fallbackToDestructiveMigration()
         .build()
     }

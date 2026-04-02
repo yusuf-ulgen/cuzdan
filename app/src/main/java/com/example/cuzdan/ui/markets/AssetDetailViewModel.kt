@@ -92,15 +92,12 @@ class AssetDetailViewModel @Inject constructor(
 
     private fun observeCurrentPrice(symbol: String) {
         viewModelScope.launch {
-            // repository.getMarketAssetBySymbolFlow (marketAssetDao'dan) kullanabiliriz
-            // Veya direkt getLatestPrice üzerinden sadece fiyatı alabiliriz.
-            // Ancak yüzdelik değişim de lazım olduğu için tüm objeyi dinlemek daha iyi.
             repository.getMarketAssetBySymbolFlow(symbol).collect { marketAsset ->
-                marketAsset?.let {
+                if (marketAsset != null) {
                     _uiState.update { state ->
                         state.copy(
-                            currentPrice = it.currentPrice,
-                            dailyChangePercentage = it.dailyChangePercentage
+                            currentPrice = marketAsset.currentPrice,
+                            dailyChangePercentage = marketAsset.dailyChangePercentage
                         )
                     }
                 }

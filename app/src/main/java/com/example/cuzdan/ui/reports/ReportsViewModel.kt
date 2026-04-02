@@ -125,6 +125,10 @@ class ReportsViewModel @Inject constructor(
         if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
         else if (currency == "EUR") exchangeRate = eurRate ?: BigDecimal("35.2")
 
+        // Seçili portföyün depositedAmount değerini al
+        val selectedPortfolio = if (_selectedPortfolioId.value == -1L) null
+            else _uiState.value.portfolios.find { it.id == _selectedPortfolioId.value }
+        val depositedAmountTry = selectedPortfolio?.depositedAmount ?: BigDecimal.ZERO
 
         var totalValueBase = BigDecimal.ZERO
         var totalCostBase = BigDecimal.ZERO
@@ -141,12 +145,17 @@ class ReportsViewModel @Inject constructor(
             totalCostBase = totalCostBase.add(assetCost)
         }
 
-        val convTotalValue = totalValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val convTotalProfitLoss = (totalValueBase.subtract(totalCostBase)).divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convTotalValue = (totalValueBase.add((depositedAmountTry - totalCostBase).coerceAtLeast(BigDecimal.ZERO))).divide(exchangeRate, 2, RoundingMode.HALF_UP)
+
+        // depositedAmount varsa onu maliyet bazı olarak kullan, yoksa cost-basis kullan
+        val effectiveCostBase = if (depositedAmountTry > BigDecimal.ZERO) depositedAmountTry else totalCostBase
+        val convEffectiveCost = effectiveCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convTotalProfitLoss = convTotalValue.subtract(convEffectiveCost)
         
-        val totalProfitPerc = if (totalCostBase > BigDecimal.ZERO) {
-            totalValueBase.subtract(totalCostBase).divide(totalCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+        val totalProfitPerc = if (effectiveCostBase > BigDecimal.ZERO) {
+            (totalValueBase.add((depositedAmountTry - totalCostBase).coerceAtLeast(BigDecimal.ZERO))).subtract(effectiveCostBase).divide(effectiveCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
         } else BigDecimal.ZERO
+
 
 
         val reportCategories = assets.groupBy { it.assetType }.map { (type, typeAssets) ->

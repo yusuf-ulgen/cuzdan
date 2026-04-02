@@ -14,7 +14,6 @@
         tools:context=".ui.home.HomeFragment">
 
         <!-- Header Section -->
-        <!-- Top Bar with Header and Icons -->
         <TextView
             android:id="@+id/text_wallet_header"
             android:layout_width="wrap_content"
@@ -28,60 +27,90 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Top-right icon grid: 3 on top row, 2 on bottom row -->
         <LinearLayout
-            android:id="@+id/layout_top_icons"
+            android:id="@+id/layout_top_actions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="20dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            app:layout_constraintBottom_toBottomOf="@id/text_wallet_header"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical"
+            android:gravity="end"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/text_wallet_header">
+            app:layout_constraintTop_toTopOf="parent">
 
-            <ImageButton
-                android:id="@+id/btn_currency_switcher"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_icon"
-                android:padding="10dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_tl"
-                app:tint="?attr/iconTint" />
+            <!-- Row 1: Deposit | Heatmap | Add Portfolio -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
 
-            <ImageButton
-                android:id="@+id/btn_privacy_toggle"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_icon"
-                android:padding="10dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_eye_on"
-                app:tint="?attr/iconTint" />
+                <ImageButton
+                    android:id="@+id/btn_deposit"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_icon"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_wallet"
+                    app:tint="?attr/accentColor" />
 
-            <ImageButton
-                android:id="@+id/btn_heatmap"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_icon"
-                android:padding="10dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_sort"
-                app:tint="?attr/accentColor" />
+                <ImageButton
+                    android:id="@+id/btn_heatmap"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_icon"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_sort"
+                    app:tint="?attr/accentColor" />
 
-            <ImageButton
-                android:id="@+id/btn_add_portfolio"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_icon"
-                android:padding="10dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_add"
-                app:tint="?attr/accentColor" />
+                <ImageButton
+                    android:id="@+id/btn_add_portfolio"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_icon"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_add"
+                    app:tint="?attr/accentColor" />
+            </LinearLayout>
+
+            <!-- Row 2: Privacy Toggle | Currency Switcher (right-aligned) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <ImageButton
+                    android:id="@+id/btn_privacy_toggle"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_icon"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_eye_on"
+                    app:tint="?attr/iconTint" />
+
+                <ImageButton
+                    android:id="@+id/btn_currency_switcher"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_icon"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_tl"
+                    app:tint="?attr/iconTint" />
+            </LinearLayout>
+
         </LinearLayout>
+
 
 
         <!-- Donut Chart Centered Top -->
@@ -89,12 +118,12 @@
             android:id="@+id/donut_chart"
             android:layout_width="0dp"
             android:layout_height="200dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="16dp"
             android:layout_marginStart="32dp"
             android:layout_marginEnd="32dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_wallet_header" />
+            app:layout_constraintTop_toBottomOf="@id/layout_top_actions" />
 
 
 
@@ -210,6 +239,7 @@
                 android:text="@string/label_daily_change_header"
                 android:textColor="?attr/textPrimary"
                 android:textSize="11sp" />
+
         </LinearLayout>
 
 

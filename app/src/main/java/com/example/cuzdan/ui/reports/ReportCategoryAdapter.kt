@@ -144,21 +144,22 @@ class ReportAssetInlineAdapter(
             val colorInt = holder.itemView.context.getColor(color)
 
             if (isPrivacyEnabled) {
-                tvAssetSymbol.text = "%***"
-                tvAssetChange.text = "**** $currency"
-                tvAssetPrice.text = "****"
+                tvAssetChangePerc.text = "%***"
+                tvAssetPrice.text = "**** $currency"
+                tvAssetChangeAbs.text = "****"
                 
-                tvAssetSymbol.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
-                tvAssetChange.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
-                tvAssetPrice.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+                tvAssetChangePerc.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
+                tvAssetPrice.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
+                tvAssetChangeAbs.setTextColor(holder.itemView.context.getColor(com.example.cuzdan.R.color.text_label))
             } else {
-                tvAssetSymbol.setTextColor(colorInt)
+                tvAssetChangePerc.text = String.format("%%%+.1f", profitPerc)
+                tvAssetChangePerc.setTextColor(colorInt)
                 
-                tvAssetChange.text = totalValue.formatCurrency(currency)
-                tvAssetChange.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
+                tvAssetPrice.text = totalValue.formatCurrency(currency)
+                tvAssetPrice.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
                 
-                tvAssetPrice.text = profitLoss.formatCurrency(currency, showSign = true)
-                tvAssetPrice.setTextColor(colorInt)
+                tvAssetChangeAbs.text = profitLoss.formatCurrency(currency, showSign = true)
+                tvAssetChangeAbs.setTextColor(colorInt)
             }
         }
     }

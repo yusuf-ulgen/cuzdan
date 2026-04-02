@@ -34,53 +34,48 @@ class WalletAssetAdapter(
         holder.binding.apply {
             val totalValueInCurrency = asset.amount.multiply(asset.currentPrice)
             
-            // Calculate percentage if categoryTotal is provided
-            val weightText = if (categoryTotal != null && categoryTotal > java.math.BigDecimal.ZERO) {
-                val weight = totalValueInCurrency.multiply(java.math.BigDecimal("100"))
-                    .divide(categoryTotal, 0, java.math.RoundingMode.HALF_UP)
-                "%$weight "
-            } else ""
-
-            tvAssetName.text = "$weightText${asset.name}"
-            tvAssetSymbol.text = asset.symbol
+            // 1. Asset Name (Top-Left)
+            tvAssetName.text = asset.name
             
-            // Note: Simplification - we assume viewmodel handles actual currency conversion of prices if needed
-            // But here we format with the chosen symbol.
-            val totalValue = asset.amount.multiply(asset.currentPrice)
-            
-            val textPrimaryValue = android.util.TypedValue()
-            holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
-            val textPrimaryColor = textPrimaryValue.data
-
+            // 2. Total Value (Top-Right)
             if (isPrivacyEnabled) {
                 tvAssetPrice.text = "**** $currency"
-                tvAssetPrice.setTextColor(textPrimaryColor)
             } else {
-                tvAssetPrice.text = totalValue.formatCurrency(currency)
-                tvAssetPrice.setTextColor(textPrimaryColor)
+                tvAssetPrice.text = totalValueInCurrency.formatCurrency(currency)
             }
             
+            // Calculate Total Profit/Loss
             val totalCost = asset.amount.multiply(asset.averageBuyPrice)
-            val profitLoss = totalValue.subtract(totalCost)
+            val profitLoss = totalValueInCurrency.subtract(totalCost)
             
             val profitPerc = if (totalCost.compareTo(BigDecimal.ZERO) > 0) {
                 profitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
             } else BigDecimal.ZERO
 
-            val sign = profitPerc.setScale(1, java.math.RoundingMode.HALF_UP).signum()
-            val color = when {
+            // Color logic based on profit/loss
+            val sign = profitLoss.signum()
+            val colorRes = when {
                 sign > 0 -> com.example.cuzdan.R.color.accent_green
                 sign < 0 -> com.example.cuzdan.R.color.accent_red
-                else -> textPrimaryColor
+                else -> {
+                    val typedValue = android.util.TypedValue()
+                    holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textSecondary, typedValue, true)
+                    typedValue.resourceId
+                }
             }
-            val arrow = when {
-                sign > 0 -> "▲"
-                sign < 0 -> "▼"
-                else -> ""
-            }
+            val color = if (colorRes != 0) holder.itemView.context.getColor(colorRes) else 0xFF888888.toInt()
 
-            tvAssetChange.text = String.format("%s %%%+.1f", arrow, profitPerc)
-            tvAssetChange.setTextColor(holder.itemView.context.getColor(color))
+            // 3. Profit/Loss Percentage (Bottom-Left)
+            tvAssetChangePerc.text = String.format("%%%+.2f", profitPerc)
+            tvAssetChangePerc.setTextColor(color)
+
+            // 4. Profit/Loss Amount (Bottom-Right)
+            if (isPrivacyEnabled) {
+                tvAssetChangeAbs.text = "****"
+            } else {
+                tvAssetChangeAbs.text = String.format("%s%s", if (sign > 0) "+" else "", profitLoss.formatCurrency(currency))
+            }
+            tvAssetChangeAbs.setTextColor(color)
             
             root.setOnClickListener {
                 HapticManager.tap(it)

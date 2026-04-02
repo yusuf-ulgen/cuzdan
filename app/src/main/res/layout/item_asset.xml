@@ -5,22 +5,17 @@
     android:layout_height="wrap_content"
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/bg_card"
-    android:elevation="2dp"
-    android:clickable="true"
-    android:focusable="true"
-    android:stateListAnimator="@animator/scale_on_press">
+    android:layout_marginBottom="8dp">
 
+    <!-- Icon background for consistency (hidden if needed) -->
     <View
         android:id="@+id/viewIconBg"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="@drawable/bg_icon"
-        android:transitionName="shared_asset_icon"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <ImageView
         android:id="@+id/ivAssetIcon"
@@ -33,7 +28,7 @@
         app:layout_constraintTop_toTopOf="@id/viewIconBg"
         app:tint="?attr/iconTint" />
 
-
+    <!-- Top Left: Asset Name -->
     <TextView
         android:id="@+id/tvAssetName"
         android:layout_width="0dp"
@@ -41,46 +36,57 @@
         android:layout_marginStart="12dp"
         android:textColor="?attr/textPrimary"
         android:textSize="15sp"
-        android:fontFamily="sans-serif-black"
-        android:transitionName="shared_asset_name"
-        app:layout_constraintEnd_toStartOf="@+id/tvAssetChange"
+        android:fontFamily="sans-serif-bold"
         app:layout_constraintStart_toEndOf="@id/viewIconBg"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Brent Petrol" />
-
-    <TextView
-        android:id="@+id/tvAssetSymbol"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:textColor="?attr/textSecondary"
-        android:textSize="11sp"
-
+        app:layout_constraintTop_toTopOf="@id/viewIconBg"
         app:layout_constraintEnd_toStartOf="@+id/tvAssetPrice"
-        app:layout_constraintStart_toStartOf="@id/tvAssetName"
-        app:layout_constraintTop_toBottomOf="@id/tvAssetName"
-        tools:text="BRENT" />
+        tools:text="A1 Capital" />
 
-    <TextView
-        android:id="@+id/tvAssetChange"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="?attr/textPrimary"
-        android:textSize="14sp"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="₺1.457,00" />
-
+    <!-- Top Right: Total Value -->
     <TextView
         android:id="@+id/tvAssetPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/pill_green_text"
+        android:textColor="?attr/textPrimary"
+        android:textSize="15sp"
+        android:fontFamily="sans-serif-bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/viewIconBg"
+        tools:text="₺2.230,50" />
+
+    <!-- Bottom Left: P/L Percentage -->
+    <TextView
+        android:id="@+id/tvAssetChangePerc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/textSecondary"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintStart_toStartOf="@id/tvAssetName"
+        app:layout_constraintTop_toBottomOf="@id/tvAssetName"
+        tools:text="%+2,5" />
+
+    <!-- Bottom Right: P/L Amount -->
+    <TextView
+        android:id="@+id/tvAssetChangeAbs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/textSecondary"
         android:textSize="12sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvAssetChange"
-        tools:text="+₺294,00" />
+        app:layout_constraintTop_toBottomOf="@id/tvAssetPrice"
+        tools:text="+₺55,50" />
+
+    <!-- Hidden Symbol view (still needed for logic possibly) -->
+    <TextView
+        android:id="@+id/tvAssetSymbol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="A1CAP" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

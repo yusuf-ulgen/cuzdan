@@ -5,6 +5,8 @@ import com.example.cuzdan.data.local.dao.PortfolioDao
 import com.example.cuzdan.data.local.entity.Portfolio
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import java.math.BigDecimal
+import java.math.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,6 +48,19 @@ class PortfolioRepository @Inject constructor(
         return portfolioDao.getIncludedPortfolios()
     }
 
+    /**
+     * Portföye sermaye yatır (TRY cinsinden).
+     * amountInTry: Yatırılacak tutar (pozitif = yatırma, negatif = çekme)
+     * Çekimde depositedAmount 0'ın altına düşmez.
+     */
+    suspend fun updateDepositedAmount(portfolioId: Long, amountInTry: BigDecimal) {
+        val portfolio = portfolioDao.getPortfolioById(portfolioId) ?: return
+        val newAmount = (portfolio.depositedAmount + amountInTry)
+            .coerceAtLeast(BigDecimal.ZERO)
+            .setScale(2, RoundingMode.HALF_UP)
+        portfolioDao.updatePortfolio(portfolio.copy(depositedAmount = newAmount))
+    }
+
     suspend fun clearAllData() {
         assetDao.deleteAllAssets()
         portfolioDao.deleteAllPortfolios()
@@ -53,3 +68,4 @@ class PortfolioRepository @Inject constructor(
         portfolioDao.insertPortfolio(Portfolio(name = "Ana Portföy"))
     }
 }
+

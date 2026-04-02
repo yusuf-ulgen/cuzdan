@@ -729,22 +729,37 @@ class AssetRepository @Inject constructor(
     }
 
 
-    suspend fun upsertAsset(asset: Asset) {
+    suspend fun addAsset(asset: Asset) {
         val existingAsset = assetDao.getAssetBySymbolAndPortfolioId(asset.symbol, asset.portfolioId)
         if (existingAsset != null) {
             // Ortalama maliyet hesabı
             val totalAmount = existingAsset.amount + asset.amount
-            val totalCost = (existingAsset.amount * existingAsset.averageBuyPrice) + (asset.amount * asset.averageBuyPrice)
+            
+            // Eğer miktar 0 ise maliyet de 0 olur
             val newAveragePrice = if (totalAmount > BigDecimal.ZERO) {
+                val totalCost = (existingAsset.amount * existingAsset.averageBuyPrice) + (asset.amount * asset.averageBuyPrice)
                 totalCost.divide(totalAmount, 8, RoundingMode.HALF_UP)
             } else BigDecimal.ZERO
 
             val updatedAsset = existingAsset.copy(
                 amount = totalAmount,
-                averageBuyPrice = newAveragePrice,
-                currentPrice = asset.currentPrice,
-                dailyChangePercentage = asset.dailyChangePercentage,
+                averageBuyPrice = if (asset.assetType == AssetType.NAKIT) BigDecimal.ONE else newAveragePrice,
+                currentPrice = if (asset.assetType == AssetType.NAKIT) BigDecimal.ONE else asset.currentPrice,
+                dailyChangePercentage = if (asset.assetType == AssetType.NAKIT) BigDecimal.ZERO else asset.dailyChangePercentage,
                 currency = asset.currency
+            )
+            assetDao.updateAsset(updatedAsset)
+        } else {
+            assetDao.insertAsset(asset)
+        }
+    }
+
+    suspend fun upsertAsset(asset: Asset) {
+        val existingAsset = assetDao.getAssetBySymbolAndPortfolioId(asset.symbol, asset.portfolioId)
+        if (existingAsset != null) {
+            val updatedAsset = existingAsset.copy(
+                currentPrice = asset.currentPrice,
+                dailyChangePercentage = asset.dailyChangePercentage
             )
             assetDao.updateAsset(updatedAsset)
         } else {
@@ -788,9 +803,6 @@ class AssetRepository @Inject constructor(
         }
     }
 
-    suspend fun addAsset(asset: Asset) {
-        assetDao.insertAsset(asset)
-    }
 
     suspend fun getAssetBySymbolAndPortfolioId(symbol: String, portfolioId: Long): Asset? {
         return assetDao.getAssetBySymbolAndPortfolioId(symbol, portfolioId)

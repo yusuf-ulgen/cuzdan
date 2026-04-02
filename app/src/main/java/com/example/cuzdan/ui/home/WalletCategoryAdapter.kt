@@ -29,9 +29,31 @@ class WalletCategoryAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         val isExpanded = item.isExpanded
+        val isNakit = item.type == com.example.cuzdan.data.local.entity.AssetType.NAKIT
 
         holder.binding.apply {
             textCategoryTitle.text = item.title
+
+            // Nakit: only show title + value, no P/L
+            if (isNakit) {
+                textCategoryChangePerc.visibility = View.GONE
+                textCategoryChangeAbs.visibility = View.GONE
+                imageExpandArrow.visibility = View.GONE
+
+                if (isPrivacyEnabled) {
+                    textCategoryTotal.text = "**** $currency"
+                } else {
+                    textCategoryTotal.text = item.totalValue.formatCurrency(currency)
+                    val textPrimaryValue = android.util.TypedValue()
+                    holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
+                    textCategoryTotal.setTextColor(textPrimaryValue.data)
+                }
+                return@apply
+            }
+
+            // Normal categories: show P/L
+            textCategoryChangePerc.visibility = View.VISIBLE
+            textCategoryChangeAbs.visibility = View.VISIBLE
             
             if (isPrivacyEnabled) {
                 textCategoryTotal.text = "**** $currency"
@@ -44,25 +66,27 @@ class WalletCategoryAdapter(
                 textCategoryChangePerc.text = String.format("%%%+.2f", item.profitLossPerc)
                 
                 val sign = item.profitLossPerc.setScale(2, java.math.RoundingMode.HALF_UP).signum()
-                val color = when {
+                val colorResId = when {
                     sign > 0 -> com.example.cuzdan.R.color.accent_green
                     sign < 0 -> com.example.cuzdan.R.color.accent_red
-                    else -> {
-                        val typedValue = android.util.TypedValue()
-                        holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, typedValue, true)
-                        typedValue.data
-                    }
+                    else -> 0
                 }
-                val colorInt = if (color is Int) color else holder.itemView.context.getColor(color as Int)
+                val colorInt = if (colorResId != 0) {
+                    holder.itemView.context.getColor(colorResId)
+                } else {
+                    val typedValue = android.util.TypedValue()
+                    holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, typedValue, true)
+                    typedValue.data
+                }
                 
                 val textPrimaryValue = android.util.TypedValue()
                 holder.itemView.context.theme.resolveAttribute(com.example.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
                 textCategoryTotal.setTextColor(textPrimaryValue.data)
-                
                 textCategoryChangeAbs.setTextColor(colorInt)
                 textCategoryChangePerc.setTextColor(colorInt)
             }
             
+            imageExpandArrow.visibility = View.VISIBLE
             imageExpandArrow.rotation = if (isExpanded) 90f else 270f
             recyclerChildAssets.visibility = if (isExpanded) View.VISIBLE else View.GONE
             
