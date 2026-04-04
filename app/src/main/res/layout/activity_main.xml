@@ -10,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="64dp"
         android:background="?attr/surfaceGlassStrong"
-        app:itemIconTint="@color/nav_item_color"
+        app:itemIconTint="@null"
         app:itemTextColor="@color/nav_item_color"
         app:labelVisibilityMode="labeled"
         app:elevation="2dp"

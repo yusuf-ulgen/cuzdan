@@ -33,6 +33,14 @@ class WalletCategoryAdapter(
 
         holder.binding.apply {
             textCategoryTitle.text = item.title
+            
+            // Set category icon
+            if (item.iconRes != 0) {
+                imageCategoryIcon.setImageResource(item.iconRes)
+                imageCategoryIcon.visibility = View.VISIBLE
+            } else {
+                imageCategoryIcon.visibility = View.GONE
+            }
 
             // Nakit: only show title + value, no P/L
             if (isNakit) {

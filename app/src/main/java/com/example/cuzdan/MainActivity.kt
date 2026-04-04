@@ -78,9 +78,37 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         // setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        
+        // Fix icon size for PNG-based navigation icons
+        navView.itemIconSize = resources.getDimensionPixelSize(R.dimen.nav_icon_size)
+
+        // Custom Scale Animation for Bottom Nav Icons
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            updateBottomNavIcons(navView, destination.id)
+        }
 
         if (!prefManager.isAgreementAccepted()) {
             checkUserAgreement()
+        }
+    }
+
+    private fun updateBottomNavIcons(navView: BottomNavigationView, selectedId: Int) {
+        val menuView = navView.getChildAt(0) as? android.view.ViewGroup ?: return
+        for (i in 0 until menuView.childCount) {
+            val itemView = menuView.getChildAt(i) as? android.view.ViewGroup ?: continue
+            val itemId = itemView.id
+            
+            // Find the icon ImageView inside the item view
+            val iconView = itemView.findViewById<android.view.View>(com.google.android.material.R.id.navigation_bar_item_icon_view)
+            
+            if (iconView != null) {
+                val scale = if (itemId == selectedId) 1.2f else 1.0f
+                iconView.animate()
+                    .scaleX(scale)
+                    .scaleY(scale)
+                    .setDuration(200)
+                    .start()
+            }
         }
     }
 

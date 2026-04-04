@@ -49,11 +49,12 @@ data class WalletUiState(
 data class WalletCategorySummary(
     val type: AssetType,
     val title: String,
-    val totalValue: BigDecimal,
-    val totalProfitLoss: BigDecimal,
-    val profitLossPerc: BigDecimal,
+    val totalValue: java.math.BigDecimal,
+    val totalProfitLoss: java.math.BigDecimal,
+    val profitLossPerc: java.math.BigDecimal,
     val assets: List<Asset> = emptyList(),
-    val isExpanded: Boolean = false
+    val isExpanded: Boolean = false,
+    val iconRes: Int = 0
 )
 
 @HiltViewModel
@@ -363,7 +364,8 @@ class HomeViewModel @Inject constructor(
                 totalProfitLoss = convCatValue.subtract(convCatCost),
                 profitLossPerc = catPLPerc,
                 assets = sortedAssets,
-                isExpanded = expandedCategory == type
+                isExpanded = expandedCategory == type,
+                iconRes = getCategoryIcon(type)
             )
         }.toMutableList()
 
@@ -393,7 +395,8 @@ class HomeViewModel @Inject constructor(
                     totalProfitLoss = BigDecimal.ZERO,
                     profitLossPerc = BigDecimal.ZERO,
                     assets = emptyList(),
-                    isExpanded = false
+                    isExpanded = false,
+                    iconRes = R.drawable.nakit
                 ))
             }
         }
@@ -458,6 +461,17 @@ class HomeViewModel @Inject constructor(
             AssetType.NAKIT -> R.string.asset_type_cash
             AssetType.FON -> R.string.asset_type_fund
         })
+    }
+
+    private fun getCategoryIcon(type: AssetType): Int {
+        return when(type) {
+            AssetType.KRIPTO -> R.drawable.kripto
+            AssetType.BIST -> R.drawable.borsa
+            AssetType.DOVIZ -> R.drawable.doviz
+            AssetType.EMTIA -> R.drawable.emtia
+            AssetType.NAKIT -> R.drawable.nakit
+            AssetType.FON -> R.drawable.fon
+        }
     }
 
     private fun getCategoryColor(type: AssetType): Int {

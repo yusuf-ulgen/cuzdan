@@ -55,12 +55,12 @@ class AssetsFragment : Fragment() {
     private fun setupRecyclerView() {
         val assetTypes =
                 listOf(
-                        AssetType(1, getString(R.string.asset_type_cash), "NAKIT", R.drawable.ic_tl),
-                        AssetType(2, getString(R.string.asset_type_stocks), "BIST", R.drawable.ic_bist),
-                        AssetType(3, getString(R.string.asset_type_commodity), "EMTIA", R.drawable.ic_reports),
-                        AssetType(4, getString(R.string.asset_type_currency), "DOVIZ", R.drawable.ic_currency),
-                        AssetType(5, getString(R.string.asset_type_fund), "FON", R.drawable.ic_funds),
-                        AssetType(6, getString(R.string.asset_type_crypto), "KRIPTO", R.drawable.ic_crypto)
+                        AssetType(1, getString(R.string.asset_type_cash), "NAKIT", R.drawable.nakit),
+                        AssetType(2, getString(R.string.asset_type_stocks), "BIST", R.drawable.borsa),
+                        AssetType(3, getString(R.string.asset_type_commodity), "EMTIA", R.drawable.emtia),
+                        AssetType(4, getString(R.string.asset_type_currency), "DOVIZ", R.drawable.doviz),
+                        AssetType(5, getString(R.string.asset_type_fund), "FON", R.drawable.fon),
+                        AssetType(6, getString(R.string.asset_type_crypto), "KRIPTO", R.drawable.kripto)
                 )
 
         binding.recyclerAssetTypes.apply {

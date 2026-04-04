@@ -1,0 +1,112 @@
+ Volume in drive C has no label.
+ Volume Serial Number is E863-6F3E
+
+ Directory of c:\Users\YUSUF\AndroidStudioProjects\cuzdan\app\src\main\res\drawable
+
+03.04.2026  21:58    <DIR>          .
+22.03.2026  01:30    <DIR>          ..
+02.04.2026  23:44         1.261.679 ana sayfa (cÅzdan sayfasç).png
+18.03.2026  11:20               366 bg_bottom_sheet.xml
+21.03.2026  19:25               261 bg_bottom_sheet_light.xml
+20.03.2026  18:20               202 bg_button_pill.xml
+21.03.2026  18:26               238 bg_card.xml
+19.03.2026  23:13               299 bg_chart_gradient.xml
+21.03.2026  19:17               283 bg_chart_gradient_light.xml
+19.03.2026  23:48               226 bg_circle_accent.xml
+18.03.2026  11:20               183 bg_circle_white.xml
+13.03.2026  20:49               421 bg_donut_chart.xml
+19.03.2026  23:47               279 bg_glass_card.xml
+21.03.2026  02:05               273 bg_header_dropdown.xml
+21.03.2026  18:26               236 bg_icon.xml
+19.03.2026  23:48               248 bg_icon_circle.xml
+21.03.2026  19:21               221 bg_input_field.xml
+19.03.2026  23:08               287 bg_main_gradient.xml
+21.03.2026  18:26               317 bg_main_gradient_light.xml
+21.03.2026  02:03               275 bg_pill.xml
+20.03.2026  19:12               251 bg_pill_dark.xml
+21.03.2026  19:00               208 bg_search_bar.xml
+20.03.2026  19:12               251 bg_spinner.xml
+02.04.2026  23:31         2.145.781 borsa.png
+02.04.2026  23:33         1.074.321 dîviz.png
+02.04.2026  23:33         1.001.568 emtia.png
+02.04.2026  23:35         2.154.665 fon.png
+20.03.2026  00:01               317 ic_add.xml
+13.03.2026  19:07               285 ic_arrow_drop_down.xml
+13.03.2026  18:18               373 ic_assets.xml
+13.03.2026  10:49               449 ic_asset_placeholder.xml
+16.03.2026  10:52               332 ic_back.xml
+13.03.2026  18:30               338 ic_bist.xml
+13.03.2026  19:07               316 ic_chevron_left.xml
+13.03.2026  19:07               317 ic_chevron_right.xml
+16.03.2026  23:04               383 ic_close.xml
+13.03.2026  18:30               653 ic_crypto.xml
+13.03.2026  18:30               503 ic_currency.xml
+12.03.2026  17:03               352 ic_dashboard_black_24dp.xml
+18.03.2026  11:34               357 ic_delete.xml
+17.03.2026  22:38               436 ic_edit.xml
+18.03.2026  13:17               566 ic_eur.xml
+13.03.2026  19:07               862 ic_eye_off.xml
+13.03.2026  19:06               503 ic_eye_on.xml
+13.03.2026  18:30               419 ic_funds.xml
+12.03.2026  17:03               310 ic_home_black_24dp.xml
+12.03.2026  17:03             5.606 ic_launcher_background.xml
+12.03.2026  17:03             1.702 ic_launcher_foreground.xml
+13.03.2026  18:18               349 ic_markets.xml
+18.03.2026  11:34               321 ic_menu.xml
+22.03.2026  01:50               464 ic_notifications.xml
+12.03.2026  17:03               464 ic_notifications_black_24dp.xml
+13.03.2026  20:53               362 ic_profit_loss.xml
+22.03.2026  23:52         2.251.199 ic_p_agr.png
+22.03.2026  23:53         2.370.288 ic_p_bio.png
+22.03.2026  23:55         2.265.274 ic_p_cur.png
+22.03.2026  23:58         2.251.765 ic_p_faq.png
+22.03.2026  23:59         2.354.368 ic_p_lang.png
+23.03.2026  00:02         2.336.303 ic_p_notif.png
+23.03.2026  00:04         2.245.101 ic_p_res.png
+23.03.2026  00:05         2.280.861 ic_p_sha.png
+23.03.2026  00:06         2.263.742 ic_p_sup.png
+23.03.2026  00:07         2.116.575 ic_p_theme.png
+20.03.2026  14:20               279 ic_remove.xml
+13.03.2026  18:18               338 ic_reports.xml
+16.03.2026  10:52               518 ic_search.xml
+13.03.2026  18:18               317 ic_settings.xml
+22.03.2026  01:34               318 ic_sort.xml
+20.03.2026  14:18               353 ic_star.xml
+20.03.2026  14:18               465 ic_star_outline.xml
+18.03.2026  13:17               700 ic_tl.xml
+18.03.2026  13:17               836 ic_usd.xml
+13.03.2026  18:18               513 ic_wallet.xml
+02.04.2026  23:49         2.170.302 iülemler sayfasç.png
+02.04.2026  23:37         2.209.860 kripto.png
+02.04.2026  23:29         2.124.733 nakit.png
+02.04.2026  23:44         1.194.087 piyasalar sayfasç.png
+02.04.2026  23:39         2.254.844 raporlar sayfasç.png
+03.04.2026  21:58                 5 test.txt
+02.04.2026  23:38         1.173.212 varlçklar sayfasç.png
+              78 File(s)     41.527.834 bytes
+
+ Directory of c:\Users\YUSUF\AndroidStudioProjects\cuzdan
+
+03.04.2026  22:01    <DIR>          .
+12.03.2026  17:03    <DIR>          ..
+12.03.2026  17:03               225 .gitignore
+03.04.2026  21:50    <DIR>          .gradle
+03.04.2026  21:59    <DIR>          .idea
+23.03.2026  22:05    <DIR>          app
+16.03.2026  18:04               399 build.gradle.kts
+03.04.2026  22:01                 0 dir_output.txt
+03.04.2026  22:00             2.118 drawable_fixer.py
+03.04.2026  21:57             1.872 fix_icons.py
+12.03.2026  17:03    <DIR>          gradle
+22.03.2026  01:59             1.388 gradle.properties
+12.03.2026  17:03             5.766 gradlew
+12.03.2026  17:03             2.763 gradlew.bat
+03.04.2026  22:01                 9 hello.txt
+12.03.2026  17:03               449 local.properties
+03.04.2026  21:54               526 rename_icons.bat
+03.04.2026  21:55             1.344 rename_icons.py
+02.04.2026  18:52    <DIR>          scripts
+13.03.2026  10:42               581 settings.gradle.kts
+03.04.2026  21:58             2.340 ultimate_fix.py
+              14 File(s)         19.780 bytes
+               7 Dir(s)  49.098.293.248 bytes free
