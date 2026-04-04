@@ -22,6 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.cuzdan.ui.currency.CurrencyBottomSheet
+import com.example.cuzdan.util.resolveCurrencySwitcherIcon
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -159,12 +160,9 @@ class HomeFragment : Fragment() {
 
         
         // Currency icon update
-        val currencyIcon = when(state.currency) {
-            "USD" -> R.drawable.ic_usd
-            "EUR" -> R.drawable.ic_eur
-            else -> R.drawable.ic_tl
-        }
-        binding.btnCurrencySwitcher.setImageResource(currencyIcon)
+        binding.btnCurrencySwitcher.setImageResource(
+            requireContext().resolveCurrencySwitcherIcon(state.currency)
+        )
         
         adapter.setItemsWithPrivacy(state.categorySummaries, isPrivacyEnabled, state.currency)
     }

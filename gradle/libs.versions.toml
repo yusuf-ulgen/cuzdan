@@ -68,6 +68,7 @@ mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", versio
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
 coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
+coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
 
 
 [plugins]

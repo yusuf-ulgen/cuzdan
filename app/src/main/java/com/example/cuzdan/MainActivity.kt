@@ -78,8 +78,9 @@ class MainActivity : AppCompatActivity() {
         // menu should be considered as top level destinations.
         // setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        
-        // Fix icon size for PNG-based navigation icons
+        navView.itemIconTintList = null
+
+        // Fix icon size for PNG-based navigation icons (square assets in drawable)
         navView.itemIconSize = resources.getDimensionPixelSize(R.dimen.nav_icon_size)
 
         // Custom Scale Animation for Bottom Nav Icons

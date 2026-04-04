@@ -172,7 +172,7 @@ class AssetDetailFragment : Fragment() {
         val iconRes = when(args.assetType) {
             "KRIPTO" -> R.drawable.ic_crypto
             "FON" -> R.drawable.ic_funds
-            "BIST" -> R.drawable.ic_bist
+            "BIST" -> R.drawable.borsa
             "EMTIA" -> R.drawable.ic_currency
             "NAKIT", "DOVIZ" -> {
                 if (args.symbol == "TRY" || args.symbol == "TL") R.drawable.ic_tl

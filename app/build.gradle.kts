@@ -85,6 +85,7 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     implementation(libs.mpandroidchart)
     implementation(libs.coil.kt)
+    implementation(libs.coil.svg)
 
 
     testImplementation(libs.junit)

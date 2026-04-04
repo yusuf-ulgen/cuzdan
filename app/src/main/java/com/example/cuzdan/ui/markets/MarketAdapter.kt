@@ -1,7 +1,11 @@
 package com.example.cuzdan.ui.markets
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.ImageView
+import androidx.core.content.ContextCompat
+import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.ItemMarketPriceBinding
@@ -11,7 +15,6 @@ import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 import coil.load
-import coil.transform.CircleCropTransformation
 import android.view.View
 import com.example.cuzdan.util.HapticManager
 
@@ -52,7 +55,10 @@ class MarketAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.binding.apply {
+            ImageViewCompat.setImageTintList(imageMarketIcon, null)
+
             val isDoviz = item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ
+            val placeholderRes = getAssetIconPlaceholder(item, root.context)
 
             if (isDoviz && item.fullName != null) {
                 // For currencies: show full name (e.g. "Euro") as main text, symbol (EUR/TRY) as subtitle
@@ -113,12 +119,12 @@ class MarketAdapter(
             if (iconUrl != null) {
                 imageMarketIcon.load(iconUrl) {
                     crossfade(true)
-                    placeholder(getAssetIconPlaceholder(item))
-                    error(getAssetIconPlaceholder(item))
-                    transformations(CircleCropTransformation())
+                    placeholder(placeholderRes)
+                    error(placeholderRes)
                 }
             } else {
-                imageMarketIcon.setImageResource(getAssetIconPlaceholder(item))
+                imageMarketIcon.setImageResource(placeholderRes)
+                applyCurrencyCustomTint(imageMarketIcon, placeholderRes)
             }
 
             root.setOnClickListener {
@@ -157,21 +163,9 @@ class MarketAdapter(
     private fun getAssetIconUrl(item: MarketAsset): String? {
         val sym = item.symbol.uppercase()
         return when {
-            // Currency Flags
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT || item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ -> {
-                val code = if (sym.contains("/")) sym.take(3) else sym
-                when(code) {
-                    "USD" -> "https://flagcdn.com/w80/us.png"
-                    "EUR" -> "https://flagcdn.com/w80/eu.png"
-                    "GBP" -> "https://flagcdn.com/w80/gb.png"
-                    "CHF" -> "https://flagcdn.com/w80/ch.png"
-                    "JPY" -> "https://flagcdn.com/w80/jp.png"
-                    "AUD" -> "https://flagcdn.com/w80/au.png"
-                    "CAD" -> "https://flagcdn.com/w80/ca.png"
-                    "TRY" -> "https://flagcdn.com/w80/tr.png"
-                    else -> null
-                }
-            }
+            // Nakit / döviz: always use local drawables (stable, no flag CDN flicker or wrong aspect).
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT ||
+                item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ -> null
             // Crypto Logos
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.KRIPTO -> {
                 val coin = sym.replace("USDT", "")
@@ -186,18 +180,68 @@ class MarketAdapter(
         }
     }
 
-    private fun getAssetIconPlaceholder(item: MarketAsset): Int {
+    /**
+     * Optional overrides: add `currency_try.png`, `currency_usd.png`, `currency_eur.png`,
+     * `currency_gbp.png`, `currency_chf.png`, `currency_jpy.png`, `currency_aud.png`,
+     * `currency_cad.png` under `res/drawable-*` (black or dark glyphs on transparent work with [applyCurrencyCustomTint]).
+     */
+    private fun getAssetIconPlaceholder(item: MarketAsset, context: android.content.Context): Int {
         val sym = item.symbol.uppercase()
+        val code = if (sym.contains("/")) sym.substringBefore("/") else sym
+        if (item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT ||
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ
+        ) {
+            val customName = when {
+                code == "TRY" || code == "TL" -> "currency_try"
+                code == "USD" || code.startsWith("USD") -> "currency_usd"
+                code == "EUR" || code.startsWith("EUR") -> "currency_eur"
+                code == "GBP" || code.startsWith("GBP") -> "currency_gbp"
+                code == "CHF" || code.startsWith("CHF") -> "currency_chf"
+                code == "JPY" || code.startsWith("JPY") -> "currency_jpy"
+                code == "AUD" || code.startsWith("AUD") -> "currency_aud"
+                code == "CAD" || code.startsWith("CAD") -> "currency_cad"
+                else -> null
+            }
+            if (customName != null) {
+                val id = context.resources.getIdentifier(customName, "drawable", context.packageName)
+                if (id != 0) return id
+            }
+        }
         return when {
-            sym == "TRY" || sym == "TL" -> R.drawable.ic_tl
-            sym == "USD" || sym.startsWith("USD") -> R.drawable.ic_usd
-            sym == "EUR" || sym.startsWith("EUR") -> R.drawable.ic_eur
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.KRIPTO -> R.drawable.ic_crypto
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> R.drawable.ic_bist
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> R.drawable.borsa
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.FON -> R.drawable.ic_funds
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.EMTIA -> R.drawable.ic_currency
+            code == "TRY" || code == "TL" -> R.drawable.ic_tl
+            code == "USD" || code.startsWith("USD") -> R.drawable.ic_usd
+            code == "EUR" || code.startsWith("EUR") -> R.drawable.ic_eur
+            code == "GBP" || code.startsWith("GBP") -> R.drawable.ic_gbp
+            code == "CHF" || code.startsWith("CHF") -> R.drawable.ic_chf
+            code == "JPY" || code.startsWith("JPY") -> R.drawable.ic_jpy
+            code == "AUD" || code.startsWith("AUD") -> R.drawable.ic_aud
+            code == "CAD" || code.startsWith("CAD") -> R.drawable.ic_cad
             else -> R.drawable.ic_asset_placeholder
         }
+    }
+
+    private fun applyCurrencyCustomTint(imageView: ImageView, resId: Int) {
+        val name = try {
+            imageView.context.resources.getResourceEntryName(resId)
+        } catch (_: Exception) {
+            ImageViewCompat.setImageTintList(imageView, null)
+            return
+        }
+        if (!name.startsWith("currency_")) {
+            ImageViewCompat.setImageTintList(imageView, null)
+            return
+        }
+        val tv = TypedValue()
+        val ctx = imageView.context
+        if (!ctx.theme.resolveAttribute(R.attr.iconTint, tv, true) || tv.resourceId == 0) {
+            ImageViewCompat.setImageTintList(imageView, null)
+            return
+        }
+        ImageViewCompat.setImageTintList(imageView, ContextCompat.getColorStateList(ctx, tv.resourceId))
     }
 
     override fun getItemCount() = items.size

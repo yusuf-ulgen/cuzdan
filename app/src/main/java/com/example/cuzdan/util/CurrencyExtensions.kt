@@ -1,5 +1,7 @@
 package com.example.cuzdan.util
 
+import android.content.Context
+import com.example.cuzdan.R
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -13,6 +15,27 @@ import java.util.Locale
 // Varsayılan yuvarlama modu ve hassasiyeti
 private const val DEFAULT_PRECISION = 2
 private const val CRYPTO_PRECISION = 8
+
+/**
+ * Ana sayfa / raporlar para birimi butonu: `currency_usd`, `currency_eur`, `currency_try` PNG varsa onları kullanır.
+ */
+fun Context.resolveCurrencySwitcherIcon(currencyCode: String): Int {
+    val customName = when (currencyCode) {
+        "USD" -> "currency_usd"
+        "EUR" -> "currency_eur"
+        "TL", "TRY" -> "currency_try"
+        else -> null
+    }
+    if (customName != null) {
+        val id = resources.getIdentifier(customName, "drawable", packageName)
+        if (id != 0) return id
+    }
+    return when (currencyCode) {
+        "USD" -> R.drawable.ic_usd
+        "EUR" -> R.drawable.ic_eur
+        else -> R.drawable.ic_tl
+    }
+}
 
 fun BigDecimal.formatCurrency(currencyCode: String = "TL", showSign: Boolean = false): String {
     val format = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))

@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.cuzdan.R
 import com.example.cuzdan.util.PreferenceManager
 import com.example.cuzdan.util.formatCurrency
+import com.example.cuzdan.util.resolveCurrencySwitcherIcon
 import com.example.cuzdan.databinding.FragmentReportsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -128,12 +129,9 @@ class ReportsFragment : Fragment() {
         }
         
         // Currency icon update
-        val currencyIcon = when(state.currency) {
-            "USD" -> R.drawable.ic_usd
-            "EUR" -> R.drawable.ic_eur
-            else -> R.drawable.ic_tl
-        }
-        binding.btnCurrencySwitcher.setImageResource(currencyIcon)
+        binding.btnCurrencySwitcher.setImageResource(
+            requireContext().resolveCurrencySwitcherIcon(state.currency)
+        )
         
         if (::adapter.isInitialized) {
             adapter.setPrivacyEnabled(isHidden)
