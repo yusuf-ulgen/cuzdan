@@ -51,26 +51,21 @@ class ReportCategoryAdapter(
                 textCategoryChangePerc.text = String.format("%%%+.1f", item.changePerc)
                 textCategoryChangeAbs.text = item.changeAbs.formatCurrency(currency)
 
-                val colorAttr = if (item.changeAbs >= BigDecimal.ZERO) {
-                    com.example.cuzdan.R.attr.pill_green_text
-                } else {
-                    com.example.cuzdan.R.attr.pill_red_text
-                }
-                val bgAttr = if (item.changeAbs >= BigDecimal.ZERO) {
-                    com.example.cuzdan.R.attr.pill_green_bg
-                } else {
-                    com.example.cuzdan.R.attr.pill_red_bg
-                }
+                val isNeutral = item.changeAbs.abs() < BigDecimal("0.01")
+                val isProfit = item.changeAbs >= BigDecimal("0.01")
 
+                val colorAttr = when {
+                    isNeutral -> com.example.cuzdan.R.attr.textSecondary
+                    isProfit -> com.example.cuzdan.R.attr.pill_green_text
+                    else -> com.example.cuzdan.R.attr.pill_red_text
+                }
                 val typedValue = android.util.TypedValue()
                 holder.itemView.context.theme.resolveAttribute(colorAttr, typedValue, true)
                 val colorInt = typedValue.data
-                holder.itemView.context.theme.resolveAttribute(bgAttr, typedValue, true)
-                val bgInt = typedValue.data
 
                 textCategoryValue.setTextColor(holder.itemView.context.obtainStyledAttributes(intArrayOf(com.example.cuzdan.R.attr.textPrimary)).getColor(0, 0))
                 textCategoryChangePerc.setTextColor(colorInt)
-                textCategoryChangePerc.setBackgroundColor(bgInt)
+                // textCategoryChangePerc.setBackgroundColor(bgInt)
                 textCategoryChangeAbs.setTextColor(colorInt)
             }
             
@@ -134,14 +129,19 @@ class ReportAssetInlineAdapter(
             val totalValue = asset.amount.multiply(asset.currentPrice)
             val cost = asset.amount.multiply(asset.averageBuyPrice)
             val profitLoss = totalValue.subtract(cost)
-            val isProfit = profitLoss >= BigDecimal.ZERO
+            val isNeutral = profitLoss.abs() < BigDecimal("0.01")
+            val isProfit = profitLoss >= BigDecimal("0.01")
+
+            val color = when {
+                isNeutral -> com.example.cuzdan.R.color.text_label
+                isProfit -> com.example.cuzdan.R.color.accent_green
+                else -> com.example.cuzdan.R.color.accent_red
+            }
+            val colorInt = holder.itemView.context.getColor(color)
             
             val profitPerc = if (cost.compareTo(BigDecimal.ZERO) > 0) {
                 profitLoss.divide(cost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
             } else BigDecimal.ZERO
-
-            val color = if (isProfit) com.example.cuzdan.R.color.accent_green else com.example.cuzdan.R.color.accent_red
-            val colorInt = holder.itemView.context.getColor(color)
 
             if (isPrivacyEnabled) {
                 tvAssetChangePerc.text = "%***"

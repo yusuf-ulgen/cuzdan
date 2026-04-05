@@ -43,6 +43,9 @@ class MarketsFragment : Fragment() {
         setupListeners()
         observeState()
         
+        // Markets sayfasını her açtığımızda varsayılan olarak "Hepsi" seçili olmalı
+        binding.chipAll.isChecked = true
+        
         return binding.root
     }
 
@@ -106,11 +109,22 @@ class MarketsFragment : Fragment() {
         }
     }
 
+    private var lastSortType: MarketsSortType? = null
+    private var lastFilterType: AssetType? = null
+
     private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     adapter.setItems(state.filteredPrices)
+                    
+                    // Eğer sıralama veya filtre değiştiyse en başa kaydır
+                    if (state.sortType != lastSortType || state.selectedType != lastFilterType) {
+                        binding.recyclerMarkets.scrollToPosition(0)
+                        lastSortType = state.sortType
+                        lastFilterType = state.selectedType
+                    }
+                    
                     binding.swipeRefreshMarkets.isRefreshing = state.isLoading
                     binding.btnFavorites.setImageResource(if (state.isFavoritesOnly) R.drawable.ic_star else R.drawable.ic_star_outline)
                     

@@ -127,9 +127,21 @@ class SymbolSearchViewModel @Inject constructor(
 
     private fun transformAssets(assets: List<MarketAsset>, type: AssetType): List<MarketAsset> {
         val currency = _uiState.value.currency
-        if (type != AssetType.KRIPTO || currency == "USD") return assets
+        val prioritySymbols = listOf("BTC", "ETH", "USDT", "SOL", "BNB", "XRP", "USDC", "ADA", "DOGE", "AVAX", "SHIB", "DOT", "TRX", "LINK", "MATIC")
+
+        val sortedAssets = if (type == AssetType.KRIPTO) {
+            assets.sortedWith(compareByDescending<MarketAsset> { asset ->
+                val cleanSym = asset.symbol.replace("USDT", "").replace("TRY", "")
+                val priorityIndex = prioritySymbols.indexOf(cleanSym)
+                if (priorityIndex != -1) 1000 - priorityIndex else 0
+            }.thenBy { it.name })
+        } else {
+            assets
+        }
+
+        if (type != AssetType.KRIPTO || currency == "USD") return sortedAssets
         
-        return assets.map { asset ->
+        return sortedAssets.map { asset ->
             asset.copy(
                 currentPrice = asset.currentPrice.multiply(usdRate).setScale(2, java.math.RoundingMode.HALF_UP),
                 currency = "TRY"

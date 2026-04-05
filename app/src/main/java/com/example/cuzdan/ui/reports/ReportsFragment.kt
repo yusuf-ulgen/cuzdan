@@ -18,6 +18,7 @@ import com.example.cuzdan.util.resolveCurrencySwitcherIcon
 import com.example.cuzdan.databinding.FragmentReportsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import javax.inject.Inject
 import com.example.cuzdan.ui.currency.CurrencyBottomSheet
 
@@ -110,21 +111,21 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangeAbs.text = "*****"
             binding.textDailyChangePerc.text = "*****"
         } else {
-            val isPositive = state.totalProfitLoss >= java.math.BigDecimal.ZERO
-            val color = if (isPositive) R.color.accent_green else R.color.accent_red
+            val isDailyPositive = state.totalProfitLoss >= java.math.BigDecimal.ZERO
+            val color = if (isDailyPositive) R.color.accent_green else R.color.accent_red
             val colorInt = requireContext().getColor(color)
             
             binding.textTotalAmount.setTextColor(requireContext().getColor(R.color.white))
             binding.textDailyChangeAbs.setTextColor(colorInt)
             binding.textDailyChangePerc.setTextColor(colorInt)
             
-            binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency)
-            binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency)
-            binding.textDailyChangePerc.text = String.format("%%%+.2f", state.totalProfitPerc)
+            binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency, showSign = true)
+            binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency, showSign = true)
+            binding.textDailyChangePerc.text = String.format("%%%+.1f", state.totalProfitPerc)
             
             // Update daily change icon
             binding.imageDailyChangeArrow.setImageResource(R.drawable.ic_arrow_drop_down)
-            binding.imageDailyChangeArrow.rotation = if (isPositive) 180f else 0f
+            binding.imageDailyChangeArrow.rotation = if (isDailyPositive) 180f else 0f
             binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
         }
         

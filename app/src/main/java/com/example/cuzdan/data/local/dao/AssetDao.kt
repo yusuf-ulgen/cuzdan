@@ -36,6 +36,9 @@ interface AssetDao {
     @Query("SELECT * FROM assets WHERE portfolioId = :portfolioId")
     fun getAssetsByPortfolioId(portfolioId: Long): Flow<List<Asset>>
 
+    @Query("SELECT * FROM assets WHERE portfolioId = :portfolioId")
+    suspend fun getAssetsByPortfolioIdOnce(portfolioId: Long): List<Asset>
+
     @Query("DELETE FROM assets")
     suspend fun deleteAllAssets()
 }

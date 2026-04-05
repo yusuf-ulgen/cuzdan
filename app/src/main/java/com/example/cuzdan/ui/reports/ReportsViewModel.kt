@@ -125,7 +125,6 @@ class ReportsViewModel @Inject constructor(
         if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
         else if (currency == "EUR") exchangeRate = eurRate ?: BigDecimal("35.2")
 
-        // Seçili portföyün depositedAmount değerini al
         val selectedPortfolio = if (_selectedPortfolioId.value == -1L) null
             else _uiState.value.portfolios.find { it.id == _selectedPortfolioId.value }
         val depositedAmountTry = selectedPortfolio?.depositedAmount ?: BigDecimal.ZERO
@@ -147,16 +146,31 @@ class ReportsViewModel @Inject constructor(
 
         val convTotalValue = (totalValueBase.add((depositedAmountTry - totalCostBase).coerceAtLeast(BigDecimal.ZERO))).divide(exchangeRate, 2, RoundingMode.HALF_UP)
 
-        // depositedAmount varsa onu maliyet bazı olarak kullan, yoksa cost-basis kullan
         val effectiveCostBase = if (depositedAmountTry > BigDecimal.ZERO) depositedAmountTry else totalCostBase
         val convEffectiveCost = effectiveCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val convTotalProfitLoss = convTotalValue.subtract(convEffectiveCost)
         
-        val totalProfitPerc = if (effectiveCostBase > BigDecimal.ZERO) {
-            (totalValueBase.add((depositedAmountTry - totalCostBase).coerceAtLeast(BigDecimal.ZERO))).subtract(effectiveCostBase).divide(effectiveCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+        val totalProfitLossAbs = convTotalValue.subtract(convEffectiveCost)
+        
+        // GÜNLÜK DEĞİŞİM (Daily Change) HESAPLAMA
+        var totalDailyChangeBase = BigDecimal.ZERO
+        assets.forEach { asset ->
+            val assetRate = when (asset.currency) {
+                "USD" -> usdRate ?: BigDecimal("32.5")
+                "EUR" -> eurRate ?: BigDecimal("35.2")
+                else -> BigDecimal.ONE
+            }
+            
+            val todayValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
+            val changePerc = asset.dailyChangePercentage
+            if (changePerc != BigDecimal.ZERO) {
+                val dailyChange = todayValue.multiply(changePerc).divide(BigDecimal("100").add(changePerc), 8, RoundingMode.HALF_UP)
+                totalDailyChangeBase = totalDailyChangeBase.add(dailyChange)
+            }
+        }
+        val convTotalDailyChange = totalDailyChangeBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val dailyChangePerc = if (totalValueBase > BigDecimal.ZERO) {
+            totalDailyChangeBase.divide(totalValueBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
         } else BigDecimal.ZERO
-
-
 
         val reportCategories = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
             var catValueBase = BigDecimal.ZERO
@@ -174,16 +188,15 @@ class ReportsViewModel @Inject constructor(
             val convCatValue = catValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
             val convCatCost = catCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
             val catPLAbs = convCatValue.subtract(convCatCost)
-            val catPLPerc = if (catCostBase > BigDecimal.ZERO) {
+            val catPLPerc = if (catCostBase.compareTo(BigDecimal.ZERO) != 0) {
                 catValueBase.subtract(catCostBase).divide(catCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
             } else BigDecimal.ZERO
 
 
             val reportAssets = when (type) {
                 AssetType.NAKIT -> {
-                    // TL -> USD -> EUR -> Diğerleri (belirlenen sıraya göre)
                     val order = listOf("TRY", "TL", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
-                    typeAssets.sortedWith(compareBy<com.example.cuzdan.data.local.entity.Asset> { asset ->
+                    typeAssets.sortedWith(compareBy { asset ->
                         val symbol = asset.symbol.uppercase()
                         val name = asset.name.lowercase()
                         if (symbol == "TRY" || symbol == "TL" || symbol == "₺" || symbol.contains("TRY") || symbol.contains("TL") || symbol.contains("₺") || 
@@ -220,9 +233,9 @@ class ReportsViewModel @Inject constructor(
 
         _uiState.update { it.copy(
             categories = reportCategories,
-            totalValue = convTotalValue,
-            totalProfitLoss = convTotalProfitLoss,
-            totalProfitPerc = totalProfitPerc,
+            totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Portföy Değeri - Maliyet)
+            totalProfitLoss = convTotalDailyChange, // KÜÇÜK YAZI: Günlük Değişim (TL)
+            totalProfitPerc = dailyChangePerc, // KÜÇÜK YAZI: Günlük Değişim (%)
             currency = currency
         )}
     }

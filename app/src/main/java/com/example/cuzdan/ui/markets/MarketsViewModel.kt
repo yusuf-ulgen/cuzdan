@@ -25,7 +25,7 @@ data class MarketsUiState(
     val prices: List<MarketAsset> = emptyList(),
     val filteredPrices: List<MarketAsset> = emptyList(),
     val isLoading: Boolean = false,
-    val selectedType: AssetType = AssetType.BIST,
+    val selectedType: AssetType? = null,
     val searchQuery: String = "",
     val isFavoritesOnly: Boolean = false,
     val sortType: MarketsSortType = MarketsSortType.NAME_ASC,
@@ -39,7 +39,7 @@ class MarketsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    private val _selectedType = MutableStateFlow(AssetType.BIST)
+    private val _selectedType = MutableStateFlow<AssetType?>(null)
     private val _isFavoritesOnly = MutableStateFlow(false)
     private val _sortType = MutableStateFlow(MarketsSortType.NAME_ASC)
     private val _isLoading = MutableStateFlow(false)
@@ -55,25 +55,40 @@ class MarketsViewModel @Inject constructor(
         _isLoading,
         _errorMessage
     ) { array ->
-        val prices = array[0] as List<MarketAsset>
-        val query = array[1] as String
-        val type = array[2] as AssetType
-        val favoritesOnly = array[3] as Boolean
-        val sortType = array[4] as MarketsSortType
-        val loading = array[5] as Boolean
-        val error = array[6] as String?
+        val prices = (array[0] as? List<MarketAsset>) ?: emptyList()
+        val query = (array[1] as? String) ?: ""
+        val type = array[2] as? AssetType
+        val favoritesOnly = (array[3] as? Boolean) ?: false
+        val sortType = (array[4] as? MarketsSortType) ?: MarketsSortType.NAME_ASC
+        val loading = (array[5] as? Boolean) ?: false
+        val error = array[6] as? String
+
+        val prioritySymbols = listOf("BTC", "ETH", "USDT", "SOL", "BNB", "XRP", "USDC", "ADA", "DOGE", "AVAX", "SHIB", "DOT", "TRX", "LINK", "MATIC")
 
         val filtered = prices.filter { asset ->
-            (asset.name.contains(query, ignoreCase = true) || asset.symbol.contains(query, ignoreCase = true)) &&
+            (asset.name.contains(query, ignoreCase = true) || 
+             asset.symbol.contains(query, ignoreCase = true) || 
+             (asset.fullName?.contains(query, ignoreCase = true) == true)) &&
             (!favoritesOnly || asset.isFavorite)
         }.let { list ->
+            // Apply priority sorting for KRIPTO
+            val sortedList = if (type == AssetType.KRIPTO) {
+                list.sortedWith(compareByDescending<MarketAsset> { asset ->
+                    val cleanSym = asset.symbol.replace("USDT", "").replace("TRY", "")
+                    val priorityIndex = prioritySymbols.indexOf(cleanSym)
+                    if (priorityIndex != -1) 1000 - priorityIndex else 0
+                }.thenBy { it.name })
+            } else {
+                list
+            }
+
             when (sortType) {
-                MarketsSortType.NAME_ASC -> list.sortedBy { it.name }
-                MarketsSortType.NAME_DESC -> list.sortedByDescending { it.name }
-                MarketsSortType.PRICE_ASC -> list.sortedBy { it.currentPrice }
-                MarketsSortType.PRICE_DESC -> list.sortedByDescending { it.currentPrice }
-                MarketsSortType.CHANGE_ASC -> list.sortedBy { it.dailyChangePercentage }
-                MarketsSortType.CHANGE_DESC -> list.sortedByDescending { it.dailyChangePercentage }
+                MarketsSortType.NAME_ASC -> if (type == AssetType.KRIPTO) sortedList else sortedList.sortedBy { it.name }
+                MarketsSortType.NAME_DESC -> sortedList.sortedByDescending { it.name }
+                MarketsSortType.PRICE_ASC -> sortedList.sortedBy { it.currentPrice }
+                MarketsSortType.PRICE_DESC -> sortedList.sortedByDescending { it.currentPrice }
+                MarketsSortType.CHANGE_ASC -> sortedList.sortedBy { it.dailyChangePercentage }
+                MarketsSortType.CHANGE_DESC -> sortedList.sortedByDescending { it.dailyChangePercentage }
             }
         }
         MarketsUiState(
@@ -112,10 +127,8 @@ class MarketsViewModel @Inject constructor(
     }
 
     fun filterByType(type: AssetType?) {
-        type?.let { 
-            _selectedType.value = it
-            refreshPrices() 
-        }
+        _selectedType.value = type
+        refreshPrices()
     }
 
     fun search(query: String) {

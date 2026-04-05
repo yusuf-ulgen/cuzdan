@@ -15,9 +15,18 @@ interface MarketAssetDao {
     @Query("SELECT * FROM market_assets WHERE assetType = :type ORDER BY name ASC")
     suspend fun getMarketAssetsByTypeOnce(type: AssetType): List<MarketAsset>
 
+    @Query("SELECT * FROM market_assets ORDER BY name ASC")
+    fun getAllMarketAssetsFlow(): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
 
-    @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%') AND assetType = :type LIMIT 50")
+    @Query("SELECT * FROM market_assets ORDER BY name ASC")
+    suspend fun getAllMarketAssetsOnce(): List<MarketAsset>
+
+
+    @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%' OR fullName LIKE '%' || :query || '%') AND assetType = :type LIMIT 50")
     fun searchMarketAssets(query: String, type: AssetType): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
+
+    @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%' OR fullName LIKE '%' || :query || '%') LIMIT 50")
+    fun searchAllMarketAssets(query: String): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -37,6 +46,18 @@ interface MarketAssetDao {
 
     @Query("SELECT * FROM market_assets WHERE assetType = :type AND isFavorite = 1 ORDER BY name ASC")
     fun getFavoritesByType(type: AssetType): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
+
+    @Query("SELECT * FROM market_assets WHERE isFavorite = 1 ORDER BY name ASC")
+    fun getAllFavoritesFlow(): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
+
+    @Query("DELETE FROM market_assets WHERE symbol = :symbol AND assetType = :type")
+    suspend fun deleteMarketAssetBySymbolAndType(symbol: String, type: AssetType)
+
+    @Query("DELETE FROM market_assets WHERE symbol = 'AEDTRY=X'")
+    suspend fun deleteAed()
+
+    @Query("DELETE FROM market_assets WHERE assetType = 'KRIPTO' AND symbol NOT LIKE '%USDT'")
+    suspend fun deleteNonUsdtCrypto()
 
     @Query("SELECT * FROM market_assets WHERE symbol = :symbol LIMIT 1")
     fun getMarketAssetBySymbol(symbol: String): kotlinx.coroutines.flow.Flow<MarketAsset?>

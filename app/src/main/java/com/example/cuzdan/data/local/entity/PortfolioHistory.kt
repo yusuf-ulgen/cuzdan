@@ -11,5 +11,6 @@ data class PortfolioHistory(
     val portfolioId: Long,
     val date: Long, // timestamp
     val totalValue: BigDecimal,
-    val currency: String
+    val currency: String,
+    val profitLoss: BigDecimal = BigDecimal.ZERO
 )

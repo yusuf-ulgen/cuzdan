@@ -58,26 +58,22 @@ class MarketAdapter(
             ImageViewCompat.setImageTintList(imageMarketIcon, null)
 
             val isDoviz = item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ
+            val isEmtia = item.assetType == com.example.cuzdan.data.local.entity.AssetType.EMTIA
+            val isNakit = item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT
             val placeholderRes = getAssetIconPlaceholder(item, root.context)
 
-            if (isDoviz && item.fullName != null) {
-                // For currencies: show full name (e.g. "Euro") as main text, symbol (EUR/TRY) as subtitle
-                textMarketName.text = getLocalizedAssetName(item.fullName, root.context)
-                textMarketFullName.visibility = android.view.View.VISIBLE
-                textMarketFullName.text = item.name  // e.g. "EUR/TRY"
-                textMarketFullName.isSelected = true
+            if ((isDoviz || isEmtia || isNakit) && item.fullName != null) {
+                // For currencies/commodities/cash: show name only, hide redundant technical subtitle
+                textMarketName.text = getLocalizedAssetName(item.fullName ?: item.name, root.context)
+                textMarketFullName.visibility = android.view.View.GONE
                 textMarketSymbol.visibility = android.view.View.GONE
             } else {
                 textMarketName.text = getLocalizedAssetName(item.name, root.context)
 
                 if (item.fullName != null && item.fullName != item.name) {
                     textMarketFullName.visibility = android.view.View.VISIBLE
-                    if (textMarketFullName.text != item.fullName) {
-                        textMarketFullName.text = item.fullName
-                    }
-                    if (!textMarketFullName.isSelected) {
-                        textMarketFullName.isSelected = true
-                    }
+                    textMarketFullName.text = item.fullName
+                    textMarketFullName.isSelected = true
                 } else {
                     textMarketFullName.visibility = android.view.View.GONE
                 }
@@ -97,19 +93,26 @@ class MarketAdapter(
                 "EUR" -> "€"
                 else -> "₺"
             }
-            textMarketPrice.text = if (item.currency == "USD") "$symbol$formattedPrice" else "$formattedPrice $symbol"
+            // If currency is USD, symbol goes to the front. 
+            // Also handle the case where currency might be USD but stored as "USD" in item.currency
+            if (item.currency == "USD") {
+                textMarketPrice.text = "$symbol$formattedPrice"
+            } else {
+                textMarketPrice.text = "$formattedPrice $symbol"
+            }
             
             if (showChange) {
                 textMarketChange.visibility = android.view.View.VISIBLE
-                val sign = item.dailyChangePercentage.setScale(2, java.math.RoundingMode.HALF_UP).signum()
+                val scaledChange = item.dailyChangePercentage.setScale(2, java.math.RoundingMode.HALF_UP)
+                val sign = scaledChange.signum()
                 textMarketChange.text = String.format("%%%+.2f", item.dailyChangePercentage)
-                textMarketChange.setTextColor(root.context.getColor(
-                    when {
-                        sign > 0 -> R.color.accent_green
-                        sign < 0 -> R.color.accent_red
-                        else -> R.color.white
-                    }
-                ))
+                
+                val color = when {
+                    sign > 0 -> R.color.accent_green
+                    sign < 0 -> R.color.accent_red
+                    else -> R.color.text_label
+                }
+                textMarketChange.setTextColor(root.context.getColor(color))
             } else {
                 textMarketChange.visibility = android.view.View.GONE
             }
