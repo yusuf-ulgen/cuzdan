@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.DialogSupportBinding
 import com.example.cuzdan.databinding.FragmentNotificationsBinding
+import com.example.cuzdan.util.showToast
 import com.example.cuzdan.util.PreferenceManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import androidx.lifecycle.lifecycleScope
@@ -140,7 +141,7 @@ class NotificationsFragment : Fragment() {
                 viewLifecycleOwner.lifecycleScope.launch {
                     portfolioRepository.clearAllData()
                     prefManager.resetPreferences()
-                    Toast.makeText(context, R.string.settings_account_reset, Toast.LENGTH_SHORT).show()
+                    showToast(R.string.toast_account_reset_success)
                     requireActivity().recreate()
                 }
             }
@@ -177,9 +178,10 @@ class NotificationsFragment : Fragment() {
                     putExtra(Intent.EXTRA_TEXT, "From: $email\n\nMessage: $message")
                 }
                 startActivity(Intent.createChooser(intent, getString(R.string.support_email_chooser)))
+                showToast(R.string.toast_support_sent)
                 dialog.dismiss()
             } else {
-                Toast.makeText(context, R.string.support_fill_all_fields, Toast.LENGTH_SHORT).show()
+                showToast(R.string.toast_fill_all_fields)
             }
         }
         dialog.show()
@@ -200,7 +202,7 @@ class NotificationsFragment : Fragment() {
             content = getString(R.string.user_agreement_text),
             isReadOnly = false,
             onAccepted = {
-                Toast.makeText(context, R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
+                showToast(R.string.toast_agreement_accepted)
             }
         ).show(parentFragmentManager, "Agreement")
     }

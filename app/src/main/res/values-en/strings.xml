@@ -166,4 +166,19 @@
     <string name="agreement_exit_confirm">Confirm Exit</string>
     <string name="agreement_go_back">Go Back</string>
     <string name="agreement_exit">Exit App</string>
+    
+    <!-- Toast & Feedback Messages -->
+    <string name="toast_asset_saved">Asset saved successfully</string>
+    <string name="toast_asset_deleted">Asset deleted from portfolio</string>
+    <string name="toast_alert_created">Price alert set successfully</string>
+    <string name="toast_portfolio_added">New portfolio created</string>
+    <string name="toast_portfolio_updated">Portfolio updated successfully</string>
+    <string name="toast_portfolio_deleted">Portfolio deleted successfully</string>
+    <string name="toast_error_name_empty">Name cannot be empty</string>
+    <string name="toast_biometric_error">No biometric data found, login method reset</string>
+    <string name="toast_detail_load_error">Error loading details</string>
+    <string name="toast_account_reset_success">Account reset successfully</string>
+    <string name="toast_support_sent">Support request sent</string>
+    <string name="toast_fill_all_fields">Please fill in all fields</string>
+    <string name="toast_agreement_accepted">Agreement accepted</string>
 </resources>

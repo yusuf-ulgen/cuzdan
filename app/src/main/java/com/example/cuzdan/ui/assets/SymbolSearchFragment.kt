@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.example.cuzdan.util.showToast
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.databinding.FragmentSymbolSearchBinding
 import com.example.cuzdan.ui.markets.MarketAdapter
@@ -128,7 +129,7 @@ class SymbolSearchFragment : Fragment() {
                 adapter.setItems(state.results)
                 
                 if (state.error != null) {
-                    Toast.makeText(context, state.error, Toast.LENGTH_SHORT).show()
+                    showToast(state.error)
                 }
             }
             .launchIn(viewLifecycleOwner.lifecycleScope)

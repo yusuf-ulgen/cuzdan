@@ -10,6 +10,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricPrompt
+import com.example.cuzdan.util.showToast
 import androidx.core.content.ContextCompat
 import androidx.biometric.BiometricManager
 import android.widget.Toast
@@ -135,9 +136,8 @@ class MainActivity : AppCompatActivity() {
         val canAuthenticate = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
 
         if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
-            // Cihazda biyometrik veri yok veya desteklenmiyor
+            showToast(R.string.toast_biometric_error)
             prefManager.setBiometricsEnabled(false)
-            Toast.makeText(this, "Telefonda kayıtlı biyometrik veri bulunamadı. Biyometrik giriş kapatıldı.", Toast.LENGTH_LONG).show()
             return
         }
 

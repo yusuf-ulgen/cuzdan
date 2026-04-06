@@ -89,6 +89,12 @@ class ReportsViewModel @Inject constructor(
                 priceSyncManager.syncStatus
             ) { assets, currency, usdRate, eurRate, syncStatus ->
                 lastAssets = assets
+                
+                // Fetch start of day balance when portfolio changes
+                if (_selectedPortfolioId.value != -1L) {
+                    fetchStartOfDayBalance(_selectedPortfolioId.value)
+                }
+
                 calculateReports(assets, currency, usdRate, eurRate)
                 
                 val timeStr = if (syncStatus.lastUpdate > 0) dateFormat.format(java.util.Date(syncStatus.lastUpdate)) else null
@@ -97,6 +103,31 @@ class ReportsViewModel @Inject constructor(
                     isOffline = syncStatus.isOffline
                 )}
             }.collect()
+        }
+    }
+
+    private var _startOfDayBalanceValue = BigDecimal.ZERO
+
+    private fun fetchStartOfDayBalance(id: Long) {
+        viewModelScope.launch {
+            val calendar = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 0)
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            val startOfToday = calendar.timeInMillis
+            
+            val history = assetRepository.getLatestHistoryBefore(id, startOfToday)
+            _startOfDayBalanceValue = history?.totalValue ?: BigDecimal.ZERO
+            
+            if (_startOfDayBalanceValue == BigDecimal.ZERO) {
+                // Fallback to current deposit if no history
+                val p = portfolioRepository.getPortfolioById(id)?.depositedAmount ?: BigDecimal.ZERO
+                _startOfDayBalanceValue = p
+            }
+            
+            calculateReports(lastAssets, _currentCurrency.value)
         }
     }
 
@@ -144,32 +175,27 @@ class ReportsViewModel @Inject constructor(
             totalCostBase = totalCostBase.add(assetCost)
         }
 
-        val convTotalValue = (totalValueBase.add((depositedAmountTry - totalCostBase).coerceAtLeast(BigDecimal.ZERO))).divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        // Nakit = Yatırılan Para (Deposited Amount)
+        val idleCashTry = depositedAmountTry
+        val idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val convertedAssetValue = totalValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        // Toplam portföy değeri = Nakit + Varlıkların değeri
+        val finalTotalBalance = convertedAssetValue.add(idleCashConv)
 
-        val effectiveCostBase = if (depositedAmountTry > BigDecimal.ZERO) depositedAmountTry else totalCostBase
-        val convEffectiveCost = effectiveCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        
-        val totalProfitLossAbs = convTotalValue.subtract(convEffectiveCost)
+        // LIFETIME PROFIT: (Mevcut Değerler - Alış Maliyetleri)
+        val totalProfitLossAbs = totalValueBase.subtract(totalCostBase).divide(exchangeRate, 2, RoundingMode.HALF_UP)
         
         // GÜNLÜK DEĞİŞİM (Daily Change) HESAPLAMA
-        var totalDailyChangeBase = BigDecimal.ZERO
-        assets.forEach { asset ->
-            val assetRate = when (asset.currency) {
-                "USD" -> usdRate ?: BigDecimal("32.5")
-                "EUR" -> eurRate ?: BigDecimal("35.2")
-                else -> BigDecimal.ONE
-            }
-            
-            val todayValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
-            val changePerc = asset.dailyChangePercentage
-            if (changePerc != BigDecimal.ZERO) {
-                val dailyChange = todayValue.multiply(changePerc).divide(BigDecimal("100").add(changePerc), 8, RoundingMode.HALF_UP)
-                totalDailyChangeBase = totalDailyChangeBase.add(dailyChange)
-            }
+        val startOfTodayBalance = _startOfDayBalanceValue
+        val dailyChangeAbs = if (startOfTodayBalance > BigDecimal.ZERO) {
+            val startOfTodayConv = startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            finalTotalBalance.subtract(startOfTodayConv)
+        } else {
+            finalTotalBalance.subtract(idleCashConv)
         }
-        val convTotalDailyChange = totalDailyChangeBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val dailyChangePerc = if (totalValueBase > BigDecimal.ZERO) {
-            totalDailyChangeBase.divide(totalValueBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+
+        val dailyChangePerc = if (startOfTodayBalance > BigDecimal.ZERO) {
+            dailyChangeAbs.multiply(BigDecimal("100")).divide(startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
         val reportCategories = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
@@ -224,17 +250,27 @@ class ReportsViewModel @Inject constructor(
 
             ReportCategory(
                 name = getLocalizedAssetTypeName(type, resolveContext),
-                totalValue = convCatValue,
+                totalValue = if (type == AssetType.NAKIT) convCatValue.add(idleCashConv) else convCatValue,
                 changePerc = catPLPerc,
                 changeAbs = catPLAbs,
                 assets = reportAssets
             )
+        }.toMutableList()
+
+        if (idleCashConv > BigDecimal.ZERO && reportCategories.none { it.name == getLocalizedAssetTypeName(AssetType.NAKIT, resolveContext) }) {
+            reportCategories.add(0, ReportCategory(
+                name = getLocalizedAssetTypeName(AssetType.NAKIT, resolveContext),
+                totalValue = idleCashConv,
+                changePerc = BigDecimal.ZERO,
+                changeAbs = BigDecimal.ZERO,
+                assets = emptyList()
+            ))
         }
 
         _uiState.update { it.copy(
             categories = reportCategories,
-            totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Portföy Değeri - Maliyet)
-            totalProfitLoss = convTotalDailyChange, // KÜÇÜK YAZI: Günlük Değişim (TL)
+            totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Varlık Değeri - Maliyet)
+            totalProfitLoss = dailyChangeAbs, // KÜÇÜK YAZI: Günlük Değişim (TL)
             totalProfitPerc = dailyChangePerc, // KÜÇÜK YAZI: Günlük Değişim (%)
             currency = currency
         )}

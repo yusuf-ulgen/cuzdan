@@ -111,8 +111,13 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangeAbs.text = "*****"
             binding.textDailyChangePerc.text = "*****"
         } else {
-            val isDailyPositive = state.totalProfitLoss >= java.math.BigDecimal.ZERO
-            val color = if (isDailyPositive) R.color.accent_green else R.color.accent_red
+            val isLight = prefManager.getThemeMode() == "light"
+            val isNeutral = state.totalProfitLoss.abs() < java.math.BigDecimal("0.01")
+            val color = when {
+                isNeutral -> if (isLight) R.color.text_secondary_light else R.color.text_secondary
+                state.totalProfitLoss > java.math.BigDecimal.ZERO -> R.color.accent_green
+                else -> R.color.accent_red
+            }
             val colorInt = requireContext().getColor(color)
             
             binding.textTotalAmount.setTextColor(requireContext().getColor(R.color.white))
@@ -124,9 +129,14 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangePerc.text = String.format("%%%+.1f", state.totalProfitPerc)
             
             // Update daily change icon
-            binding.imageDailyChangeArrow.setImageResource(R.drawable.ic_arrow_drop_down)
-            binding.imageDailyChangeArrow.rotation = if (isDailyPositive) 180f else 0f
-            binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
+            if (isNeutral) {
+                binding.imageDailyChangeArrow.visibility = View.GONE
+            } else {
+                binding.imageDailyChangeArrow.visibility = View.VISIBLE
+                binding.imageDailyChangeArrow.setImageResource(R.drawable.ic_arrow_drop_down)
+                binding.imageDailyChangeArrow.rotation = if (state.totalProfitLoss > java.math.BigDecimal.ZERO) 180f else 0f
+                binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
+            }
         }
         
         // Currency icon update

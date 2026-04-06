@@ -19,6 +19,7 @@ import android.content.res.ColorStateList
 import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.databinding.FragmentAssetDetailBinding
 import com.example.cuzdan.ui.assets.PriceAlertBottomSheet
+import com.example.cuzdan.util.showToast
 import com.example.cuzdan.util.HapticManager
 import com.example.cuzdan.util.formatCurrency
 import com.github.mikephil.charting.data.Entry
@@ -50,17 +51,22 @@ class AssetDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        setupToolbar()
-        setupListeners()
-        observeState()
-        
-        if (args.assetType == "NAKIT" && args.symbol == "TRY") {
-            binding.layoutCostContainer.visibility = View.GONE
-            binding.textAmountLabel.text = "TL"
+        try {
+            setupToolbar()
+            setupListeners()
+            observeState()
+            
+            if (args.assetType == "NAKIT" && args.symbol == "TRY") {
+                binding.layoutCostContainer.visibility = View.GONE
+                binding.textAmountLabel.text = "TL"
+            }
+            
+            viewModel.init(args.symbol, args.name, args.assetType, args.currency)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showToast(R.string.toast_detail_load_error)
+            findNavController().navigateUp()
         }
-        
-        viewModel.init(args.symbol, args.name, args.assetType, args.currency)
-
     }
 
     private fun setupToolbar() {
@@ -78,14 +84,15 @@ class AssetDetailFragment : Fragment() {
         }
         binding.btnAlert.setOnClickListener {
             val state = viewModel.uiState.value
+            val currentType = try { AssetType.valueOf(args.assetType) } catch (e: Exception) { AssetType.BIST }
             val bottomSheet = PriceAlertBottomSheet(
                 symbol = state.symbol,
                 name = state.name,
-                assetType = AssetType.valueOf(args.assetType),
+                assetType = currentType,
                 currentPrice = state.currentPrice,
                 onAlertSet = { alert ->
                     viewModel.setPriceAlert(alert)
-                    Toast.makeText(requireContext(), R.string.alert_save, Toast.LENGTH_SHORT).show()
+                    showToast(R.string.toast_alert_created)
                 }
             )
             bottomSheet.show(childFragmentManager, PriceAlertBottomSheet.TAG)
@@ -147,17 +154,17 @@ class AssetDetailFragment : Fragment() {
                     updateUI(state)
                     if (state.isSaved) {
                         HapticManager.success(requireContext())
-                        Toast.makeText(requireContext(), R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
+                        showToast(R.string.toast_asset_saved)
                         findNavController().navigateUp()
                     }
                     if (state.isDeleted) {
                         HapticManager.success(requireContext())
-                        Toast.makeText(requireContext(), R.string.dialog_confirm, Toast.LENGTH_SHORT).show()
+                        showToast(R.string.toast_asset_deleted)
                         findNavController().navigateUp()
                     }
                     if (state.errorMessage != null) {
                         HapticManager.error(requireContext())
-                        Toast.makeText(requireContext(), state.errorMessage, Toast.LENGTH_SHORT).show()
+                        showToast(state.errorMessage)
                     }
                 }
             }

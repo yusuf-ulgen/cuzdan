@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import com.example.cuzdan.R
 import com.example.cuzdan.databinding.BottomSheetDepositBinding
 import com.example.cuzdan.util.formatCurrency
+import com.example.cuzdan.util.showToast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -137,13 +138,13 @@ class DepositBottomSheet : BottomSheetDialogFragment() {
 
             val portfolioId = viewModel.uiState.value.selectedPortfolioId
             if (portfolioId == -1L) {
-                Toast.makeText(requireContext(), getString(R.string.deposit_error_total_mode), Toast.LENGTH_SHORT).show()
+                showToast(com.example.cuzdan.R.string.deposit_error_total_mode)
                 return@setOnClickListener
             }
 
             viewModel.depositOrWithdraw(amount, selectedCurrency, isWithdrawMode)
             val msgRes = if (isWithdrawMode) R.string.withdraw_success else R.string.deposit_success
-            Toast.makeText(requireContext(), getString(msgRes), Toast.LENGTH_SHORT).show()
+            showToast(msgRes)
             dismiss()
         }
     }

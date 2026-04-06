@@ -4,16 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
 import com.example.cuzdan.data.local.entity.Portfolio
+import com.example.cuzdan.util.showToast
 import com.example.cuzdan.data.repository.PortfolioRepository
 import com.example.cuzdan.databinding.DialogEditPortfolioBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -73,7 +74,7 @@ class EditPortfolioDialogFragment : DialogFragment() {
             return
         }
 
-        CoroutineScope(Dispatchers.Main).launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val portfolio = portfolioRepository.getPortfolioById(portfolioId)
             portfolio?.let {
                 binding.editPortfolioName.setText(it.name)
@@ -86,18 +87,18 @@ class EditPortfolioDialogFragment : DialogFragment() {
         binding.btnSave.setOnClickListener {
             val name = binding.editPortfolioName.text.toString().trim()
             if (name.isEmpty()) {
-                binding.editPortfolioName.error = "Lütfen bir isim girin"
+                binding.editPortfolioName.error = getString(com.example.cuzdan.R.string.portfolio_name_hint)
             } else {
                 val includeTotal = binding.switchIncludeTotal.isChecked
                 
-                CoroutineScope(Dispatchers.Main).launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     val portfolio = portfolioRepository.getPortfolioById(portfolioId)
                     portfolio?.let {
                         portfolioRepository.updatePortfolio(it.copy(
                             name = name,
                             isIncludedInTotal = includeTotal
                         ))
-                        Toast.makeText(context, "Portföy güncellendi", Toast.LENGTH_SHORT).show()
+                        showToast(com.example.cuzdan.R.string.toast_portfolio_updated)
                         dismiss()
                     }
                 }
@@ -111,19 +112,19 @@ class EditPortfolioDialogFragment : DialogFragment() {
 
     private fun showDeleteConfirmation() {
         AlertDialog.Builder(requireContext())
-            .setTitle("Portföyü Sil")
-            .setMessage("Bu portföyü ve içindeki tüm varlıkları silmek istediğinize emin misiniz?")
-            .setPositiveButton("SİL") { _, _ ->
-                CoroutineScope(Dispatchers.Main).launch {
+            .setTitle(com.example.cuzdan.R.string.reset_warning_title)
+            .setMessage(com.example.cuzdan.R.string.toast_portfolio_deleted)
+            .setPositiveButton(com.example.cuzdan.R.string.dialog_confirm) { dialog, _ ->
+                viewLifecycleOwner.lifecycleScope.launch {
                     val portfolio = portfolioRepository.getPortfolioById(portfolioId)
                     portfolio?.let {
                         portfolioRepository.deletePortfolio(it)
-                        Toast.makeText(context, "Portföy silindi", Toast.LENGTH_SHORT).show()
+                        showToast(com.example.cuzdan.R.string.toast_portfolio_deleted)
                         dismiss()
                     }
                 }
             }
-            .setNegativeButton("İPTAL", null)
+            .setNegativeButton(com.example.cuzdan.R.string.dialog_cancel, null)
             .show()
     }
 

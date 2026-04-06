@@ -57,17 +57,33 @@ class HomeFragment : Fragment() {
         adapter = WalletCategoryAdapter(emptyList(), { category ->
             viewModel.toggleCategoryExpansion(category.type)
         }, { asset: Asset, iconView: View, nameView: View ->
-            val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
-                symbol = asset.symbol,
-                name = asset.name,
-                assetType = asset.assetType.name,
-                currency = viewModel.uiState.value.currency
-            )
-            val extras = FragmentNavigatorExtras(
-                iconView to "shared_asset_icon",
-                nameView to "shared_asset_name"
-            )
-            findNavController().navigate(action, extras)
+            try {
+                val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
+                    symbol = asset.symbol,
+                    name = asset.name,
+                    assetType = asset.assetType.name,
+                    currency = viewModel.uiState.value.currency
+                )
+                val extras = FragmentNavigatorExtras(
+                    iconView to "shared_asset_icon",
+                    nameView to "shared_asset_name"
+                )
+                findNavController().navigate(action, extras)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Durumsal çökme yaşanırsa animasyonsuz dene
+                try {
+                    val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
+                        symbol = asset.symbol,
+                        name = asset.name,
+                        assetType = asset.assetType.name,
+                        currency = viewModel.uiState.value.currency
+                    )
+                    findNavController().navigate(action)
+                } catch (inner: Exception) {
+                    inner.printStackTrace()
+                }
+            }
         })
         binding.recyclerWalletCategories.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerWalletCategories.adapter = adapter
@@ -148,11 +164,15 @@ class HomeFragment : Fragment() {
             val percStr = String.format("%%%+.2f", state.dailyChangePerc)
             binding.textDailyChangePerc.text = "$changeStr ($percStr)"
             
-            val isPositive = state.dailyChangeAbs >= java.math.BigDecimal.ZERO
-            val textColor = if (isPositive) R.color.pill_green_text else R.color.pill_red_text
-            val bgColor = if (isPositive) R.color.pill_green_bg else R.color.pill_red_bg
+            val isLight = prefManager.getThemeMode() == "light"
+            val isNeutral = state.dailyChangeAbs.abs() < java.math.BigDecimal("0.01")
+            val (textColor, bgColor) = when {
+                isNeutral -> (if (isLight) R.color.text_secondary_light else R.color.text_secondary) to (if (isLight) R.color.divider_light else R.color.surface_glass_strong)
+                state.dailyChangeAbs > java.math.BigDecimal.ZERO -> R.color.pill_green_text to R.color.pill_green_bg
+                else -> R.color.pill_red_text to R.color.pill_red_bg
+            }
             
-            binding.textTotalBalance.setTextColor(requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.text_primary_light else R.color.white))
+            binding.textTotalBalance.setTextColor(requireContext().getColor(if (isLight) R.color.text_primary_light else R.color.white))
             binding.textDailyChangePerc.setTextColor(requireContext().getColor(textColor))
             binding.layoutDailyChangePill.backgroundTintList = android.content.res.ColorStateList.valueOf(requireContext().getColor(bgColor))
         }

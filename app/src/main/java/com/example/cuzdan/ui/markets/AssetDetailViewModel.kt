@@ -128,13 +128,15 @@ class AssetDetailViewModel @Inject constructor(
             var portfolioId = prefManager.getSelectedPortfolioId()
             if (portfolioId == -1L) portfolioId = 1L 
 
-            val assetType = AssetType.valueOf(typeString)
+            val assetType = try { AssetType.valueOf(typeString) } catch (e: Exception) { AssetType.BIST }
             val isCash = assetType == AssetType.NAKIT
             
             // Ortalama maliyet hesabı
             val newAvgCost = if (transactionType == TransactionType.BUY) {
-                if (newAmount > BigDecimal.ZERO) {
-                    val totalCost = (currentAmount * state.averageBuyPrice) + (enteredAmount * enteredCost)
+                if (newAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    val currentValue = currentAmount.multiply(state.averageBuyPrice)
+                    val newValue = enteredAmount.multiply(enteredCost)
+                    val totalCost = currentValue.add(newValue)
                     totalCost.divide(newAmount, 8, java.math.RoundingMode.HALF_UP)
                 } else enteredCost
             } else {

@@ -17,4 +17,7 @@ interface PortfolioHistoryDao {
 
     @Query("SELECT * FROM portfolio_history WHERE portfolioId = :portfolioId ORDER BY date ASC")
     fun getAllHistory(portfolioId: Long): Flow<List<PortfolioHistory>>
+
+    @Query("SELECT * FROM portfolio_history WHERE portfolioId = :portfolioId AND date < :date ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestBefore(portfolioId: Long, date: Long): PortfolioHistory?
 }

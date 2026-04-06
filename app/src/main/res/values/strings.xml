@@ -183,5 +183,21 @@
     <string name="withdraw_title">Para Çek</string>
     <string name="withdraw_confirm">ÇEK</string>
     <string name="withdraw_success">Para çekme işlemi başarılı</string>
+    <string name="withdraw_error_total_mode">Portföyler toplamında para çekilemez</string>
+
+    <!-- Toast & Feedback Messages -->
+    <string name="toast_asset_saved">Varlık başarıyla kaydedildi</string>
+    <string name="toast_asset_deleted">Varlık portföyden silindi</string>
+    <string name="toast_alert_created">Fiyat alarmı başarıyla kuruldu</string>
+    <string name="toast_portfolio_added">Yeni portföy oluşturuldu</string>
+    <string name="toast_portfolio_updated">Portföy güncellendi</string>
+    <string name="toast_portfolio_deleted">Portföy silindi</string>
+    <string name="toast_error_name_empty">İsim alanı boş bırakılamaz</string>
+    <string name="toast_biometric_error">Biyometrik veri bulunamadı, giriş yöntemi sıfırlandı</string>
+    <string name="toast_detail_load_error">Detay yüklenirken hata oluştu</string>
+    <string name="toast_account_reset_success">Hesap başarıyla sıfırlandı</string>
+    <string name="toast_support_sent">Destek talebi iletildi</string>
+    <string name="toast_fill_all_fields">Lütfen tüm alanları doldurun</string>
+    <string name="toast_agreement_accepted">Sözleşme kabul edildi</string>
 
 </resources>

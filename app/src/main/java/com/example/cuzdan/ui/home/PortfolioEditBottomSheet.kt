@@ -4,13 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.appcompat.app.AlertDialog
+import com.example.cuzdan.R
 import com.example.cuzdan.databinding.BottomSheetPortfolioEditBinding
+import com.example.cuzdan.util.showToast
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
 
 @AndroidEntryPoint
 class PortfolioEditBottomSheet : BottomSheetDialogFragment() {
@@ -71,29 +75,29 @@ class PortfolioEditBottomSheet : BottomSheetDialogFragment() {
         binding.btnSavePortfolio.setOnClickListener {
             val newName = binding.editPortfolioName.text.toString()
             if (newName.isBlank()) {
-                Toast.makeText(requireContext(), "İsim boş olamaz", Toast.LENGTH_SHORT).show()
+                showToast(com.example.cuzdan.R.string.toast_error_name_empty)
                 return@setOnClickListener
             }
             
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.updatePortfolio(portfolioId, newName, binding.switchInclusion.isChecked)
-                Toast.makeText(requireContext(), "Kaydedildi", Toast.LENGTH_SHORT).show()
+                showToast(com.example.cuzdan.R.string.toast_portfolio_updated)
                 dismiss()
             }
         }
 
         binding.btnDeletePortfolio.setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Portföyü Sil")
-                .setMessage("Bu portföyü ve içindeki tüm varlıkları silmek istediğinize emin misiniz?")
-                .setPositiveButton("Sil") { _, _ ->
+            AlertDialog.Builder(requireContext())
+                .setTitle(com.example.cuzdan.R.string.reset_warning_title)
+                .setMessage(com.example.cuzdan.R.string.toast_portfolio_deleted)
+                .setPositiveButton(com.example.cuzdan.R.string.dialog_confirm) { dialog, _ ->
                     viewLifecycleOwner.lifecycleScope.launch {
                         viewModel.deletePortfolio(portfolioId)
-                        Toast.makeText(requireContext(), "Silindi", Toast.LENGTH_SHORT).show()
+                        showToast(com.example.cuzdan.R.string.toast_portfolio_deleted)
                         dismiss()
                     }
                 }
-                .setNegativeButton("İptal", null)
+                .setNegativeButton(com.example.cuzdan.R.string.dialog_cancel, null)
                 .show()
         }
     }

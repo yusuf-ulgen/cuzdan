@@ -462,13 +462,30 @@ class AssetRepository @Inject constructor(
         }
     }
 
+    /**
+     * Varlığı veritabanına kaydeder veya mevcutsa günceller.
+     * Miktarı toplamaz, gönderilen varlık nesnesi nihai haldir.
+     */
+    /**
+     * Varlığı veritabanına kaydeder veya mevcutsa günceller.
+     * Miktarı toplamaz, gönderilen varlık nesnesi nihai haldir.
+     * Var olan TÜM mükerrer kayıtları temizleyerek tekil bir kayıt bırakır (Bug 1 Fix).
+     */
     suspend fun addAsset(asset: Asset) {
-        val existing = assetDao.getAssetBySymbolAndPortfolioId(asset.symbol, asset.portfolioId)
-        if (existing != null) {
-            val totalAmount = existing.amount + asset.amount
-            val newAvg = if (totalAmount > BigDecimal.ZERO) ((existing.amount * existing.averageBuyPrice) + (asset.amount * asset.averageBuyPrice)).divide(totalAmount, 8, RoundingMode.HALF_UP) else BigDecimal.ZERO
-            assetDao.updateAsset(existing.copy(amount = totalAmount, averageBuyPrice = if (asset.assetType == AssetType.NAKIT) BigDecimal.ONE else newAvg, currentPrice = if (asset.assetType == AssetType.NAKIT) BigDecimal.ONE else asset.currentPrice, dailyChangePercentage = if (asset.assetType == AssetType.NAKIT) BigDecimal.ZERO else asset.dailyChangePercentage, currency = asset.currency))
-        } else assetDao.insertAsset(asset)
+        val portfolioAssets = assetDao.getAssetsByPortfolioIdOnce(asset.portfolioId)
+        val existingMatches = portfolioAssets.filter { it.symbol == asset.symbol }
+        
+        if (existingMatches.isNotEmpty()) {
+            // İlkini güncelle, diğerlerini sil (mükerrer kayıtları temizle)
+            val primary = existingMatches.first()
+            assetDao.updateAsset(asset.copy(id = primary.id))
+            
+            if (existingMatches.size > 1) {
+                existingMatches.drop(1).forEach { assetDao.deleteAsset(it) }
+            }
+        } else {
+            assetDao.insertAsset(asset)
+        }
     }
 
     suspend fun upsertAsset(asset: Asset) {
@@ -496,11 +513,13 @@ class AssetRepository @Inject constructor(
     fun getAllPriceAlerts(): Flow<List<PriceAlert>> = priceAlertDao.getAllAlerts()
     fun getAlertsForAsset(s: String, t: AssetType): Flow<List<PriceAlert>> = priceAlertDao.getAlertsForAsset(s, t)
     suspend fun insertPriceAlert(a: PriceAlert) = priceAlertDao.insertAlert(a)
+    suspend fun updatePriceAlert(a: PriceAlert) = priceAlertDao.updateAlert(a)
     suspend fun deletePriceAlert(a: PriceAlert) = priceAlertDao.deleteAlert(a)
     suspend fun markAlertAsTriggered(id: Long) = priceAlertDao.markAsTriggered(id)
     suspend fun getActivePriceAlerts() = priceAlertDao.getActiveAlerts()
 
     suspend fun recordPortfolioSnapshot(pId: Long, v: BigDecimal, c: String) = portfolioHistoryDao.insert(PortfolioHistory(portfolioId = pId, date = System.currentTimeMillis(), totalValue = v, currency = c))
+    suspend fun getLatestHistoryBefore(pId: Long, date: Long): PortfolioHistory? = portfolioHistoryDao.getLatestBefore(pId, date)
     fun getPortfolioHistory(pId: Long): Flow<List<PortfolioHistory>> = portfolioHistoryDao.getAllHistory(pId)
 
     suspend fun reconstructPortfolioHistory(pId: Long, range: String): List<PortfolioHistory> = coroutineScope {

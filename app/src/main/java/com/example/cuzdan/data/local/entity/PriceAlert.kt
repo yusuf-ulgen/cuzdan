@@ -15,6 +15,7 @@ data class PriceAlert(
     val condition: PriceAlertCondition, // "ABOVE" or "BELOW"
     val isEnabled: Boolean = true,
     val isTriggered: Boolean = false,
+    val baselinePrice: BigDecimal? = null,
     val createdAt: Long = System.currentTimeMillis()
 )
 

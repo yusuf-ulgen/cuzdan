@@ -31,6 +31,12 @@ class PriceAlertWorker @AssistedInject constructor(
                     ?: repository.getLatestPrice(alert.symbol).toString().toBigDecimalOrNull() // Fallback to DB
 
                 if (currentPrice != null) {
+                    if (alert.baselinePrice == null) {
+                        // İlk çalıştırma: Başlangıç fiyatını kaydet ama ötme
+                        repository.updatePriceAlert(alert.copy(baselinePrice = currentPrice))
+                        return@forEach
+                    }
+
                     val isTriggered = when (alert.condition) {
                         PriceAlertCondition.ABOVE -> currentPrice >= alert.targetPrice
                         PriceAlertCondition.EQUALS -> currentPrice.compareTo(alert.targetPrice) == 0
