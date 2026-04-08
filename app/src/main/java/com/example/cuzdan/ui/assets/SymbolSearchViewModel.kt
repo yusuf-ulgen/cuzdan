@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import java.math.BigDecimal
 import javax.inject.Inject
 import com.example.cuzdan.util.PreferenceManager
@@ -44,7 +45,17 @@ class SymbolSearchViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.getYahooPriceOnce("USDTRY=X")?.let { usdRate = it }
+            // Keep USD/TRY rate fresh for converting crypto USD quotes to TL.
+            repository.getLatestPrice("USDTRY=X").collectLatest { rate ->
+                if (rate != null && rate > BigDecimal.ZERO) {
+                    usdRate = rate
+                } else {
+                    // Fallback: fetch directly once if DB isn't ready yet.
+                    repository.getYahooPriceOnce("USDTRY=X")?.let { fetched ->
+                        if (fetched > BigDecimal.ZERO) usdRate = fetched
+                    }
+                }
+            }
         }
     }
 

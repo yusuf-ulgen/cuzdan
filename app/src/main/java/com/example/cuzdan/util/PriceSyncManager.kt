@@ -2,6 +2,7 @@ package com.example.cuzdan.util
 
 import android.util.Log
 import com.example.cuzdan.data.repository.AssetRepository
+import com.example.cuzdan.data.local.entity.AssetType
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +38,9 @@ class PriceSyncManager @Inject constructor(
                     
                     // Update BIST, Currency, Gold (Yahoo)
                     repository.refreshYahooPrices().collect { /* result handled in repo/db */ }
+
+                    // Update market lists (incl. USDTRY for conversions)
+                    repository.refreshMarketAssets(AssetType.DOVIZ).collect { /* result handled in repo/db */ }
                     
                     // Update TEFAS Funds
                     repository.refreshOwnedFundPrices().collect { /* result handled in repo/db */ }

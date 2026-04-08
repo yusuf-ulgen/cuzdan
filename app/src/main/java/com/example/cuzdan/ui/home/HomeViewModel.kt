@@ -74,8 +74,8 @@ class HomeViewModel @Inject constructor(
     private val _expandedCategory = MutableStateFlow<AssetType?>(null)
     private val _currentAssets = MutableStateFlow<List<Asset>>(emptyList())
 
-    private val _usdRate = assetRepository.getLatestPrice("TRY=X")
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("32.5"))
+    private val _usdRate = assetRepository.getLatestPrice("USDTRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("44.52"))
     private val _eurRate = assetRepository.getLatestPrice("EURTRY=X")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("35.2"))
 
@@ -142,12 +142,15 @@ class HomeViewModel @Inject constructor(
 
                 if (portfolios.isNotEmpty()) {
                     val currentId = _selectedPortfolioId.value
-                    val selectedPortfolio = if (currentId == -1L) null else portfolios.find { it.id == currentId } ?: portfolios.firstOrNull()
+                    val selectedPortfolio = portfolios.find { it.id == currentId } ?: portfolios.firstOrNull()
 
-                    val newId = if (currentId == -1L) -1L else selectedPortfolio?.id ?: 1L
-                    val localizedName = if (newId == -1L) context.getString(R.string.total_portfolios) else selectedPortfolio?.name ?: ""
+                    // If user has portfolios but selection is "total", default to first portfolio.
+                    // This enables portfolio-scoped actions like deposit/withdraw without extra taps.
+                    val newId = if (currentId == -1L) (selectedPortfolio?.id ?: -1L) else (selectedPortfolio?.id ?: -1L)
+                    val localizedName = if (newId == -1L) context.getString(R.string.total_portfolios) else selectedPortfolio?.name.orEmpty()
 
                     _selectedPortfolioId.value = newId
+                    prefManager.setSelectedPortfolioId(newId)
                     
                     // Fetch start of day balance when portfolio changes
                     fetchStartOfDayBalance(newId)

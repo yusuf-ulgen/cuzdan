@@ -21,11 +21,8 @@ class PortfolioRepository @Inject constructor(
 
     suspend fun getOrCreateDefaultPortfolioId(): Long {
         val all = portfolioDao.getAllPortfolios().first()
-        return if (all.isEmpty()) {
-            portfolioDao.insertPortfolio(Portfolio(name = "Ana Portföy"))
-        } else {
-            all.first().id
-        }
+        // Do not auto-create a portfolio on first open. Force explicit creation in UI.
+        return all.firstOrNull()?.id ?: -1L
     }
 
     suspend fun insertPortfolio(portfolio: Portfolio): Long {
@@ -64,8 +61,6 @@ class PortfolioRepository @Inject constructor(
     suspend fun clearAllData() {
         assetDao.deleteAllAssets()
         portfolioDao.deleteAllPortfolios()
-        // Varsayılan portföyü yeniden oluştur
-        portfolioDao.insertPortfolio(Portfolio(name = "Ana Portföy"))
     }
 }
 

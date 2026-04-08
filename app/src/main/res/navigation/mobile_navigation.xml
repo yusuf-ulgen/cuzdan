@@ -21,6 +21,12 @@
         tools:layout="@layout/fragment_reports" />
 
     <fragment
+        android:id="@+id/navigation_alerts"
+        android:name="com.example.cuzdan.ui.alerts.AlertsFragment"
+        android:label="@string/nav_alerts"
+        tools:layout="@layout/fragment_alerts" />
+
+    <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.cuzdan.ui.home.HomeFragment"
         android:label="@string/nav_wallet"

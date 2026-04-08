@@ -119,6 +119,9 @@ class HomeFragment : Fragment() {
         binding.btnHeatmap.setOnClickListener {
             findNavController().navigate(R.id.action_navigation_home_to_heatmapFragment)
         }
+        binding.btnAlerts.setOnClickListener {
+            findNavController().navigate(R.id.navigation_alerts)
+        }
     }
 
 

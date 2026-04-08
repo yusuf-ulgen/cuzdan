@@ -47,8 +47,8 @@ class ReportsViewModel @Inject constructor(
     private val _selectedPortfolioId = MutableStateFlow(prefManager.getSelectedPortfolioId())
     private var lastAssets: List<Asset> = emptyList()
 
-    private val _usdRate = assetRepository.getLatestPrice("TRY=X")
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("32.5"))
+    private val _usdRate = assetRepository.getLatestPrice("USDTRY=X")
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("44.52"))
     private val _eurRate = assetRepository.getLatestPrice("EURTRY=X")
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BigDecimal("35.2"))
 
@@ -175,27 +175,40 @@ class ReportsViewModel @Inject constructor(
             totalCostBase = totalCostBase.add(assetCost)
         }
 
-        // Nakit = Yatırılan Para (Deposited Amount)
-        val idleCashTry = depositedAmountTry
-        val idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val convertedAssetValue = totalValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        // Toplam portföy değeri = Nakit + Varlıkların değeri
-        val finalTotalBalance = convertedAssetValue.add(idleCashConv)
-
         // LIFETIME PROFIT: (Mevcut Değerler - Alış Maliyetleri)
         val totalProfitLossAbs = totalValueBase.subtract(totalCostBase).divide(exchangeRate, 2, RoundingMode.HALF_UP)
         
-        // GÜNLÜK DEĞİŞİM (Daily Change) HESAPLAMA
-        val startOfTodayBalance = _startOfDayBalanceValue
-        val dailyChangeAbs = if (startOfTodayBalance > BigDecimal.ZERO) {
-            val startOfTodayConv = startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            finalTotalBalance.subtract(startOfTodayConv)
-        } else {
-            finalTotalBalance.subtract(idleCashConv)
+        // DAILY PROFIT/LOSS (excluding deposits/withdrawals)
+        // Approximation based on today's percentage change:
+        // prevPrice = currentPrice / (1 + pct/100)
+        var dailyProfitBase = BigDecimal.ZERO
+        var prevTotalValueBase = BigDecimal.ZERO
+
+        assets.forEach { asset ->
+            if (asset.amount <= BigDecimal.ZERO) return@forEach
+            // Ignore cash-like assets; we only want price-driven P/L
+            if (asset.assetType == AssetType.NAKIT) return@forEach
+
+            val assetRate = when (asset.currency) {
+                "USD" -> usdRate ?: BigDecimal("32.5")
+                "EUR" -> eurRate ?: BigDecimal("35.2")
+                else -> BigDecimal.ONE
+            }
+
+            val pct = asset.dailyChangePercentage
+            val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
+            if (denom.compareTo(BigDecimal.ZERO) == 0) return@forEach
+
+            val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
+            val diff = asset.currentPrice.subtract(prevPrice)
+
+            dailyProfitBase = dailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
+            prevTotalValueBase = prevTotalValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
         }
 
-        val dailyChangePerc = if (startOfTodayBalance > BigDecimal.ZERO) {
-            dailyChangeAbs.multiply(BigDecimal("100")).divide(startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP)
+        val dailyProfitAbs = dailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val dailyProfitPerc = if (prevTotalValueBase > BigDecimal.ZERO) {
+            dailyProfitBase.multiply(BigDecimal("100")).divide(prevTotalValueBase, 2, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
         val reportCategories = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
@@ -250,28 +263,18 @@ class ReportsViewModel @Inject constructor(
 
             ReportCategory(
                 name = getLocalizedAssetTypeName(type, resolveContext),
-                totalValue = if (type == AssetType.NAKIT) convCatValue.add(idleCashConv) else convCatValue,
+                totalValue = convCatValue,
                 changePerc = catPLPerc,
                 changeAbs = catPLAbs,
                 assets = reportAssets
             )
         }.toMutableList()
 
-        if (idleCashConv > BigDecimal.ZERO && reportCategories.none { it.name == getLocalizedAssetTypeName(AssetType.NAKIT, resolveContext) }) {
-            reportCategories.add(0, ReportCategory(
-                name = getLocalizedAssetTypeName(AssetType.NAKIT, resolveContext),
-                totalValue = idleCashConv,
-                changePerc = BigDecimal.ZERO,
-                changeAbs = BigDecimal.ZERO,
-                assets = emptyList()
-            ))
-        }
-
         _uiState.update { it.copy(
             categories = reportCategories,
             totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Varlık Değeri - Maliyet)
-            totalProfitLoss = dailyChangeAbs, // KÜÇÜK YAZI: Günlük Değişim (TL)
-            totalProfitPerc = dailyChangePerc, // KÜÇÜK YAZI: Günlük Değişim (%)
+            totalProfitLoss = dailyProfitAbs, // KÜÇÜK YAZI: Günlük Kâr/Zarar (eklemeler hariç)
+            totalProfitPerc = dailyProfitPerc, // KÜÇÜK YAZI: Günlük Kâr/Zarar (%)
             currency = currency
         )}
     }

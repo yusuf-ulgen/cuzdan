@@ -110,7 +110,9 @@ class PreferenceManager @Inject constructor(
     }
 
     fun getSelectedPortfolioId(): Long {
-        return prefs.getLong("selected_portfolio_id", 1L)
+        // -1L means "All portfolios" / no explicit selection.
+        // Defaulting to -1 prevents silently attaching assets to a non-existent "first" portfolio on fresh install.
+        return prefs.getLong("selected_portfolio_id", -1L)
     }
 
     fun setLastAuthTimestamp(timestamp: Long) {

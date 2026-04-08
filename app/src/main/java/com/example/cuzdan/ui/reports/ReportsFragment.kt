@@ -112,30 +112,37 @@ class ReportsFragment : Fragment() {
             binding.textDailyChangePerc.text = "*****"
         } else {
             val isLight = prefManager.getThemeMode() == "light"
-            val isNeutral = state.totalProfitLoss.abs() < java.math.BigDecimal("0.01")
-            val color = when {
-                isNeutral -> if (isLight) R.color.text_secondary_light else R.color.text_secondary
+            val isNeutralDaily = state.totalProfitLoss.abs() < java.math.BigDecimal("0.01")
+            val dailyColor = when {
+                isNeutralDaily -> if (isLight) R.color.text_secondary_light else R.color.text_secondary
                 state.totalProfitLoss > java.math.BigDecimal.ZERO -> R.color.accent_green
                 else -> R.color.accent_red
             }
-            val colorInt = requireContext().getColor(color)
+            val dailyColorInt = requireContext().getColor(dailyColor)
+
+            val isNeutralTotal = state.totalValue.abs() < java.math.BigDecimal("0.01")
+            val totalColor = when {
+                isNeutralTotal -> if (isLight) R.color.text_secondary_light else R.color.text_secondary
+                state.totalValue > java.math.BigDecimal.ZERO -> R.color.accent_green
+                else -> R.color.accent_red
+            }
             
-            binding.textTotalAmount.setTextColor(requireContext().getColor(R.color.white))
-            binding.textDailyChangeAbs.setTextColor(colorInt)
-            binding.textDailyChangePerc.setTextColor(colorInt)
+            binding.textTotalAmount.setTextColor(requireContext().getColor(totalColor))
+            binding.textDailyChangeAbs.setTextColor(dailyColorInt)
+            binding.textDailyChangePerc.setTextColor(dailyColorInt)
             
             binding.textTotalAmount.text = state.totalValue.formatCurrency(state.currency, showSign = true)
             binding.textDailyChangeAbs.text = state.totalProfitLoss.formatCurrency(state.currency, showSign = true)
             binding.textDailyChangePerc.text = String.format("%%%+.1f", state.totalProfitPerc)
             
             // Update daily change icon
-            if (isNeutral) {
+            if (isNeutralDaily) {
                 binding.imageDailyChangeArrow.visibility = View.GONE
             } else {
                 binding.imageDailyChangeArrow.visibility = View.VISIBLE
                 binding.imageDailyChangeArrow.setImageResource(R.drawable.ic_arrow_drop_down)
                 binding.imageDailyChangeArrow.rotation = if (state.totalProfitLoss > java.math.BigDecimal.ZERO) 180f else 0f
-                binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(colorInt)
+                binding.imageDailyChangeArrow.imageTintList = android.content.res.ColorStateList.valueOf(dailyColorInt)
             }
         }
         

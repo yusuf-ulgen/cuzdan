@@ -53,15 +53,22 @@
     <string name="nav_wallet">Cüzdan</string>
     <string name="nav_markets">Piyasalar</string>
     <string name="nav_settings">İşlemler</string>
+    <string name="nav_alerts">Alarmlar</string>
     <string name="nav_add_asset">Varlık Ekle</string>
     <string name="nav_select_asset">Varlık Seç</string>
     <string name="nav_profit_loss_chart">Kar/Zarar Grafiği</string>
  
     <!-- Layout & UI Labels -->
     <string name="label_daily_change">GÜNLÜK DEĞİŞİM</string>
+    <string name="label_daily_profit_loss">GÜNLÜK KÂR/ZARAR</string>
     <string name="label_distribution">Dağılım</string>
     <string name="label_profit_loss">Kar/Zarar</string>
     <string name="total_portfolios">Portföyler Toplamı</string>
+    <string name="title_alerts">Alarmlar</string>
+    <string name="tab_active_alerts">Aktif</string>
+    <string name="tab_triggered_alerts">Çalmış</string>
+    <string name="empty_active_alerts">Aktif alarm yok.</string>
+    <string name="empty_triggered_alerts">Çalmış alarm yok.</string>
     
     <!-- Asset Types -->
     <string name="asset_type_crypto">Kripto</string>

@@ -244,12 +244,15 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/label_daily_profit_loss"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/label_daily_change"
-                android:textColor="?attr/textSecondary"
-                android:textSize="10sp"
+                android:alpha="0.4"
+                android:fontFamily="sans-serif-black"
+                android:text="@string/label_daily_profit_loss"
+                android:textColor="?attr/textPrimary"
+                android:textSize="11sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/layout_daily_change" />
@@ -261,7 +264,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
                 android:nestedScrollingEnabled="false"
-                app:layout_constraintTop_toBottomOf="@id/layout_daily_change"
+                app:layout_constraintTop_toBottomOf="@id/label_daily_profit_loss"
                 tools:listitem="@layout/item_report_category" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

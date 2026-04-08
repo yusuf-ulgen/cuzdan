@@ -58,14 +58,14 @@ class AssetDetailViewModel @Inject constructor(
 
     private fun loadExistingAsset(symbol: String) {
         viewModelScope.launch {
-            val portfolioId = prefManager.getSelectedPortfolioId().let { if (it == -1L) 1L else it }
-            val portfolio = portfolioRepository.getPortfolioById(portfolioId)
-            val existing = repository.getAssetBySymbolAndPortfolioId(symbol, portfolioId)
+            val portfolioId = prefManager.getSelectedPortfolioId()
+            val portfolio = if (portfolioId != -1L) portfolioRepository.getPortfolioById(portfolioId) else null
+            val existing = if (portfolioId != -1L) repository.getAssetBySymbolAndPortfolioId(symbol, portfolioId) else null
             
             _uiState.update { it.copy(
                 currentAmount = existing?.amount ?: BigDecimal.ZERO,
                 averageBuyPrice = existing?.averageBuyPrice ?: BigDecimal.ZERO,
-                portfolioName = portfolio?.name ?: "Ana Portföy"
+                portfolioName = portfolio?.name ?: "—"
             ) }
         }
     }
@@ -106,11 +106,14 @@ class AssetDetailViewModel @Inject constructor(
     }
 
     fun setTransactionType(type: TransactionType) {
-        _uiState.update { it.copy(transactionType = type) }
+        // Clear any previous error (e.g. "yetersiz bakiye") when switching modes.
+        _uiState.update { it.copy(transactionType = type, errorMessage = null) }
     }
 
     fun saveAsset(enteredAmount: BigDecimal, enteredCost: BigDecimal, typeString: String) {
         viewModelScope.launch {
+            // Clear stale error state before processing a new action.
+            _uiState.update { it.copy(errorMessage = null) }
             val state = _uiState.value
             val currentAmount = state.currentAmount
             val transactionType = state.transactionType
@@ -125,8 +128,11 @@ class AssetDetailViewModel @Inject constructor(
                 currentAmount.subtract(enteredAmount)
             }
 
-            var portfolioId = prefManager.getSelectedPortfolioId()
-            if (portfolioId == -1L) portfolioId = 1L 
+            val portfolioId = prefManager.getSelectedPortfolioId()
+            if (portfolioId == -1L) {
+                _uiState.update { it.copy(errorMessage = "Önce portföy oluşturun") }
+                return@launch
+            }
 
             val assetType = try { AssetType.valueOf(typeString) } catch (e: Exception) { AssetType.BIST }
             val isCash = assetType == AssetType.NAKIT

@@ -314,11 +314,7 @@ class AssetRepository @Inject constructor(
                                         val response = tefasApi.getFundPrices(TefasRequest(fundType = symbol, date = sdf.format(calendar.time)))
                                         response.firstOrNull()?.let { entry ->
                                             fundName = entry.fundName ?: fundName
-                                            val parsed = when (val raw = entry.price) {
-                                                is Number -> BigDecimal(raw.toString())
-                                                is String -> try { BigDecimal(raw.replace(",", ".")) } catch (e: Exception) { BigDecimal.ZERO }
-                                                else -> BigDecimal.ZERO
-                                            }
+                                            val parsed = parseTefasPrice(entry.price)
                                             if (parsed > BigDecimal.ZERO) { price = parsed; return@async symbol to Triple(price, fundName, true) }
                                         }
                                     } catch (e: Exception) { }
@@ -329,10 +325,22 @@ class AssetRepository @Inject constructor(
                         }.awaitAll()
                     }
                     fundAssets.forEach { (symbol, data) ->
-                        if (data.third) {
-                            val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.FON)
-                            marketAssets.add(MarketAsset(symbol, data.second, data.second, data.first, BigDecimal.ZERO, AssetType.FON, "TRY", existing?.isFavorite ?: false))
-                        }
+                        // Even if TEFAS fails, keep the fund visible with last known/zero price.
+                        val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.FON)
+                        val price = if (data.third) data.first else (existing?.currentPrice ?: BigDecimal.ZERO)
+                        val name = if (data.second.isNotBlank()) data.second else (existing?.name ?: "$symbol Fonu")
+                        marketAssets.add(
+                            MarketAsset(
+                                symbol = symbol,
+                                name = name,
+                                fullName = name,
+                                currentPrice = price,
+                                dailyChangePercentage = BigDecimal.ZERO,
+                                assetType = AssetType.FON,
+                                currency = "TRY",
+                                isFavorite = existing?.isFavorite ?: false
+                            )
+                        )
                     }
                 }
                 AssetType.NAKIT -> {
@@ -494,15 +502,69 @@ class AssetRepository @Inject constructor(
     }
 
     suspend fun getAssetHistory(symbol: String, range: String = "1d", interval: String = "1m"): List<Pair<Long, Double>> {
-        if (symbol == "TRY" || symbol == "TL") return listOf(System.currentTimeMillis() - 86400000 to 1.0, System.currentTimeMillis() to 1.0)
+        if (symbol == "TRY" || symbol == "TL") {
+            return listOf(
+                System.currentTimeMillis() - 86400000 to 1.0,
+                System.currentTimeMillis() to 1.0
+            )
+        }
+
+        // Special synthetic symbol: Gram Altın (TRY) = (Ons Altın (USD) / 31.1) * USDTRY
+        if (symbol.uppercase() == "GRAM_ALTIN") {
+            return try {
+                val ons = yahooFinanceApi.getChartData("GC=F", range, interval).chart.result?.firstOrNull()
+                val usdTry = yahooFinanceApi.getChartData("TRY=X", range, interval).chart.result?.firstOrNull()
+
+                val onsTs = ons?.timestamp ?: emptyList()
+                val onsPrices = ons?.indicators?.quote?.firstOrNull()?.close ?: emptyList()
+                val usdTs = usdTry?.timestamp ?: emptyList()
+                val usdPrices = usdTry?.indicators?.quote?.firstOrNull()?.close ?: emptyList()
+
+                if (onsTs.isEmpty() || usdTs.isEmpty()) return emptyList()
+
+                val onsSeries = onsTs.zip(onsPrices).mapNotNull { (ts, p) -> p?.let { ts * 1000 to it.toDouble() } }
+                val usdSeries = usdTs.zip(usdPrices).mapNotNull { (ts, p) -> p?.let { ts * 1000 to it.toDouble() } }
+
+                if (onsSeries.isEmpty() || usdSeries.isEmpty()) return emptyList()
+
+                val allTs = (onsSeries.map { it.first } + usdSeries.map { it.first }).distinct().sorted()
+                fun lastValueAt(series: List<Pair<Long, Double>>, t: Long): Double? =
+                    series.lastOrNull { it.first <= t }?.second ?: series.firstOrNull()?.second
+
+                val ozToGram = 31.1
+                allTs.mapNotNull { t ->
+                    val onsP = lastValueAt(onsSeries, t)
+                    val usdP = lastValueAt(usdSeries, t)
+                    if (onsP == null || usdP == null) null else t to (onsP / ozToGram) * usdP
+                }
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
+
         return try {
-            var target = symbol
-            if (!symbol.contains(".") && !symbol.contains("=X") && !symbol.contains("-USD") && symbol.all { it.isUpperCase() || it.isDigit() }) target = "$symbol.IS"
+            val clean = symbol.uppercase()
+            val target = when {
+                // Binance-style symbols stored as e.g. BTCUSDT, ETHUSDT...
+                clean.endsWith("USDT") && clean.length > 4 -> "${clean.dropLast(4)}-USD"
+                // Common crypto tickers without suffix
+                !clean.contains(".") && !clean.contains("=X") && !clean.contains("-USD") &&
+                    clean.all { it.isLetterOrDigit() } && clean.length in 2..6 ->
+                    "$clean-USD"
+                // BIST tickers should use .IS, but avoid forcing it for synthetic/other symbols
+                !clean.contains(".") && !clean.contains("=X") && !clean.contains("-USD") &&
+                    clean.all { it.isUpperCase() || it.isDigit() } && !clean.contains("_") ->
+                    "$clean.IS"
+                else -> symbol
+            }
+
             val result = yahooFinanceApi.getChartData(target, range, interval).chart.result?.firstOrNull()
             val timestamps = result?.timestamp ?: emptyList()
             val prices = result?.indicators?.quote?.firstOrNull()?.close ?: emptyList()
-            timestamps.zip(prices).mapNotNull { (ts, p) -> if (p != null) ts * 1000 to p.toDouble() else null }
-        } catch (e: Exception) { emptyList() }
+            timestamps.zip(prices).mapNotNull { (ts, p) -> p?.let { ts * 1000 to it.toDouble() } }
+        } catch (_: Exception) {
+            emptyList()
+        }
     }
 
     suspend fun getPortfolioById(id: Long) = portfolioDao.getPortfolioById(id)
@@ -532,13 +594,13 @@ class AssetRepository @Inject constructor(
         if (assets.isEmpty()) return@coroutineScope emptyList()
         val interval = if (range == "7d") "1h" else "1d"
         val histories = assets.map { a -> async { a to getAssetHistory(a.symbol, range, interval) } }.awaitAll()
-        val usdHistory = getAssetHistory("TRY=X", range, interval)
+        val usdHistory = getAssetHistory("USDTRY=X", range, interval)
         val eurHistory = getAssetHistory("EURTRY=X", range, interval)
         val allTs = (histories.flatMap { it.second.map { p -> p.first } } + usdHistory.map { it.first } + eurHistory.map { it.first }).distinct().sorted()
 
         var totalCostBase = BigDecimal.ZERO
         assets.forEach { a ->
-            val rate = when(a.currency) { "USD" -> usdHistory.lastOrNull()?.second ?: 32.5; "EUR" -> eurHistory.lastOrNull()?.second ?: 35.2; else -> 1.0 }
+            val rate = when(a.currency) { "USD" -> usdHistory.lastOrNull()?.second ?: 44.52; "EUR" -> eurHistory.lastOrNull()?.second ?: 35.2; else -> 1.0 }
             totalCostBase += (a.amount * a.averageBuyPrice * BigDecimal(rate.toString()))
         }
         val port = if (pId != -1L) portfolioDao.getPortfolioById(pId) else null
@@ -548,7 +610,7 @@ class AssetRepository @Inject constructor(
             var dayVal = BigDecimal.ZERO
             histories.forEach { (a, h) ->
                 val p = h.find { it.first <= ts }?.second ?: h.firstOrNull()?.second ?: 0.0
-                val rate = when(a.currency) { "USD" -> usdHistory.find { it.first <= ts }?.second ?: 32.0; "EUR" -> eurHistory.find { it.first <= ts }?.second ?: 35.0; else -> 1.0 }
+                val rate = when(a.currency) { "USD" -> usdHistory.find { it.first <= ts }?.second ?: 44.52; "EUR" -> eurHistory.find { it.first <= ts }?.second ?: 35.0; else -> 1.0 }
                 dayVal += (a.amount * BigDecimal(p.toString()) * BigDecimal(rate.toString()))
             }
             PortfolioHistory(portfolioId = pId, date = ts, totalValue = dayVal, currency = "TRY", profitLoss = dayVal - effCost)
