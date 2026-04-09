@@ -7,7 +7,7 @@ import com.example.cuzdan.data.local.entity.AssetType
 import com.example.cuzdan.data.remote.api.BinanceApi
 import com.example.cuzdan.data.remote.api.YahooFinanceApi
 import com.example.cuzdan.data.remote.api.TefasApi
-import com.example.cuzdan.data.remote.model.TefasRequest
+import java.util.Locale
 import com.example.cuzdan.data.remote.model.YahooQuote
 import com.example.cuzdan.data.remote.model.YahooFinanceResponse
 import com.example.cuzdan.data.remote.model.YahooSearchResponse
@@ -212,24 +212,36 @@ class AssetRepository @Inject constructor(
                 emit(Resource.Success(Unit))
                 return@flow
             }
-            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
             fundAssets.forEach { asset ->
-                val calendar = java.util.Calendar.getInstance()
                 var price = BigDecimal.ZERO
-                for (i in 0..5) {
-                    try {
-                        val dateStr = sdf.format(calendar.time)
-                        val response = tefasApi.getFundPrices(TefasRequest(fundType = asset.symbol, date = dateStr))
-                        val entry = response.firstOrNull()
+                try {
+                    val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                    val cal = java.util.Calendar.getInstance()
+                    for (i in 0..7) {
+                        val dateStr = sdf.format(cal.time)
+                        val history = tefasApi.getFundHistory(
+                            fundType = "YAT",
+                            fundCode = asset.symbol.uppercase(),
+                            startDate = dateStr,
+                            endDate = dateStr
+                        )
+                        val entry = history.firstOrNull()
                         if (entry != null) {
-                            val parsedPrice = parseTefasPrice(entry.price)
-                            if (parsedPrice > BigDecimal.ZERO) { price = parsedPrice; break }
+                            val parsed = parseTefasPrice(entry.price)
+                            if (parsed > BigDecimal.ZERO) {
+                                price = parsed
+                                break
+                            }
                         }
-                    } catch (e: Exception) { }
-                    calendar.add(java.util.Calendar.DATE, -1)
+                        cal.add(java.util.Calendar.DATE, -1)
+                    }
+                } catch (e: Exception) {
+                    Log.w("TEFAS", "Owned fund history fetch failed: ${asset.symbol}: ${e.message}")
                 }
                 if (price > BigDecimal.ZERO) {
                     assetDao.updateAsset(asset.copy(currentPrice = price, dailyChangePercentage = BigDecimal.ZERO, currency = "TRY"))
+                } else {
+                    Log.w("TEFAS", "Owned fund price stayed 0: ${asset.symbol}. Keeping existing price=${asset.currentPrice.setScale(4, RoundingMode.HALF_UP)}")
                 }
             }
             emit(Resource.Success(Unit))
@@ -307,18 +319,29 @@ class AssetRepository @Inject constructor(
                             async {
                                 var price = BigDecimal.ZERO
                                 var fundName = "$symbol Fonu"
-                                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-                                val calendar = java.util.Calendar.getInstance()
-                                for (i in 0..5) {
-                                    try {
-                                        val response = tefasApi.getFundPrices(TefasRequest(fundType = symbol, date = sdf.format(calendar.time)))
-                                        response.firstOrNull()?.let { entry ->
+                                try {
+                                    val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                                    val cal = java.util.Calendar.getInstance()
+                                    for (i in 0..7) {
+                                        val dateStr = sdf.format(cal.time)
+                                        val history = tefasApi.getFundHistory(
+                                            fundType = "YAT",
+                                            fundCode = symbol,
+                                            startDate = dateStr,
+                                            endDate = dateStr
+                                        )
+                                        history.firstOrNull()?.let { entry ->
                                             fundName = entry.fundName ?: fundName
                                             val parsed = parseTefasPrice(entry.price)
-                                            if (parsed > BigDecimal.ZERO) { price = parsed; return@async symbol to Triple(price, fundName, true) }
+                                            if (parsed > BigDecimal.ZERO) {
+                                                price = parsed
+                                                return@async symbol to Triple(price, fundName, true)
+                                            }
                                         }
-                                    } catch (e: Exception) { }
-                                    calendar.add(java.util.Calendar.DATE, -1)
+                                        cal.add(java.util.Calendar.DATE, -1)
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("TEFAS", "Market fund fetch failed: $symbol: ${e.message}")
                                 }
                                 symbol to Triple(price, fundName, false)
                             }

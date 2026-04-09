@@ -30,7 +30,7 @@ data class PortfolioWithBalance(
 
 data class WalletUiState(
     val portfolios: List<PortfolioWithBalance> = emptyList(),
-    val selectedPortfolioId: Long = 1,
+    val selectedPortfolioId: Long = -1,
     val selectedPortfolioName: String = "",
     val totalBalance: BigDecimal = BigDecimal.ZERO,
     val cashBalance: BigDecimal = BigDecimal.ZERO,
@@ -142,12 +142,18 @@ class HomeViewModel @Inject constructor(
 
                 if (portfolios.isNotEmpty()) {
                     val currentId = _selectedPortfolioId.value
-                    val selectedPortfolio = portfolios.find { it.id == currentId } ?: portfolios.firstOrNull()
-
-                    // If user has portfolios but selection is "total", default to first portfolio.
-                    // This enables portfolio-scoped actions like deposit/withdraw without extra taps.
-                    val newId = if (currentId == -1L) (selectedPortfolio?.id ?: -1L) else (selectedPortfolio?.id ?: -1L)
-                    val localizedName = if (newId == -1L) context.getString(R.string.total_portfolios) else selectedPortfolio?.name.orEmpty()
+                    // IMPORTANT: Do not auto-select a portfolio.
+                    // If the user is in "total / none selected" (-1), keep it that way. This prevents
+                    // silently attaching new assets to the first portfolio on fresh installs.
+                    val newId = when {
+                        currentId == -1L -> -1L
+                        portfolios.any { it.id == currentId } -> currentId
+                        else -> -1L
+                    }
+                    val selectedPortfolio = portfolios.find { it.id == newId }
+                    val localizedName =
+                        if (newId == -1L) context.getString(R.string.total_portfolios)
+                        else selectedPortfolio?.name.orEmpty()
 
                     _selectedPortfolioId.value = newId
                     prefManager.setSelectedPortfolioId(newId)
@@ -209,6 +215,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private var _startOfDayBalanceValue = BigDecimal.ZERO
+    private var _lastStartOfDayMillis: Long = 0L
 
     private fun fetchStartOfDayBalance(id: Long) {
         viewModelScope.launch {
@@ -314,6 +321,8 @@ class HomeViewModel @Inject constructor(
         eurRate: BigDecimal? = _eurRate.value,
         resolveContext: Context = context
     ) {
+        // Build correct locale context for labels even if flow triggers this from background
+        val langContext = com.example.cuzdan.util.LocaleHelper.setLocale(context, prefManager.getLanguage())
         var exchangeRate = BigDecimal.ONE
 
         if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
@@ -354,31 +363,37 @@ class HomeViewModel @Inject constructor(
         val finalTotalBalance = convertedAssetValue.add(idleCashConv)
         
         // 3. Daily Change calculation
-        // Formula: Current Total Balance - Start of Day Balance
-        val startOfTodayBalance = _startOfDayBalanceValue
-        val dailyChangeAbs = if (startOfTodayBalance > BigDecimal.ZERO) {
-            // Convert start of day balance to current currency for comparison
-            val startOfTodayConv = startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            finalTotalBalance.subtract(startOfTodayConv)
-        } else {
-            // Fallback for new portfolios: only count asset growth if any
-            finalTotalBalance.subtract(idleCashConv)
+        // Reset at 00:00: on the first calculation after day changes, baseline becomes "now" and daily change becomes 0.
+        val todayStart = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+            set(java.util.Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        if (_lastStartOfDayMillis != todayStart) {
+            _lastStartOfDayMillis = todayStart
+            // Store baseline in TRY to match PortfolioHistory semantics
+            _startOfDayBalanceValue = finalTotalBalance.multiply(exchangeRate)
         }
 
+        val startOfTodayBalance = _startOfDayBalanceValue
+        val startOfTodayConv = if (startOfTodayBalance > BigDecimal.ZERO) {
+            startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        } else null
+
+        val dailyChangeAbs = if (startOfTodayConv != null) {
+            finalTotalBalance.subtract(startOfTodayConv)
+        } else BigDecimal.ZERO
+
         val dailyChangePerc = if (startOfTodayBalance > BigDecimal.ZERO) {
-            dailyChangeAbs.multiply(BigDecimal("100")).divide(startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP)
+            dailyChangeAbs.multiply(BigDecimal("100"))
+                .divide(startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
         // Record a history snapshot if none exists for today (for tomorrow's reference)
         viewModelScope.launch {
             if (currentId != -1L && finalTotalBalance > BigDecimal.ZERO) {
-                val todayStart = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, 0)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    set(java.util.Calendar.MILLISECOND, 0)
-                }.timeInMillis
-                
                 // Get snapshots taken TODAY
                 val snapshotToday = assetRepository.getLatestHistoryBefore(currentId, todayStart + 86400000)?.let { 
                     it.date >= todayStart 
@@ -439,7 +454,7 @@ class HomeViewModel @Inject constructor(
 
              WalletCategorySummary(
                 type = type,
-                title = getLocalizedAssetTypeName(type, resolveContext),
+                title = getLocalizedAssetTypeName(type, langContext),
                 totalValue = convCatValue,
                 totalProfitLoss = convCatValue.subtract(convCatCost),
                 profitLossPerc = catPLPerc,
@@ -449,8 +464,9 @@ class HomeViewModel @Inject constructor(
             )
         }.toMutableList()
 
-        // Filter out zero-value categories (Döviz, Emtia etc. with no assets)
-        categorySummaries.removeAll { it.totalValue.compareTo(BigDecimal.ZERO) == 0 }
+        // Filter out empty categories. Keep categories that have assets even if their
+        // computed value is temporarily 0 (e.g. funds while TEFAS price refresh is pending).
+        categorySummaries.removeAll { it.assets.isEmpty() }
 
         // Inject 'Nakit' (Idle Cash) category as the first item if there is idle cash
         if (idleCashTry > BigDecimal.ZERO) {
@@ -470,7 +486,7 @@ class HomeViewModel @Inject constructor(
                 // Pure idle cash card — no assets, no P/L
                 categorySummaries.add(0, WalletCategorySummary(
                     type = AssetType.NAKIT,
-                    title = getLocalizedAssetTypeName(AssetType.NAKIT, resolveContext),
+                    title = getLocalizedAssetTypeName(AssetType.NAKIT, langContext),
                     totalValue = idleCashConv,
                     totalProfitLoss = BigDecimal.ZERO,
                     profitLossPerc = BigDecimal.ZERO,
@@ -482,7 +498,7 @@ class HomeViewModel @Inject constructor(
         }
 
         val segments = mutableListOf<DonutChartView.Segment>()
-        var centerLabel = resolveContext.getString(com.example.cuzdan.R.string.label_distribution)
+        var centerLabel = langContext.getString(com.example.cuzdan.R.string.label_distribution)
         var centerPercent = "%100"
 
         if (expandedCategory != null) {
@@ -492,7 +508,7 @@ class HomeViewModel @Inject constructor(
             // If Nakit is expanded, we need to include idle cash in the distribution
             val catTotal = if (expandedCategory == AssetType.NAKIT) catTotalRaw.add(idleCashTry) else catTotalRaw
 
-            centerLabel = getLocalizedAssetTypeName(expandedCategory, resolveContext)
+            centerLabel = getLocalizedAssetTypeName(expandedCategory, langContext)
             
             if (catTotal > BigDecimal.ZERO) {
                 // Add regular assets in this category
@@ -504,7 +520,7 @@ class HomeViewModel @Inject constructor(
                 // If it's Nakit, add the idle cash portion as a segment
                 if (expandedCategory == AssetType.NAKIT && idleCashTry > BigDecimal.ZERO) {
                     val weight = idleCashTry.divide(catTotal, 4, RoundingMode.HALF_UP).toFloat()
-                    segments.add(DonutChartView.Segment(weight, getAssetColor(catAssets.size), resolveContext.getString(R.string.asset_type_cash)))
+                    segments.add(DonutChartView.Segment(weight, getAssetColor(catAssets.size), langContext.getString(R.string.asset_type_cash)))
                 }
             }
         } else {

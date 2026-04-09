@@ -1,52 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="?attr/sheetBackground"
+    android:paddingBottom="32dp">
 
+    <!-- Handle -->
+    <View
+        android:id="@+id/view_handle"
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="12dp"
+        android:background="?attr/divider_light"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Title -->
     <TextView
+        android:id="@+id/text_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/portfolio_add_title"
         android:textColor="?attr/textPrimary"
-        android:textSize="20sp" />
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/view_handle" />
 
-    <EditText
-        android:id="@+id/edit_portfolio_name"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/bg_input_field"
-        android:hint="@string/portfolio_name_hint"
-        android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary"
-        android:textSize="16sp" />
-
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/switch_include_total"
+    <!-- Portföy Adı Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/edit_name_layout"
+        style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:checked="true"
-        android:text="@string/portfolio_include_total"
-        android:textColor="?attr/textPrimary"
-        android:fontFamily="sans-serif-medium"
-        app:thumbTint="?attr/accentColor"
-        app:trackTint="?attr/divider_light" />
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="24dp"
+        app:boxBackgroundColor="?attr/surfaceGlassStrong"
+        app:boxCornerRadiusBottomEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="1dp"
+        app:boxStrokeColor="?attr/accentColor"
+        app:hintEnabled="true"
+        app:hintTextColor="?attr/textSecondary"
+        app:layout_constraintTop_toBottomOf="@id/text_title">
 
-    <Button
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_portfolio_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:hint="@string/portfolio_name_hint"
+            android:inputType="textPersonName"
+            android:textColor="?attr/textPrimary"
+            android:textColorHint="?attr/textSecondary"
+            android:textSize="16sp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Portföyler Toplamına Dahil Et -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_switch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="?attr/surfaceGlass"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:layout_constraintTop_toBottomOf="@id/edit_name_layout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/portfolio_include_total"
+                android:textColor="?attr/textPrimary"
+                android:textSize="15sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_include_total"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                app:thumbTint="?attr/accentColor"
+                app:trackTint="?attr/divider_light" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Kaydet Butonu -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="32dp"
+        android:layout_height="56dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="28dp"
         android:backgroundTint="?attr/accentColor"
         android:fontFamily="sans-serif-black"
         android:text="@string/btn_save"
         android:textColor="@color/white"
-        app:cornerRadius="30dp" />
+        android:textSize="16sp"
+        app:cornerRadius="28dp"
+        app:layout_constraintTop_toBottomOf="@id/card_switch" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

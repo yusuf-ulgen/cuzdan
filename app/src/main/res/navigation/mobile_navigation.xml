@@ -95,7 +95,34 @@
         <action
             android:id="@+id/action_navigation_symbol_search_to_navigation_asset_detail"
             app:destination="@id/navigation_asset_detail" />
+        <action
+            android:id="@+id/action_navigation_symbol_search_to_term_deposit_calculator"
+            app:destination="@id/termDepositCalculatorFragment" />
+        <action
+            android:id="@+id/action_navigation_symbol_search_to_demand_deposit_calculator"
+            app:destination="@id/demandDepositCalculatorFragment" />
+        <action
+            android:id="@+id/action_navigation_symbol_search_to_bes_calculator"
+            app:destination="@id/besCalculatorFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/termDepositCalculatorFragment"
+        android:name="com.example.cuzdan.ui.assets.TermDepositCalculatorFragment"
+        android:label="@string/cash_tool_term_deposit_short"
+        tools:layout="@layout/fragment_term_deposit_calculator" />
+
+    <fragment
+        android:id="@+id/demandDepositCalculatorFragment"
+        android:name="com.example.cuzdan.ui.assets.DemandDepositCalculatorFragment"
+        android:label="@string/cash_tool_demand_deposit_short"
+        tools:layout="@layout/fragment_demand_deposit_calculator" />
+
+    <fragment
+        android:id="@+id/besCalculatorFragment"
+        android:name="com.example.cuzdan.ui.assets.BesCalculatorFragment"
+        android:label="@string/cash_tool_bes_short"
+        tools:layout="@layout/fragment_bes_calculator" />
 
     <fragment
         android:id="@+id/heatmapFragment"

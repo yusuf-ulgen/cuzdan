@@ -64,7 +64,7 @@
     </style>
 
     <style name="CustomDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
-        <item name="android:windowBackground">?attr/surfaceGlassStrong</item>
+        <item name="android:windowBackground">@drawable/bg_glass_dialog</item>
         <item name="android:textColorPrimary">?attr/textPrimary</item>
         <item name="colorAccent">?attr/accentColor</item>
     </style>

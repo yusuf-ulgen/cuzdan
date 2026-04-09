@@ -60,15 +60,27 @@ class MarketAdapter(
             val isDoviz = item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ
             val isEmtia = item.assetType == com.example.cuzdan.data.local.entity.AssetType.EMTIA
             val isNakit = item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT
+            val isCashTool = isNakit && item.symbol.startsWith("TOOL_")
             val placeholderRes = getAssetIconPlaceholder(item, root.context)
 
-            if ((isDoviz || isEmtia || isNakit) && item.fullName != null) {
+            if (isCashTool) {
+                textMarketName.text = getLocalizedAssetName(item.name, root.context)
+                // Cash tool cards: no subtitle
+                textMarketFullName.visibility = View.GONE
+                textMarketSymbol.visibility = View.GONE
+                if (item.symbol == "TOOL_BES") {
+                    textMarketName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15f)
+                } else {
+                    textMarketName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+                }
+            } else if ((isDoviz || isEmtia || isNakit) && item.fullName != null) {
                 // For currencies/commodities/cash: show name only, hide redundant technical subtitle
                 textMarketName.text = getLocalizedAssetName(item.fullName ?: item.name, root.context)
                 textMarketFullName.visibility = android.view.View.GONE
                 textMarketSymbol.visibility = android.view.View.GONE
             } else {
                 textMarketName.text = getLocalizedAssetName(item.name, root.context)
+                textMarketName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
 
                 if (item.fullName != null && item.fullName != item.name) {
                     textMarketFullName.visibility = android.view.View.VISIBLE
@@ -93,12 +105,25 @@ class MarketAdapter(
                 "EUR" -> "€"
                 else -> "₺"
             }
-            // If currency is USD, symbol goes to the front. 
-            // Also handle the case where currency might be USD but stored as "USD" in item.currency
-            if (item.currency == "USD") {
-                textMarketPrice.text = "$symbol$formattedPrice"
+            if (isCashTool) {
+                // Render as an action card (same layout) instead of a price.
+                val tv = TypedValue()
+                val ctx = root.context
+                val ok = ctx.theme.resolveAttribute(R.attr.accentColor, tv, true)
+                if (ok) textMarketPrice.setTextColor(tv.data)
+                textMarketPrice.text = ctx.getString(R.string.cash_tool_action)
             } else {
-                textMarketPrice.text = "$formattedPrice $symbol"
+                // If currency is USD, symbol goes to the front.
+                if (item.currency == "USD") {
+                    textMarketPrice.text = "$symbol$formattedPrice"
+                } else {
+                    textMarketPrice.text = "$formattedPrice $symbol"
+                }
+                // reset to theme default color
+                val tv = TypedValue()
+                val ctx = root.context
+                val ok = ctx.theme.resolveAttribute(R.attr.textPrimary, tv, true)
+                if (ok) textMarketPrice.setTextColor(tv.data)
             }
             
             if (showChange) {
@@ -135,13 +160,17 @@ class MarketAdapter(
                 onItemClick(item, viewIconBg, textMarketName)
             }
 
-            imageMarketFavorite.setImageResource(
-                if (item.isFavorite) R.drawable.ic_star 
-                else R.drawable.ic_star_outline
-            )
-
-            imageMarketFavorite.setOnClickListener {
-                onFavoriteClick?.invoke(item)
+            if (isCashTool) {
+                imageMarketFavorite.visibility = View.GONE
+            } else {
+                imageMarketFavorite.visibility = View.VISIBLE
+                imageMarketFavorite.setImageResource(
+                    if (item.isFavorite) R.drawable.ic_star 
+                    else R.drawable.ic_star_outline
+                )
+                imageMarketFavorite.setOnClickListener {
+                    onFavoriteClick?.invoke(item)
+                }
             }
         }
     }
@@ -169,16 +198,9 @@ class MarketAdapter(
             // Nakit / döviz: always use local drawables (stable, no flag CDN flicker or wrong aspect).
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.NAKIT ||
                 item.assetType == com.example.cuzdan.data.local.entity.AssetType.DOVIZ -> null
-            // Crypto Logos
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.KRIPTO -> {
-                val coin = sym.replace("USDT", "")
-                "https://static.binance.com/assets/asset/symbol/${coin.lowercase()}@2x.png"
-            }
-            // BIST Stock Logos
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> {
-                val stock = sym.replace(".IS", "")
-                "https://s3-symbol-logo.tradingview.com/turkish--${stock.lowercase()}.svg"
-            }
+            // We now use local primitive icons for all asset types as requested by user.
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.KRIPTO -> null
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> null
             else -> null
         }
     }
@@ -212,9 +234,9 @@ class MarketAdapter(
         }
         return when {
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.KRIPTO -> R.drawable.ic_crypto
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> R.drawable.borsa
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.BIST -> R.drawable.ic_bist
             item.assetType == com.example.cuzdan.data.local.entity.AssetType.FON -> R.drawable.ic_funds
-            item.assetType == com.example.cuzdan.data.local.entity.AssetType.EMTIA -> R.drawable.ic_currency
+            item.assetType == com.example.cuzdan.data.local.entity.AssetType.EMTIA -> R.drawable.ic_commodity
             code == "TRY" || code == "TL" -> R.drawable.ic_tl
             code == "USD" || code.startsWith("USD") -> R.drawable.ic_usd
             code == "EUR" || code.startsWith("EUR") -> R.drawable.ic_eur

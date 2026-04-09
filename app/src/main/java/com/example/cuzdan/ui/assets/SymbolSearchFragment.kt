@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import com.example.cuzdan.R
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import com.example.cuzdan.data.local.entity.MarketAsset
+import java.math.BigDecimal
 
 @AndroidEntryPoint
 class SymbolSearchFragment : Fragment() {
@@ -87,6 +89,14 @@ class SymbolSearchFragment : Fragment() {
         adapter = MarketAdapter(
             showChange = false,
             onItemClick = { selectedAsset, iconView, nameView ->
+                if (type == AssetType.NAKIT && selectedAsset.symbol.startsWith("TOOL_")) {
+                    when (selectedAsset.symbol) {
+                        "TOOL_TERM_DEPOSIT" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_term_deposit_calculator)
+                        "TOOL_DEMAND_DEPOSIT" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_demand_deposit_calculator)
+                        "TOOL_BES" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_bes_calculator)
+                    }
+                    return@MarketAdapter
+                }
                 val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
                     symbol = selectedAsset.symbol,
                     name = selectedAsset.name,
@@ -126,7 +136,48 @@ class SymbolSearchFragment : Fragment() {
 
                 binding.btnCurrencySwitcher.setImageResource(if (state.currency == "TL") R.drawable.ic_tl else R.drawable.ic_usd)
                 binding.btnFavorites.setImageResource(if (state.isFavoritesOnly) R.drawable.ic_star else R.drawable.ic_star_outline)
-                adapter.setItems(state.results)
+                val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
+                val results = if (type == AssetType.NAKIT) {
+                    // Show 4 TL-like items: TRY + 3 calculator actions.
+                    val tools = listOf(
+                        MarketAsset(
+                            symbol = "TOOL_TERM_DEPOSIT",
+                            name = getString(R.string.cash_tool_term_deposit_short),
+                            fullName = null,
+                            currentPrice = BigDecimal.ZERO,
+                            dailyChangePercentage = BigDecimal.ZERO,
+                            assetType = AssetType.NAKIT,
+                            currency = "TRY",
+                            isFavorite = false
+                        ),
+                        MarketAsset(
+                            symbol = "TOOL_DEMAND_DEPOSIT",
+                            name = getString(R.string.cash_tool_demand_deposit_short),
+                            fullName = null,
+                            currentPrice = BigDecimal.ZERO,
+                            dailyChangePercentage = BigDecimal.ZERO,
+                            assetType = AssetType.NAKIT,
+                            currency = "TRY",
+                            isFavorite = false
+                        ),
+                        MarketAsset(
+                            symbol = "TOOL_BES",
+                            name = getString(R.string.cash_tool_bes_short),
+                            fullName = null,
+                            currentPrice = BigDecimal.ZERO,
+                            dailyChangePercentage = BigDecimal.ZERO,
+                            assetType = AssetType.NAKIT,
+                            currency = "TRY",
+                            isFavorite = false
+                        )
+                    )
+                    // Keep TRY as first, then tools.
+                    val tryItem = state.results.firstOrNull { it.symbol.equals("TRY", true) || it.symbol.equals("TL", true) }
+                    listOfNotNull(tryItem) + tools
+                } else {
+                    state.results
+                }
+                adapter.setItems(results)
                 
                 if (state.error != null) {
                     showToast(state.error)

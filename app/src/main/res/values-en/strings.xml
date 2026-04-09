@@ -59,9 +59,16 @@
 
     <!-- Layout & UI Labels -->
     <string name="label_daily_change">DAILY CHANGE</string>
+    <string name="label_daily_profit_loss">DAILY PROFIT/LOSS</string>
     <string name="label_distribution">Distribution</string>
     <string name="label_profit_loss">Profit/Loss</string>
     <string name="total_portfolios">Total Portfolios</string>
+    <string name="nav_alerts">Alerts</string>
+    <string name="title_alerts">Alerts</string>
+    <string name="tab_active_alerts">Active</string>
+    <string name="tab_triggered_alerts">Inactive</string>
+    <string name="empty_active_alerts">No active alerts.</string>
+    <string name="empty_triggered_alerts">No inactive alerts.</string>
 
     <!-- Asset Types -->
     <string name="asset_type_crypto">Crypto</string>
@@ -166,6 +173,25 @@
     <string name="agreement_exit_confirm">Confirm Exit</string>
     <string name="agreement_go_back">Go Back</string>
     <string name="agreement_exit">Exit App</string>
+
+    <!-- Deposit / Withdraw -->
+    <string name="deposit_btn_label">Deposit / Withdraw</string>
+    <string name="deposit_title">Deposit</string>
+    <string name="deposit_subtitle">This does not affect profit/loss calculations</string>
+    <string name="deposit_add">Deposit</string>
+    <string name="deposit_withdraw">Withdraw</string>
+    <string name="deposit_amount_label">Amount</string>
+    <string name="deposit_current_invested">Invested Capital (TL)</string>
+    <string name="deposit_confirm">DEPOSIT</string>
+    <string name="deposit_success">Deposit successful</string>
+    <string name="deposit_error_empty">Enter amount</string>
+    <string name="deposit_error_invalid">Invalid amount</string>
+    <string name="deposit_error_positive">Amount must be greater than 0</string>
+    <string name="deposit_error_total_mode">Cannot operate in total portfolios mode</string>
+    <string name="withdraw_title">Withdraw</string>
+    <string name="withdraw_confirm">WITHDRAW</string>
+    <string name="withdraw_success">Withdrawal successful</string>
+    <string name="withdraw_error_total_mode">Cannot withdraw in total portfolios mode</string>
     
     <!-- Toast & Feedback Messages -->
     <string name="toast_asset_saved">Asset saved successfully</string>
@@ -181,4 +207,39 @@
     <string name="toast_support_sent">Support request sent</string>
     <string name="toast_fill_all_fields">Please fill in all fields</string>
     <string name="toast_agreement_accepted">Agreement accepted</string>
+
+    <!-- Cash Tools -->
+    <string name="cash_tools_title">Cash Tools</string>
+    <string name="cash_tool_term_deposit">Term Deposit Calculator</string>
+    <string name="cash_tool_demand_deposit">Demand Deposit Calculator</string>
+    <string name="cash_tool_bes">Private Pension (BES) Calculator</string>
+    <string name="cash_tool_term_deposit_short">Term deposit</string>
+    <string name="cash_tool_demand_deposit_short">Demand deposit</string>
+    <string name="cash_tool_bes_short">Private pension (BES)</string>
+    <string name="cash_tool_action">Calculate</string>
+    <string name="cash_tool_tap_to_calculate">Tap to calculate</string>
+
+    <string name="cash_term_deposit_desc">Simple estimate: from the start date to today, daily interest is calculated using the annual gross rate and netted after withholding tax.</string>
+    <string name="cash_demand_deposit_desc">Demand deposit rates vary by bank. Enter rate, tax and start date for a better estimate.</string>
+    <string name="cash_bes_desc">Simple BES model: contribution + state match + annual compounding return (vesting/limits not included).</string>
+
+    <string name="cash_input_principal_try">Deposit (TRY)</string>
+    <string name="cash_input_annual_gross_rate">Annual gross interest rate (%)</string>
+    <string name="cash_input_stopaj_rate">Withholding tax rate (%)</string>
+    <string name="cash_input_start_date">Start date (yyyy-MM-dd)</string>
+    <string name="cash_input_annual_net_rate_optional">Annual interest rate (%)</string>
+    <string name="cash_input_stopaj_rate_optional">Withholding tax rate (%)</string>
+    <string name="cash_input_years">Duration (years)</string>
+    <string name="cash_input_annual_return_rate">Annual return rate (%)</string>
+    <string name="cash_input_state_contribution_rate">State match rate (%)</string>
+
+    <string name="cash_result_placeholder">Result will appear here.</string>
+    <string name="cash_term_deposit_result_template">Days: %1$s\nNet interest: %2$s TRY\nTotal: %3$s TRY</string>
+    <string name="cash_demand_deposit_result_template_v2">Days: %1$s\nNet interest: %2$s TRY\nTotal: %3$s TRY</string>
+    <string name="cash_bes_result_template_v2">Duration: %1$s years\nState match: %2$s TRY\nEstimated balance: %3$s TRY</string>
+
+    <string name="error_invalid_amount">Invalid amount</string>
+    <string name="error_invalid_rate">Invalid rate</string>
+    <string name="error_invalid_date">Invalid date</string>
+    <string name="error_invalid_years">Invalid duration</string>
 </resources>

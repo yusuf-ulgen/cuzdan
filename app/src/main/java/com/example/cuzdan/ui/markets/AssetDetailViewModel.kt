@@ -130,7 +130,7 @@ class AssetDetailViewModel @Inject constructor(
 
             val portfolioId = prefManager.getSelectedPortfolioId()
             if (portfolioId == -1L) {
-                _uiState.update { it.copy(errorMessage = "Önce portföy oluşturun") }
+                _uiState.update { it.copy(errorMessage = "Önce portföy seçin") }
                 return@launch
             }
 

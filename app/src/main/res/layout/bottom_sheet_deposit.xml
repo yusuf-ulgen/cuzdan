@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_bottom_sheet"
+    android:background="?attr/sheetBackground"
     android:paddingBottom="32dp">
 
     <!-- Handle -->
@@ -12,7 +12,7 @@
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_marginTop="8dp"
-        android:background="#40FFFFFF"
+        android:background="?attr/divider_light"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,23 +26,23 @@
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/deposit_title"
-        android:textColor="@color/white"
+        android:textColor="?attr/textPrimary"
         android:textSize="28sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/view_handle" />
 
     <ImageButton
         android:id="@+id/btn_close"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_marginEnd="24dp"
-        android:background="#20FFFFFF"
+        android:background="@drawable/bg_icon"
         android:padding="8dp"
         android:src="@drawable/ic_close"
         app:layout_constraintBottom_toBottomOf="@id/text_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_title"
-        app:tint="@color/white" />
+        app:tint="?attr/iconTint" />
 
     <!-- Subtitle -->
     <TextView
@@ -54,7 +54,7 @@
         android:alpha="0.6"
         android:fontFamily="sans-serif"
         android:text="@string/deposit_subtitle"
-        android:textColor="@color/white"
+        android:textColor="?attr/textSecondary"
         android:textSize="13sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_title" />
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        app:cardBackgroundColor="#1AFFFFFF"
+        app:cardBackgroundColor="?attr/surfaceGlass"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:layout_constraintTop_toBottomOf="@id/text_subtitle">
@@ -82,7 +82,6 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:backgroundTint="#8B5CF6"
                 android:fontFamily="sans-serif-bold"
                 android:text="@string/deposit_add"
                 android:textColor="@color/white"
@@ -94,10 +93,9 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:backgroundTint="@android:color/transparent"
                 android:fontFamily="sans-serif-bold"
                 android:text="@string/deposit_withdraw"
-                android:textColor="#80FFFFFF"
+                android:textColor="?attr/textSecondary"
                 android:textSize="14sp"
                 app:cornerRadius="12dp" />
         </LinearLayout>
@@ -112,7 +110,7 @@
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-bold"
         android:text="@string/deposit_amount_label"
-        android:textColor="@color/white"
+        android:textColor="?attr/textPrimary"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_mode_toggle" />
@@ -135,7 +133,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            app:boxBackgroundColor="#E5E7EB"
+            app:boxBackgroundColor="?attr/surfaceGlassStrong"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
@@ -150,7 +148,8 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-bold"
                 android:inputType="numberDecimal"
-                android:textColor="#1A237E"
+                android:textColor="?attr/textPrimary"
+                android:textColorHint="?attr/textSecondary"
                 android:textSize="18sp"
                 android:hint="0,00" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -161,7 +160,7 @@
             android:layout_width="wrap_content"
             android:layout_height="56dp"
             android:layout_marginStart="12dp"
-            app:cardBackgroundColor="#E5E7EB"
+            app:cardBackgroundColor="?attr/surfaceGlassStrong"
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp">
 
@@ -178,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
                     android:text="₺"
-                    android:textColor="#1A237E"
+                    android:textColor="?attr/textPrimary"
                     android:textSize="20sp" />
 
                 <ImageView
@@ -186,7 +185,7 @@
                     android:layout_height="16dp"
                     android:layout_marginStart="4dp"
                     android:src="@drawable/ic_arrow_drop_down"
-                    app:tint="#1A237E" />
+                    app:tint="?attr/textSecondary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
@@ -198,8 +197,8 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#1AFFFFFF"
-        app:cardCornerRadius="12dp"
+        app:cardBackgroundColor="?attr/surfaceGlass"
+        app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:layout_constraintTop_toBottomOf="@id/layout_amount_row">
 
@@ -215,7 +214,7 @@
                 android:alpha="0.6"
                 android:fontFamily="sans-serif"
                 android:text="@string/deposit_current_invested"
-                android:textColor="@color/white"
+                android:textColor="?attr/textSecondary"
                 android:textSize="12sp" />
 
             <TextView
@@ -225,7 +224,7 @@
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif-black"
                 android:text="₺0,00"
-                android:textColor="@color/white"
+                android:textColor="?attr/textPrimary"
                 android:textSize="20sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -237,7 +236,7 @@
         android:layout_height="56dp"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        android:backgroundTint="#8B5CF6"
+        android:backgroundTint="?attr/accentColor"
         android:fontFamily="sans-serif-black"
         android:text="@string/deposit_confirm"
         android:textColor="@color/white"

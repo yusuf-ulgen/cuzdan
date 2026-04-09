@@ -1,14 +1,18 @@
 package com.example.cuzdan.ui.home
 
+import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.DialogFragment
+import com.example.cuzdan.R
 import com.example.cuzdan.data.local.entity.Portfolio
 import com.example.cuzdan.data.repository.PortfolioRepository
 import com.example.cuzdan.databinding.DialogAddPortfolioBinding
+import com.example.cuzdan.util.PreferenceManager
 import com.example.cuzdan.util.showToast
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +20,20 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AddPortfolioDialogFragment : DialogFragment() {
+class AddPortfolioDialogFragment : BottomSheetDialogFragment() {
 
     @Inject
     lateinit var portfolioRepository: PortfolioRepository
+    
+    @Inject
+    lateinit var prefManager: PreferenceManager
 
     private var _binding: DialogAddPortfolioBinding? = null
     private val binding get() = _binding!!
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        return BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialog)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,14 +42,6 @@ class AddPortfolioDialogFragment : DialogFragment() {
     ): View {
         _binding = DialogAddPortfolioBinding.inflate(inflater, container, false)
         return binding.root
-    }
-
-    override fun onStart() {
-        super.onStart()
-        dialog?.window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,15 +53,16 @@ class AddPortfolioDialogFragment : DialogFragment() {
         binding.btnSave.setOnClickListener {
             val name = binding.editPortfolioName.text.toString().trim()
             if (name.isEmpty()) {
-                binding.editPortfolioName.error = getString(com.example.cuzdan.R.string.portfolio_name_hint)
+                binding.editPortfolioName.error = getString(R.string.portfolio_name_hint)
             } else {
                 val includeTotal = binding.switchIncludeTotal.isChecked
                 
                 CoroutineScope(Dispatchers.Main).launch {
-                    portfolioRepository.insertPortfolio(
+                    val newId = portfolioRepository.insertPortfolio(
                         Portfolio(name = name, isIncludedInTotal = includeTotal)
                     )
-                    showToast(com.example.cuzdan.R.string.toast_portfolio_added)
+                    prefManager.setSelectedPortfolioId(newId)
+                    showToast(R.string.toast_portfolio_added)
                     dismiss()
                 }
             }

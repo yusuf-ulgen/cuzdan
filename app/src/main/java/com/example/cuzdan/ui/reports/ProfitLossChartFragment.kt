@@ -80,12 +80,11 @@ class ProfitLossChartFragment : Fragment() {
         val last = data.last()
         val first = data.first()
         
-        binding.textTotalBalance.text = last.totalValue.formatCurrency(last.currency)
+        binding.textTotalBalance.text = last.profitLoss.formatCurrency(last.currency, showSign = true)
         
-        val diff = last.totalValue.subtract(first.totalValue)
-        val perc = if (first.totalValue > BigDecimal.ZERO) {
-            diff.divide(first.totalValue, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
-        } else BigDecimal.ZERO
+        // "Kar/Zarar Değişimi" should show cumulative P/L over time, i.e. profitLoss series.
+        val diff = last.profitLoss.subtract(first.profitLoss)
+        val perc = BigDecimal.ZERO
         
         val colorAttr = if (diff >= BigDecimal.ZERO) com.example.cuzdan.R.attr.pill_green_text else com.example.cuzdan.R.attr.pill_red_text
         val typedValue = android.util.TypedValue()
@@ -93,7 +92,7 @@ class ProfitLossChartFragment : Fragment() {
         val colorInt = typedValue.data
             
         binding.textDailyChange.apply {
-            text = "${diff.formatCurrency(last.currency, showSign = true)} (%${perc.setScale(2, java.math.RoundingMode.HALF_UP)})"
+            text = diff.formatCurrency(last.currency, showSign = true)
             setTextColor(colorInt)
         }
     }
@@ -127,12 +126,12 @@ class ProfitLossChartFragment : Fragment() {
 
     private fun updateChart(data: List<PortfolioHistory>) {
         val entries = data.mapIndexed { index, history ->
-            Entry(index.toFloat(), history.totalValue.toFloat())
+            Entry(index.toFloat(), history.profitLoss.toFloat())
         }
 
         val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
-        val dataSet = LineDataSet(entries, "Total").apply {
+        val dataSet = LineDataSet(entries, "P/L").apply {
             color = accentViolet
             lineWidth = 4f
             setDrawCircles(false)

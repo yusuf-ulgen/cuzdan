@@ -75,19 +75,48 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = binding.navView
 
         val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        // setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+
+        // Top-level tab IDs — switching between these should always pop sub-pages
+        val topLevelIds = setOf(
+            R.id.navigation_assets,
+            R.id.navigation_reports,
+            R.id.navigation_home,
+            R.id.navigation_markets,
+            R.id.navigation_settings
+        )
+
+        // Custom tab selection: pop back stack to tab root before navigating
+        navView.setOnItemSelectedListener { item ->
+            val currentDest = navController.currentDestination?.id
+            if (currentDest == item.itemId) {
+                // Aynı tab'a tıklanırsa — alt sayfalardan kök sayfaya dön
+                navController.popBackStack(item.itemId, false)
+                true
+            } else {
+                // Farklı bir tab — eski tab'ın alt sayfalarını temizle
+                navController.navigate(item.itemId, null,
+                    androidx.navigation.NavOptions.Builder()
+                        .setPopUpTo(navController.graph.startDestinationId, false)
+                        .setLaunchSingleTop(true)
+                        .build()
+                )
+                true
+            }
+        }
+
+        // Sync bottom nav selection with NavController destination changes
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            // Sadece top-level destinasyonlarda alt çubuğu güncelle
+            if (destination.id in topLevelIds) {
+                navView.menu.findItem(destination.id)?.isChecked = true
+            }
+            updateBottomNavIcons(navView, destination.id)
+        }
+
         navView.itemIconTintList = null
 
         // Fix icon size for PNG-based navigation icons (square assets in drawable)
         navView.itemIconSize = resources.getDimensionPixelSize(R.dimen.nav_icon_size)
-
-        // Custom Scale Animation for Bottom Nav Icons
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            updateBottomNavIcons(navView, destination.id)
-        }
 
         if (!prefManager.isAgreementAccepted()) {
             checkUserAgreement()

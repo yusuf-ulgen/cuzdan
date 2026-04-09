@@ -70,7 +70,7 @@ class AssetDetailFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.textTitleDetail.text = args.name
+        binding.textTitleDetail.text = getLocalizedAssetName(args.name)
         binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
         }
@@ -175,12 +175,12 @@ class AssetDetailFragment : Fragment() {
         binding.textCurrentPrice.text = state.currentPrice.formatCurrency()
         binding.textPortfolioName.text = getString(R.string.detail_portfolio_prefix, state.portfolioName)
         
-        // Load icon (Simplified placeholder logic, can be enhanced with coil if url available)
+        // Load icon: each asset type uses its own primitive category icon
         val iconRes = when(args.assetType) {
             "KRIPTO" -> R.drawable.ic_crypto
             "FON" -> R.drawable.ic_funds
-            "BIST" -> R.drawable.borsa
-            "EMTIA" -> R.drawable.ic_currency
+            "BIST" -> R.drawable.ic_bist
+            "EMTIA" -> R.drawable.ic_commodity
             "NAKIT", "DOVIZ" -> {
                 if (args.symbol == "TRY" || args.symbol == "TL") R.drawable.ic_tl
                 else if (args.symbol == "USD") R.drawable.ic_usd
@@ -255,6 +255,27 @@ class AssetDetailFragment : Fragment() {
             invalidate()
         }
 
+    }
+
+    private fun getLocalizedAssetName(name: String): String {
+        return when {
+            name == "Türk Lirası" || name == "Turkish Lira" -> getString(R.string.currency_try).replace(" (₺)", "")
+            name == "Amerikan Doları" || name == "US Dollar" || name == "American Dollar" || name == "United States Dollar" -> getString(R.string.currency_usd).replace(" ($)", "")
+            name == "Euro" -> getString(R.string.currency_eur).replace(" (€)", "")
+            name == "İngiliz Sterlini" || name == "British Pound" -> getString(R.string.currency_gbp)
+            name == "İsviçre Frangı" || name == "Swiss Franc" -> getString(R.string.currency_chf)
+            name == "Japon Yeni" || name == "Japanese Yen" -> getString(R.string.currency_jpy)
+            name == "Avustralya Doları" || name == "Australian Dollar" -> getString(R.string.currency_aud)
+            name == "Kanada Doları" || name == "Canadian Dollar" -> getString(R.string.currency_cad)
+            name == "Altın (Ons)" || name == "Gold (Oz)" -> getString(R.string.commodity_gold_oz)
+            name == "Gram Altın" || name == "Gram Gold" -> getString(R.string.commodity_gram_gold)
+            name == "Altın" || name == "Gold" -> getString(R.string.commodity_gold)
+            name == "Gümüş" || name == "Silver" -> getString(R.string.commodity_silver)
+            name == "Bakır" || name == "Copper" -> getString(R.string.commodity_copper)
+            name == "Platin" || name == "Platinum" -> getString(R.string.commodity_platinum)
+            name == "Paladyum" || name == "Palladium" -> getString(R.string.commodity_palladium)
+            else -> name
+        }
     }
 
     override fun onDestroyView() {

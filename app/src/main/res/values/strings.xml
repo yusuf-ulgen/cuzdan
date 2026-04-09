@@ -66,9 +66,9 @@
     <string name="total_portfolios">Portföyler Toplamı</string>
     <string name="title_alerts">Alarmlar</string>
     <string name="tab_active_alerts">Aktif</string>
-    <string name="tab_triggered_alerts">Çalmış</string>
+    <string name="tab_triggered_alerts">Pasif</string>
     <string name="empty_active_alerts">Aktif alarm yok.</string>
-    <string name="empty_triggered_alerts">Çalmış alarm yok.</string>
+    <string name="empty_triggered_alerts">Pasif alarm yok.</string>
     
     <!-- Asset Types -->
     <string name="asset_type_crypto">Kripto</string>
@@ -206,5 +206,40 @@
     <string name="toast_support_sent">Destek talebi iletildi</string>
     <string name="toast_fill_all_fields">Lütfen tüm alanları doldurun</string>
     <string name="toast_agreement_accepted">Sözleşme kabul edildi</string>
+
+    <!-- Cash Tools -->
+    <string name="cash_tools_title">Vadeli Seçenekler</string>
+    <string name="cash_tool_term_deposit">Mevduat (Vadeli) Hesaplama</string>
+    <string name="cash_tool_demand_deposit">Mevduat (Vadesiz) Hesaplama</string>
+    <string name="cash_tool_bes">Bireysel Emeklilik (BES) Hesaplama</string>
+    <string name="cash_tool_term_deposit_short">Vadeli mevduat</string>
+    <string name="cash_tool_demand_deposit_short">Vadesiz mevduat</string>
+    <string name="cash_tool_bes_short">Bireysel emeklilik (BES)</string>
+    <string name="cash_tool_action">Hesapla</string>
+    <string name="cash_tool_tap_to_calculate">Hesaplamak için dokun</string>
+
+    <string name="cash_term_deposit_desc">Basit hesaplama: başlangıç tarihinden bugüne kadar yıllık brüt faiz üzerinden günlük faiz ve stopaj düşümü ile net tutar hesaplanır.</string>
+    <string name="cash_demand_deposit_desc">Vadesiz mevduatta faiz oranı bankaya göre değişir. Daha gerçekçi hesap için oran, stopaj ve başlangıç tarihi girebilirsiniz.</string>
+    <string name="cash_bes_desc">Basit BES modeli: toplam katkı + devlet katkısı + yıllık bileşik getiri ile tahmini değer hesaplanır (hak ediş/limitler hesaba katılmaz).</string>
+
+    <string name="cash_input_principal_try">Yatırılan TL</string>
+    <string name="cash_input_annual_gross_rate">Yıllık brüt faiz oranı (%)</string>
+    <string name="cash_input_stopaj_rate">Vergi stopaj oranı (%)</string>
+    <string name="cash_input_start_date">Başlangıç tarihi (yyyy-MM-dd)</string>
+    <string name="cash_input_annual_net_rate_optional">Yıllık faiz oranı (%)</string>
+    <string name="cash_input_stopaj_rate_optional">Stopaj oranı (%)</string>
+    <string name="cash_input_years">Süre (yıl)</string>
+    <string name="cash_input_annual_return_rate">Yıllık getiri oranı (%)</string>
+    <string name="cash_input_state_contribution_rate">Devlet katkısı oranı (%)</string>
+
+    <string name="cash_result_placeholder">Sonuç burada görünecek.</string>
+    <string name="cash_term_deposit_result_template">Gün sayısı: %1$s\nNet faiz: %2$s TL\nToplam: %3$s TL</string>
+    <string name="cash_demand_deposit_result_template_v2">Gün sayısı: %1$s\nNet faiz: %2$s TL\nToplam: %3$s TL</string>
+    <string name="cash_bes_result_template_v2">Süre: %1$s yıl\nDevlet katkısı: %2$s TL\nTahmini birikim: %3$s TL</string>
+
+    <string name="error_invalid_amount">Geçersiz tutar</string>
+    <string name="error_invalid_rate">Geçersiz oran</string>
+    <string name="error_invalid_date">Geçersiz tarih</string>
+    <string name="error_invalid_years">Geçersiz süre</string>
 
 </resources>

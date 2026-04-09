@@ -119,7 +119,7 @@
         android:clipToPadding="false"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_search_bar"
+        app:layout_constraintTop_toBottomOf="@id/progress_bar"
         tools:listitem="@layout/item_market_price" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

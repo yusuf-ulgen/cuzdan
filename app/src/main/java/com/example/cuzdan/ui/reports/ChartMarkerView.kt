@@ -21,7 +21,7 @@ class ChartMarkerView(context: Context, private val dataPoints: List<com.example
         val index = e.x.toInt()
         if (index >= 0 && index < dataPoints.size) {
             val history = dataPoints[index]
-            tvContent.text = history.totalValue.formatCurrency(history.currency)
+            tvContent.text = history.profitLoss.formatCurrency(history.currency, showSign = true)
             val sdf = SimpleDateFormat("dd MMMM yyyy", Locale.getDefault())
             tvDate.text = sdf.format(Date(history.date))
         }

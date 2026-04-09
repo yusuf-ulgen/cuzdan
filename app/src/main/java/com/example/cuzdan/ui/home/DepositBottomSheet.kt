@@ -66,22 +66,28 @@ class DepositBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun updateModeButtons() {
+        val textSecondaryColor = run {
+            val tv = android.util.TypedValue()
+            requireContext().theme.resolveAttribute(com.example.cuzdan.R.attr.textSecondary, tv, true)
+            tv.data
+        }
+
         if (!isWithdrawMode) {
             binding.btnModeDeposit.backgroundTintList = colorPurple
             binding.btnModeDeposit.setTextColor(Color.WHITE)
             binding.btnModeWithdraw.backgroundTintList = colorClear
-            binding.btnModeWithdraw.setTextColor(0x80FFFFFF.toInt())
+            binding.btnModeWithdraw.setTextColor(textSecondaryColor)
             binding.textTitle.text = getString(R.string.deposit_title)
             binding.btnConfirm.text = getString(R.string.deposit_confirm)
             binding.btnConfirm.backgroundTintList = colorPurple
         } else {
-            binding.btnModeWithdraw.backgroundTintList = colorRed
+            binding.btnModeWithdraw.backgroundTintList = colorPurple
             binding.btnModeWithdraw.setTextColor(Color.WHITE)
             binding.btnModeDeposit.backgroundTintList = colorClear
-            binding.btnModeDeposit.setTextColor(0x80FFFFFF.toInt())
+            binding.btnModeDeposit.setTextColor(textSecondaryColor)
             binding.textTitle.text = getString(R.string.withdraw_title)
             binding.btnConfirm.text = getString(R.string.withdraw_confirm)
-            binding.btnConfirm.backgroundTintList = colorRed
+            binding.btnConfirm.backgroundTintList = colorPurple
         }
     }
 
