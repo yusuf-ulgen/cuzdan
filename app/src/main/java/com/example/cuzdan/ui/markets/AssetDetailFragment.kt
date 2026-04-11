@@ -114,6 +114,14 @@ class AssetDetailFragment : Fragment() {
             val amount = amountStr.toBigDecimalOrNull() ?: BigDecimal.ZERO
             val cost = costStr.toBigDecimalOrNull() ?: BigDecimal.ZERO
             
+            // Maliyet zorunlu: BUY modunda ve NAKIT olmayan varlıklarda
+            val isBuyMode = binding.toggleTransactionType.checkedButtonId == R.id.btnBuy
+            val isNakit = args.assetType == "NAKIT"
+            if (isBuyMode && !isNakit && (costStr.isEmpty() || cost <= BigDecimal.ZERO)) {
+                binding.editCost.error = getString(R.string.alert_error_price)
+                return@setOnClickListener
+            }
+            
             viewModel.saveAsset(amount, cost, args.assetType)
         }
 

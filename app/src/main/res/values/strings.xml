@@ -215,6 +215,7 @@
     <string name="cash_tool_term_deposit_short">Vadeli mevduat</string>
     <string name="cash_tool_demand_deposit_short">Vadesiz mevduat</string>
     <string name="cash_tool_bes_short">Bireysel emeklilik (BES)</string>
+    <string name="cash_tool_kasa_short">Kasa</string>
     <string name="cash_tool_action">Hesapla</string>
     <string name="cash_tool_tap_to_calculate">Hesaplamak için dokun</string>
 

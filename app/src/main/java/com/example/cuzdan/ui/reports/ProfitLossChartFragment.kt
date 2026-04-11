@@ -80,20 +80,36 @@ class ProfitLossChartFragment : Fragment() {
         val last = data.last()
         val first = data.first()
         
+        // Top value: Total Profit/Loss (latest data point)
         binding.textTotalBalance.text = last.profitLoss.formatCurrency(last.currency, showSign = true)
         
-        // "Kar/Zarar Değişimi" should show cumulative P/L over time, i.e. profitLoss series.
-        val diff = last.profitLoss.subtract(first.profitLoss)
-        val perc = BigDecimal.ZERO
+        // Color for total P/L
+        val isNeutralTotal = last.profitLoss.abs() < BigDecimal("0.01")
+        val totalColorAttr = when {
+            isNeutralTotal -> com.example.cuzdan.R.attr.textSecondary
+            last.profitLoss > BigDecimal.ZERO -> com.example.cuzdan.R.attr.pill_green_text
+            else -> com.example.cuzdan.R.attr.pill_red_text
+        }
+        val totalTypedValue = android.util.TypedValue()
+        requireContext().theme.resolveAttribute(totalColorAttr, totalTypedValue, true)
+        binding.textTotalBalance.setTextColor(totalTypedValue.data)
         
-        val colorAttr = if (diff >= BigDecimal.ZERO) com.example.cuzdan.R.attr.pill_green_text else com.example.cuzdan.R.attr.pill_red_text
-        val typedValue = android.util.TypedValue()
-        requireContext().theme.resolveAttribute(colorAttr, typedValue, true)
-        val colorInt = typedValue.data
+        // Bottom value: Daily change (difference between last and second-to-last point, or last - first if only 2 points)
+        val prevPoint = if (data.size >= 2) data[data.size - 2] else first
+        val diff = last.profitLoss.subtract(prevPoint.profitLoss)
+
+        val isNeutralDaily = diff.abs() < BigDecimal("0.01")
+        val dailyColorAttr = when {
+            isNeutralDaily -> com.example.cuzdan.R.attr.textSecondary
+            diff > BigDecimal.ZERO -> com.example.cuzdan.R.attr.pill_green_text
+            else -> com.example.cuzdan.R.attr.pill_red_text
+        }
+        val dailyTypedValue = android.util.TypedValue()
+        requireContext().theme.resolveAttribute(dailyColorAttr, dailyTypedValue, true)
             
         binding.textDailyChange.apply {
             text = diff.formatCurrency(last.currency, showSign = true)
-            setTextColor(colorInt)
+            setTextColor(dailyTypedValue.data)
         }
     }
 

@@ -145,10 +145,11 @@ class PortfolioManagementBottomSheet : BottomSheetDialogFragment() {
                 )
 
 
-                val changeColor = if (item.changeAbs >= BigDecimal.ZERO) {
-                    com.example.cuzdan.R.color.accent_green
-                } else {
-                    com.example.cuzdan.R.color.accent_red
+                val isNeutral = item.changeAbs.abs() < BigDecimal("0.01") && item.changePerc.abs() < BigDecimal("0.01")
+                val changeColor = when {
+                    isNeutral -> com.example.cuzdan.R.color.text_label
+                    item.changeAbs >= BigDecimal.ZERO -> com.example.cuzdan.R.color.accent_green
+                    else -> com.example.cuzdan.R.color.accent_red
                 }
                 textPortfolioChange.setTextColor(root.context.getColor(changeColor))
 

@@ -216,6 +216,7 @@
     <string name="cash_tool_term_deposit_short">Term deposit</string>
     <string name="cash_tool_demand_deposit_short">Demand deposit</string>
     <string name="cash_tool_bes_short">Private pension (BES)</string>
+    <string name="cash_tool_kasa_short">Cash Box</string>
     <string name="cash_tool_action">Calculate</string>
     <string name="cash_tool_tap_to_calculate">Tap to calculate</string>
 

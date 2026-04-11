@@ -91,6 +91,10 @@ class SymbolSearchFragment : Fragment() {
             onItemClick = { selectedAsset, iconView, nameView ->
                 if (type == AssetType.NAKIT && selectedAsset.symbol.startsWith("TOOL_")) {
                     when (selectedAsset.symbol) {
+                        "TOOL_KASA" -> {
+                            val depositSheet = com.example.cuzdan.ui.home.DepositBottomSheet()
+                            depositSheet.show(childFragmentManager, "DepositBottomSheet")
+                        }
                         "TOOL_TERM_DEPOSIT" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_term_deposit_calculator)
                         "TOOL_DEMAND_DEPOSIT" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_demand_deposit_calculator)
                         "TOOL_BES" -> findNavController().navigate(R.id.action_navigation_symbol_search_to_bes_calculator)
@@ -137,45 +141,68 @@ class SymbolSearchFragment : Fragment() {
                 binding.btnCurrencySwitcher.setImageResource(if (state.currency == "TL") R.drawable.ic_tl else R.drawable.ic_usd)
                 binding.btnFavorites.setImageResource(if (state.isFavoritesOnly) R.drawable.ic_star else R.drawable.ic_star_outline)
                 val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
-                val results = if (type == AssetType.NAKIT) {
-                    // Show 4 TL-like items: TRY + 3 calculator actions.
-                    val tools = listOf(
-                        MarketAsset(
-                            symbol = "TOOL_TERM_DEPOSIT",
-                            name = getString(R.string.cash_tool_term_deposit_short),
+                val results = when (type) {
+                    AssetType.NAKIT -> {
+                        // NAKIT: Kasa + Vadeli Mevduat + Vadesiz Mevduat + BES (TRY kaldırıldı)
+                        val tools = listOf(
+                            MarketAsset(
+                                symbol = "TOOL_KASA",
+                                name = getString(R.string.cash_tool_kasa_short),
+                                fullName = null,
+                                currentPrice = BigDecimal.ZERO,
+                                dailyChangePercentage = BigDecimal.ZERO,
+                                assetType = AssetType.NAKIT,
+                                currency = "TRY",
+                                isFavorite = false
+                            ),
+                            MarketAsset(
+                                symbol = "TOOL_TERM_DEPOSIT",
+                                name = getString(R.string.cash_tool_term_deposit_short),
+                                fullName = null,
+                                currentPrice = BigDecimal.ZERO,
+                                dailyChangePercentage = BigDecimal.ZERO,
+                                assetType = AssetType.NAKIT,
+                                currency = "TRY",
+                                isFavorite = false
+                            ),
+                            MarketAsset(
+                                symbol = "TOOL_DEMAND_DEPOSIT",
+                                name = getString(R.string.cash_tool_demand_deposit_short),
+                                fullName = null,
+                                currentPrice = BigDecimal.ZERO,
+                                dailyChangePercentage = BigDecimal.ZERO,
+                                assetType = AssetType.NAKIT,
+                                currency = "TRY",
+                                isFavorite = false
+                            ),
+                            MarketAsset(
+                                symbol = "TOOL_BES",
+                                name = getString(R.string.cash_tool_bes_short),
+                                fullName = null,
+                                currentPrice = BigDecimal.ZERO,
+                                dailyChangePercentage = BigDecimal.ZERO,
+                                assetType = AssetType.NAKIT,
+                                currency = "TRY",
+                                isFavorite = false
+                            )
+                        )
+                        tools
+                    }
+                    AssetType.DOVIZ -> {
+                        // DOVIZ: TRY'yi en başa ekle (sabit 1 TL fiyat)
+                        val tryItem = MarketAsset(
+                            symbol = "TRY",
+                            name = getString(R.string.currency_try),
                             fullName = null,
-                            currentPrice = BigDecimal.ZERO,
+                            currentPrice = BigDecimal.ONE,
                             dailyChangePercentage = BigDecimal.ZERO,
-                            assetType = AssetType.NAKIT,
-                            currency = "TRY",
-                            isFavorite = false
-                        ),
-                        MarketAsset(
-                            symbol = "TOOL_DEMAND_DEPOSIT",
-                            name = getString(R.string.cash_tool_demand_deposit_short),
-                            fullName = null,
-                            currentPrice = BigDecimal.ZERO,
-                            dailyChangePercentage = BigDecimal.ZERO,
-                            assetType = AssetType.NAKIT,
-                            currency = "TRY",
-                            isFavorite = false
-                        ),
-                        MarketAsset(
-                            symbol = "TOOL_BES",
-                            name = getString(R.string.cash_tool_bes_short),
-                            fullName = null,
-                            currentPrice = BigDecimal.ZERO,
-                            dailyChangePercentage = BigDecimal.ZERO,
-                            assetType = AssetType.NAKIT,
+                            assetType = AssetType.NAKIT, // Ana sayfa/raporlarda NAKIT altında görünecek
                             currency = "TRY",
                             isFavorite = false
                         )
-                    )
-                    // Keep TRY as first, then tools.
-                    val tryItem = state.results.firstOrNull { it.symbol.equals("TRY", true) || it.symbol.equals("TL", true) }
-                    listOfNotNull(tryItem) + tools
-                } else {
-                    state.results
+                        listOf(tryItem) + state.results
+                    }
+                    else -> state.results
                 }
                 adapter.setItems(results)
                 

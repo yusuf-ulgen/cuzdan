@@ -112,14 +112,22 @@ class CategoryDetailsBottomSheet : BottomSheetDialogFragment() {
                 )
                 
                 // Renkler
-                val plPositive = profitLoss >= BigDecimal.ZERO
-                val plColor = if (plPositive) "#4CAF50" else "#FF5252"
+                val plNeutral = profitLoss.abs() < BigDecimal("0.01")
+                val plColor = when {
+                    plNeutral -> "#888888"
+                    profitLoss > BigDecimal.ZERO -> "#4CAF50"
+                    else -> "#FF5252"
+                }
                 textAssetValue.setTextColor(Color.parseColor(plColor))
                 textAssetChangePerc.setTextColor(Color.parseColor(plColor))
                 textAssetChangePerc.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#15${plColor.removePrefix("#")}"))
                 
-                val dailyPositive = asset.dailyChangePercentage >= BigDecimal.ZERO
-                val dailyColor = if (dailyPositive) "#4CAF50" else "#FF5252"
+                val dailyNeutral = asset.dailyChangePercentage.abs() < BigDecimal("0.01")
+                val dailyColor = when {
+                    dailyNeutral -> "#888888"
+                    asset.dailyChangePercentage > BigDecimal.ZERO -> "#4CAF50"
+                    else -> "#FF5252"
+                }
                 textAssetChangeAbs.setTextColor(Color.parseColor(dailyColor))
             }
         }

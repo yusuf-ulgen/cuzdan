@@ -409,19 +409,36 @@ class HomeViewModel @Inject constructor(
         val categorySummaries = assets.groupBy { it.assetType }.map { (type, typeAssets) ->
             var catValueBase = BigDecimal.ZERO
             var catCostBase = BigDecimal.ZERO
+            var catDailyProfitBase = BigDecimal.ZERO
+            var catPrevDayValueBase = BigDecimal.ZERO
             typeAssets.forEach { asset ->
                 val assetRate = when (asset.currency) {
                     "USD" -> usdRate ?: BigDecimal("32.5")
                     "EUR" -> eurRate ?: BigDecimal("35.2")
                     else -> BigDecimal.ONE
                 }
-                catValueBase = catValueBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+                val assetValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
+                catValueBase = catValueBase.add(assetValue)
                 catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
+                
+                // Daily P/L: prevPrice = currentPrice / (1 + dailyChangePercentage/100)
+                if (asset.amount > BigDecimal.ZERO) {
+                    val pct = asset.dailyChangePercentage
+                    val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
+                    if (denom.compareTo(BigDecimal.ZERO) != 0) {
+                        val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
+                        val diff = asset.currentPrice.subtract(prevPrice)
+                        catDailyProfitBase = catDailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
+                        catPrevDayValueBase = catPrevDayValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
+                    }
+                }
             }
             val convCatValue = catValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            val convCatCost = catCostBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-            val catPLPerc = if (catCostBase > BigDecimal.ZERO) {
-                catValueBase.subtract(catCostBase).divide(catCostBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
+            val convCatDailyProfit = catDailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+            
+            // Weighted daily change % for the category
+            val catDailyPerc = if (catPrevDayValueBase > BigDecimal.ZERO) {
+                catDailyProfitBase.multiply(BigDecimal("100")).divide(catPrevDayValueBase, 2, RoundingMode.HALF_UP)
             } else BigDecimal.ZERO
 
             val sortedAssets = when (type) {
@@ -456,17 +473,16 @@ class HomeViewModel @Inject constructor(
                 type = type,
                 title = getLocalizedAssetTypeName(type, langContext),
                 totalValue = convCatValue,
-                totalProfitLoss = convCatValue.subtract(convCatCost),
-                profitLossPerc = catPLPerc,
+                totalProfitLoss = convCatDailyProfit,
+                profitLossPerc = catDailyPerc,
                 assets = sortedAssets,
                 isExpanded = expandedCategory == type,
                 iconRes = getCategoryIcon(type)
             )
         }.toMutableList()
 
-        // Filter out empty categories. Keep categories that have assets even if their
-        // computed value is temporarily 0 (e.g. funds while TEFAS price refresh is pending).
-        categorySummaries.removeAll { it.assets.isEmpty() }
+        // Filter out empty categories AND categories where all assets have zero amount (fully sold)
+        categorySummaries.removeAll { it.assets.isEmpty() || it.assets.all { a -> a.amount.compareTo(BigDecimal.ZERO) == 0 } }
 
         // Inject 'Nakit' (Idle Cash) category as the first item if there is idle cash
         if (idleCashTry > BigDecimal.ZERO) {

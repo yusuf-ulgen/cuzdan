@@ -44,16 +44,18 @@ class WalletAssetAdapter(
                 tvAssetPrice.text = totalValueInCurrency.formatCurrency(currency)
             }
             
-            // Calculate Total Profit/Loss
-            val totalCost = asset.amount.multiply(asset.averageBuyPrice)
-            val profitLoss = totalValueInCurrency.subtract(totalCost)
-            
-            val profitPerc = if (totalCost.compareTo(BigDecimal.ZERO) > 0) {
-                profitLoss.divide(totalCost, 4, java.math.RoundingMode.HALF_UP).multiply(BigDecimal(100))
-            } else BigDecimal.ZERO
+            // Calculate DAILY Profit/Loss (what the asset did today)
+            // prevPrice = currentPrice / (1 + dailyChangePercentage/100)
+            val dailyPerc = asset.dailyChangePercentage
+            val denom = BigDecimal.ONE.add(dailyPerc.divide(BigDecimal("100"), 8, java.math.RoundingMode.HALF_UP))
+            val prevPrice = if (denom.compareTo(BigDecimal.ZERO) != 0) {
+                asset.currentPrice.divide(denom, 12, java.math.RoundingMode.HALF_UP)
+            } else asset.currentPrice
+            val dailyPriceChange = asset.currentPrice.subtract(prevPrice)
+            val dailyCashChange = asset.amount.multiply(dailyPriceChange)
 
-            // Color logic based on profit/loss
-            val sign = profitLoss.signum()
+            // Color logic based on daily change
+            val sign = dailyCashChange.signum()
             val colorRes = when {
                 sign > 0 -> com.example.cuzdan.R.color.accent_green
                 sign < 0 -> com.example.cuzdan.R.color.accent_red
@@ -65,15 +67,15 @@ class WalletAssetAdapter(
             }
             val color = if (colorRes != 0) holder.itemView.context.getColor(colorRes) else 0xFF888888.toInt()
 
-            // 3. Profit/Loss Percentage (Bottom-Left)
-            tvAssetChangePerc.text = String.format("%%%+.2f", profitPerc)
+            // 3. Daily Change Percentage (Bottom-Left) — what the stock did today
+            tvAssetChangePerc.text = String.format("%%%+.2f", dailyPerc)
             tvAssetChangePerc.setTextColor(color)
 
-            // 4. Profit/Loss Amount (Bottom-Right)
+            // 4. Daily Change Amount (Bottom-Right) — cash P/L for today
             if (isPrivacyEnabled) {
                 tvAssetChangeAbs.text = "****"
             } else {
-                tvAssetChangeAbs.text = String.format("%s%s", if (sign > 0) "+" else "", profitLoss.formatCurrency(currency))
+                tvAssetChangeAbs.text = String.format("%s%s", if (sign > 0) "+" else "", dailyCashChange.formatCurrency(currency))
             }
             tvAssetChangeAbs.setTextColor(color)
             

@@ -54,6 +54,7 @@
                     android:padding="9dp"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_wallet"
+                    android:visibility="gone"
                     app:tint="?attr/accentColor" />
 
                 <ImageButton

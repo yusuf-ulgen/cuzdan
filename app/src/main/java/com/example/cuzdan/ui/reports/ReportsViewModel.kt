@@ -270,6 +270,9 @@ class ReportsViewModel @Inject constructor(
             )
         }.toMutableList()
 
+        // Filter out empty categories and categories where all assets have zero amount
+        reportCategories.removeAll { it.assets.isEmpty() || it.assets.all { a -> a.amount.compareTo(BigDecimal.ZERO) == 0 } }
+
         _uiState.update { it.copy(
             categories = reportCategories,
             totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Varlık Değeri - Maliyet)

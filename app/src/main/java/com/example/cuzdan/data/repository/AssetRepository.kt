@@ -621,22 +621,22 @@ class AssetRepository @Inject constructor(
         val eurHistory = getAssetHistory("EURTRY=X", range, interval)
         val allTs = (histories.flatMap { it.second.map { p -> p.first } } + usdHistory.map { it.first } + eurHistory.map { it.first }).distinct().sorted()
 
+        // Total cost base = sum of (amount * averageBuyPrice * exchangeRate) for all assets
         var totalCostBase = BigDecimal.ZERO
         assets.forEach { a ->
             val rate = when(a.currency) { "USD" -> usdHistory.lastOrNull()?.second ?: 44.52; "EUR" -> eurHistory.lastOrNull()?.second ?: 35.2; else -> 1.0 }
             totalCostBase += (a.amount * a.averageBuyPrice * BigDecimal(rate.toString()))
         }
-        val port = if (pId != -1L) portfolioDao.getPortfolioById(pId) else null
-        val effCost = if (port != null && port.depositedAmount > totalCostBase) port.depositedAmount else totalCostBase
 
         allTs.map { ts ->
             var dayVal = BigDecimal.ZERO
             histories.forEach { (a, h) ->
-                val p = h.find { it.first <= ts }?.second ?: h.firstOrNull()?.second ?: 0.0
-                val rate = when(a.currency) { "USD" -> usdHistory.find { it.first <= ts }?.second ?: 44.52; "EUR" -> eurHistory.find { it.first <= ts }?.second ?: 35.0; else -> 1.0 }
+                val p = h.lastOrNull { it.first <= ts }?.second ?: h.firstOrNull()?.second ?: 0.0
+                val rate = when(a.currency) { "USD" -> usdHistory.lastOrNull { it.first <= ts }?.second ?: 44.52; "EUR" -> eurHistory.lastOrNull { it.first <= ts }?.second ?: 35.0; else -> 1.0 }
                 dayVal += (a.amount * BigDecimal(p.toString()) * BigDecimal(rate.toString()))
             }
-            PortfolioHistory(portfolioId = pId, date = ts, totalValue = dayVal, currency = "TRY", profitLoss = dayVal - effCost)
+            // profitLoss = current market value at this timestamp - total cost of all assets
+            PortfolioHistory(portfolioId = pId, date = ts, totalValue = dayVal, currency = "TRY", profitLoss = dayVal - totalCostBase)
         }
     }
 
