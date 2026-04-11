@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer Glow -->
+    <path
+        android:fillColor="#337835E6"
+        android:pathData="M100,5 A95,95 0 1,0 100,195 A95,95 0 1,0 100,5 Z"/>
+
+    <!-- Main sphere gradient background -->
+    <path
+        android:pathData="M100,15 A85,85 0 1,0 100,185 A85,85 0 1,0 100,15 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient 
+                android:type="radial" 
+                android:centerX="50" 
+                android:centerY="50" 
+                android:gradientRadius="150">
+                <item android:offset="0.0" android:color="#BE8AFF"/>
+                <item android:offset="0.5" android:color="#7835E6"/>
+                <item android:offset="1.0" android:color="#36038A"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Inner highlight (Glass reflection top left) -->
+    <path
+        android:fillColor="#4DFFFFFF"
+        android:pathData="M100,15 A85,85 0 0,1 180,70 A120,60 0 0,0 20,70 A85,85 0 0,1 100,15 Z"/>
+
+    <!-- Alarm Clock Icon in White (from standard material icon) -->
+    <group
+        android:translateX="46"
+        android:translateY="46"
+        android:scaleX="4.5"
+        android:scaleY="4.5">
+        
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M 4.34 6.48 l 1.41 -1.41 l 3.29 3.29 l -1.41 1.41 L 4.34 6.48 z M 21.06 5.07 l -3.29 3.29 l -1.41 -1.41 l 3.29 -3.29 L 21.06 5.07 z M 12 8.4 c 4.14 0 7.5 3.36 7.5 7.5 s -3.36 7.5 -7.5 7.5 s -7.5 -3.36 -7.5 -7.5 S 7.86 8.4 12 8.4 M 12 6.4 c -5.25 0 -9.5 4.25 -9.5 9.5 s 4.25 9.5 9.5 9.5 s 9.5 -4.25 9.5 -9.5 S 17.25 6.4 12 6.4 z M 13 11.4 h -1.5 v 4.29 l 3.54 2.12 l 0.75 -1.23 l -2.79 -1.65 V 11.4 z"/>
+    </group>
+</vector>

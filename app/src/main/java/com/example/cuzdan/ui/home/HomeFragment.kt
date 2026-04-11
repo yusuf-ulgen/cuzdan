@@ -110,17 +110,8 @@ class HomeFragment : Fragment() {
         binding.btnAddPortfolio.setOnClickListener {
             AddPortfolioDialogFragment().show(childFragmentManager, "AddPortfolio")
         }
-        binding.btnDeposit.setOnClickListener {
-            DepositBottomSheet().show(childFragmentManager, "DepositBottomSheet")
-        }
         binding.textPortfolioName.setOnClickListener {
             PortfolioManagementBottomSheet().show(parentFragmentManager, "PortfolioManagement")
-        }
-        binding.btnHeatmap.setOnClickListener {
-            findNavController().navigate(R.id.action_navigation_home_to_heatmapFragment)
-        }
-        binding.btnAlerts.setOnClickListener {
-            findNavController().navigate(R.id.navigation_alerts)
         }
     }
 

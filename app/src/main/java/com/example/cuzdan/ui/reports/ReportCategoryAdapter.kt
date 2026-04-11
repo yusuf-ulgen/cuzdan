@@ -11,6 +11,7 @@ import com.example.cuzdan.util.formatCurrency
 import java.math.BigDecimal
 
 data class ReportCategory(
+    val type: com.example.cuzdan.data.local.entity.AssetType,
     val name: String,
     val totalValue: BigDecimal,
     val changePerc: BigDecimal,

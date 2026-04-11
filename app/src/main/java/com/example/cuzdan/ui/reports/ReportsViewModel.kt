@@ -175,9 +175,15 @@ class ReportsViewModel @Inject constructor(
             totalCostBase = totalCostBase.add(assetCost)
         }
 
-        // LIFETIME PROFIT: (Mevcut Değerler - Alış Maliyetleri)
         val totalProfitLossAbs = totalValueBase.subtract(totalCostBase).divide(exchangeRate, 2, RoundingMode.HALF_UP)
         
+        val cal = java.util.Calendar.getInstance()
+        val dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+        val isWeekend = dayOfWeek == java.util.Calendar.SATURDAY || dayOfWeek == java.util.Calendar.SUNDAY
+        val hr = cal.get(java.util.Calendar.HOUR_OF_DAY)
+        val min = cal.get(java.util.Calendar.MINUTE)
+        val isBistClosedForToday = isWeekend || (hr < 9) || (hr == 9 && min < 55)
+
         // DAILY PROFIT/LOSS (excluding deposits/withdrawals)
         // Approximation based on today's percentage change:
         // prevPrice = currentPrice / (1 + pct/100)
@@ -195,7 +201,11 @@ class ReportsViewModel @Inject constructor(
                 else -> BigDecimal.ONE
             }
 
-            val pct = asset.dailyChangePercentage
+            var pct = asset.dailyChangePercentage
+            if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
+                pct = BigDecimal.ZERO
+            }
+
             val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
             if (denom.compareTo(BigDecimal.ZERO) == 0) return@forEach
 
@@ -261,17 +271,49 @@ class ReportsViewModel @Inject constructor(
                 else -> typeAssets
             }
 
+            val convertedAssets = reportAssets.map { asset ->
+                val assetRate = when (asset.currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                val finalRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                
+                var adjustedDailyPerc = asset.dailyChangePercentage
+                if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
+                    adjustedDailyPerc = BigDecimal.ZERO
+                }
+
+                asset.copy(
+                    currentPrice = asset.currentPrice.multiply(finalRate),
+                    averageBuyPrice = asset.averageBuyPrice.multiply(finalRate),
+                    currency = currency,
+                    dailyChangePercentage = adjustedDailyPerc
+                )
+            }
+
             ReportCategory(
+                type = type,
                 name = getLocalizedAssetTypeName(type, resolveContext),
                 totalValue = convCatValue,
                 changePerc = catPLPerc,
                 changeAbs = catPLAbs,
-                assets = reportAssets
+                assets = convertedAssets
             )
         }.toMutableList()
 
         // Filter out empty categories and categories where all assets have zero amount
         reportCategories.removeAll { it.assets.isEmpty() || it.assets.all { a -> a.amount.compareTo(BigDecimal.ZERO) == 0 } }
+
+        val categoryOrder = listOf(
+            AssetType.NAKIT,
+            AssetType.BIST,
+            AssetType.KRIPTO,
+            AssetType.EMTIA,
+            AssetType.FON,
+            AssetType.DOVIZ
+        )
+        reportCategories.sortBy { categoryOrder.indexOf(it.type).let { idx -> if (idx == -1) Int.MAX_VALUE else idx } }
 
         _uiState.update { it.copy(
             categories = reportCategories,

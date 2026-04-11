@@ -27,99 +27,49 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Top-right icon grid: 3 on top row, 2 on bottom row -->
+        <!-- Top-right icon row: Add Portfolio | Currency Swticher | Privacy Toggle -->
         <LinearLayout
             android:id="@+id/layout_top_actions"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginTop="24dp"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:gravity="end"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <!-- Row 1: Deposit | Heatmap | Add Portfolio | Alerts -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end">
+            <ImageButton
+                android:id="@+id/btn_add_portfolio"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_icon"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_add"
+                app:tint="?attr/accentColor" />
 
-                <ImageButton
-                    android:id="@+id/btn_deposit"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_wallet"
-                    android:visibility="gone"
-                    app:tint="?attr/accentColor" />
+            <ImageButton
+                android:id="@+id/btn_currency_switcher"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_icon"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_tl"
+                app:tint="?attr/iconTint" />
 
-                <ImageButton
-                    android:id="@+id/btn_heatmap"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_sort"
-                    app:tint="?attr/accentColor" />
-
-                <ImageButton
-                    android:id="@+id/btn_add_portfolio"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_add"
-                    app:tint="?attr/accentColor" />
-
-                <ImageButton
-                    android:id="@+id/btn_alerts"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_nav_alerts"
-                    app:tint="?attr/accentColor" />
-            </LinearLayout>
-
-            <!-- Row 2: Privacy Toggle | Currency Switcher (right-aligned) -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal"
-                android:gravity="end">
-
-                <ImageButton
-                    android:id="@+id/btn_privacy_toggle"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_eye_on"
-                    app:tint="?attr/iconTint" />
-
-                <ImageButton
-                    android:id="@+id/btn_currency_switcher"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="6dp"
-                    android:background="@drawable/bg_icon"
-                    android:padding="9dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/ic_tl"
-                    app:tint="?attr/iconTint" />
-            </LinearLayout>
+            <ImageButton
+                android:id="@+id/btn_privacy_toggle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_icon"
+                android:padding="9dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_eye_on"
+                app:tint="?attr/iconTint" />
 
         </LinearLayout>
 

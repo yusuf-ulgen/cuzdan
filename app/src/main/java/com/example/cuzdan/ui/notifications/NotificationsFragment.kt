@@ -58,6 +58,7 @@ class NotificationsFragment : Fragment() {
             SettingItem(1, getString(R.string.settings_notifications), hasSwitch = true, isSwitchChecked = prefManager.isNotificationsEnabled(), iconRes = R.drawable.ic_p_notif),
             SettingItem(3, getString(R.string.settings_language), value = if (prefManager.getLanguage() == "tr") getString(R.string.label_turkish) else getString(R.string.label_english), iconRes = R.drawable.ic_p_lang),
             SettingItem(4, getString(R.string.settings_currency), value = prefManager.getHomeCurrency(), iconRes = R.drawable.ic_p_cur),
+            SettingItem(12, getString(R.string.nav_alerts), iconRes = R.drawable.ic_p_alert_padded),
             SettingItem(5, getString(R.string.settings_biometrics), hasSwitch = true, isSwitchChecked = prefManager.isBiometricsEnabled(), iconRes = R.drawable.ic_p_bio),
 
             SettingItem(6, getString(R.string.settings_device_management), iconRes = R.drawable.ic_p_res),
@@ -107,6 +108,10 @@ class NotificationsFragment : Fragment() {
             9 -> shareApp()
             10 -> showAgreementDialog()
             11 -> showLegalWarningDialog()
+            12 -> {
+                val navController = androidx.navigation.fragment.NavHostFragment.findNavController(this)
+                navController.navigate(R.id.navigation_alerts)
+            }
         }
     }
 

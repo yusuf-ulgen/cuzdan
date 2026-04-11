@@ -158,8 +158,7 @@ class HomeViewModel @Inject constructor(
                     _selectedPortfolioId.value = newId
                     prefManager.setSelectedPortfolioId(newId)
                     
-                    // Fetch start of day balance when portfolio changes
-                    fetchStartOfDayBalance(newId)
+                    prefManager.setSelectedPortfolioId(newId)
 
                     _uiState.update { it.copy(
                         portfolios = portfolioList,
@@ -214,62 +213,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private var _startOfDayBalanceValue = BigDecimal.ZERO
-    private var _lastStartOfDayMillis: Long = 0L
-
-    private fun fetchStartOfDayBalance(id: Long) {
-        viewModelScope.launch {
-            val calendar = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.HOUR_OF_DAY, 0)
-                set(java.util.Calendar.MINUTE, 0)
-                set(java.util.Calendar.SECOND, 0)
-                set(java.util.Calendar.MILLISECOND, 0)
-            }
-            val startOfToday = calendar.timeInMillis
-            
-            val history = if (id == -1L) {
-                val portfolios = portfolioRepository.getIncludedPortfolios().first()
-                var total = BigDecimal.ZERO
-                portfolios.forEach { p ->
-                    val h = assetRepository.getLatestHistoryBefore(p.id, startOfToday)
-                    total = total.add(h?.totalValue ?: p.depositedAmount)
-                }
-                total
-            } else {
-                assetRepository.getLatestHistoryBefore(id, startOfToday)?.totalValue
-            }
-            
-            _startOfDayBalanceValue = history ?: BigDecimal.ZERO
-            
-            // If no history exists, use the initial deposited amount as a starting point 
-            // so that NEW portfolios don't show +10000% on day one.
-            if (_startOfDayBalanceValue == BigDecimal.ZERO) {
-                val p = if (id == -1L) {
-                    portfolioRepository.getIncludedPortfolios().first().sumOf { it.depositedAmount }
-                } else {
-                    portfolioRepository.getPortfolioById(id)?.depositedAmount ?: BigDecimal.ZERO
-                }
-                _startOfDayBalanceValue = p
-            }
-
-            // Record snapshot if it's the first time today for this portfolio
-            if (id != -1L) {
-                val today = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-                val snapshotToday = assetRepository.getLatestHistoryBefore(id, today + 86400000)?.let { 
-                    it.date >= today 
-                } ?: false
-                
-                if (!snapshotToday) {
-                    // This is the first time today. Record history.
-                    // We record the 'finalTotalBalance' from calculateStats but wait...
-                    // calculateStats is not yet finished. We'll record it in calculateStats itself 
-                    // if it's the first time today.
-                }
-            }
-
-            calculateStats(_currentAssets.value, _expandedCategory.value)
-        }
-    }
 
     fun toggleCategoryExpansion(type: AssetType) {
         _expandedCategory.value = if (_expandedCategory.value == type) null else type
@@ -328,11 +271,17 @@ class HomeViewModel @Inject constructor(
         if (currency == "USD") exchangeRate = usdRate ?: BigDecimal("32.5")
         else if (currency == "EUR") exchangeRate = eurRate ?: BigDecimal("35.2")
 
+        val cal = java.util.Calendar.getInstance()
+        val dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+        val isWeekend = dayOfWeek == java.util.Calendar.SATURDAY || dayOfWeek == java.util.Calendar.SUNDAY
+        val hr = cal.get(java.util.Calendar.HOUR_OF_DAY)
+        val min = cal.get(java.util.Calendar.MINUTE)
+        val isBistClosedForToday = isWeekend || (hr < 9) || (hr == 9 && min < 55)
 
         var totalBalanceBase = BigDecimal.ZERO
-        // totalCostBase: only cost of the ASSETS in the current view (selected portfolio)
-        // This is the cost of what was purchased from deposited funds.
         var totalCostBase = BigDecimal.ZERO
+        var totalDailyProfitBase = BigDecimal.ZERO
+        var totalPrevDayValueBase = BigDecimal.ZERO
 
         assets.forEach { asset ->
             val assetRate = when (asset.currency) {
@@ -342,10 +291,25 @@ class HomeViewModel @Inject constructor(
             }
             totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
             totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
+            
+            // Calculate individual asset daily P/L
+            if (asset.amount > BigDecimal.ZERO) {
+                var pct = asset.dailyChangePercentage
+                if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
+                    pct = BigDecimal.ZERO
+                }
+
+                val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
+                if (denom.compareTo(BigDecimal.ZERO) != 0) {
+                    val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
+                    val diff = asset.currentPrice.subtract(prevPrice)
+                    totalDailyProfitBase = totalDailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
+                    totalPrevDayValueBase = totalPrevDayValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
+                }
+            }
         }
 
         // 1. Calculate Idle Cash in Base Currency (TRY)
-        // Idle Cash = Total Deposited Amount (as requested by user)
         val currentId = _selectedPortfolioId.value
         val portfolios = _uiState.value.portfolios
         val totalDepositedBase = if (currentId == -1L) {
@@ -362,37 +326,23 @@ class HomeViewModel @Inject constructor(
         val convertedAssetValue = totalBalanceBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
         val finalTotalBalance = convertedAssetValue.add(idleCashConv)
         
-        // 3. Daily Change calculation
-        // Reset at 00:00: on the first calculation after day changes, baseline becomes "now" and daily change becomes 0.
-        val todayStart = java.util.Calendar.getInstance().apply {
-            set(java.util.Calendar.HOUR_OF_DAY, 0)
-            set(java.util.Calendar.MINUTE, 0)
-            set(java.util.Calendar.SECOND, 0)
-            set(java.util.Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        if (_lastStartOfDayMillis != todayStart) {
-            _lastStartOfDayMillis = todayStart
-            // Store baseline in TRY to match PortfolioHistory semantics
-            _startOfDayBalanceValue = finalTotalBalance.multiply(exchangeRate)
-        }
-
-        val startOfTodayBalance = _startOfDayBalanceValue
-        val startOfTodayConv = if (startOfTodayBalance > BigDecimal.ZERO) {
-            startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        } else null
-
-        val dailyChangeAbs = if (startOfTodayConv != null) {
-            finalTotalBalance.subtract(startOfTodayConv)
-        } else BigDecimal.ZERO
-
-        val dailyChangePerc = if (startOfTodayBalance > BigDecimal.ZERO) {
-            dailyChangeAbs.multiply(BigDecimal("100"))
-                .divide(startOfTodayBalance.divide(exchangeRate, 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP)
+        // 3. Daily Change calculation from sum of individual assets' daily change
+        val dailyChangeAbs = totalDailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        val totalPrevDayValueWithCash = totalPrevDayValueBase.add(idleCashTry)
+        val dailyChangePerc = if (totalPrevDayValueWithCash > BigDecimal.ZERO) {
+            totalDailyProfitBase.multiply(BigDecimal("100"))
+                .divide(totalPrevDayValueWithCash, 2, RoundingMode.HALF_UP)
         } else BigDecimal.ZERO
 
         // Record a history snapshot if none exists for today (for tomorrow's reference)
         viewModelScope.launch {
+            val todayStart = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 0)
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+
             if (currentId != -1L && finalTotalBalance > BigDecimal.ZERO) {
                 // Get snapshots taken TODAY
                 val snapshotToday = assetRepository.getLatestHistoryBefore(currentId, todayStart + 86400000)?.let { 
@@ -423,7 +373,11 @@ class HomeViewModel @Inject constructor(
                 
                 // Daily P/L: prevPrice = currentPrice / (1 + dailyChangePercentage/100)
                 if (asset.amount > BigDecimal.ZERO) {
-                    val pct = asset.dailyChangePercentage
+                    var pct = asset.dailyChangePercentage
+                    if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
+                        pct = BigDecimal.ZERO
+                    }
+
                     val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
                     if (denom.compareTo(BigDecimal.ZERO) != 0) {
                         val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
@@ -469,13 +423,34 @@ class HomeViewModel @Inject constructor(
                 else -> typeAssets
             }
 
+            val convertedAssets = sortedAssets.map { asset ->
+                val assetRate = when (asset.currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                val finalRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                
+                var adjustedDailyPerc = asset.dailyChangePercentage
+                if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
+                    adjustedDailyPerc = BigDecimal.ZERO
+                }
+
+                asset.copy(
+                    currentPrice = asset.currentPrice.multiply(finalRate),
+                    averageBuyPrice = asset.averageBuyPrice.multiply(finalRate),
+                    currency = currency,
+                    dailyChangePercentage = adjustedDailyPerc
+                )
+            }
+
              WalletCategorySummary(
                 type = type,
                 title = getLocalizedAssetTypeName(type, langContext),
                 totalValue = convCatValue,
                 totalProfitLoss = convCatDailyProfit,
                 profitLossPerc = catDailyPerc,
-                assets = sortedAssets,
+                assets = convertedAssets,
                 isExpanded = expandedCategory == type,
                 iconRes = getCategoryIcon(type)
             )
@@ -483,6 +458,10 @@ class HomeViewModel @Inject constructor(
 
         // Filter out empty categories AND categories where all assets have zero amount (fully sold)
         categorySummaries.removeAll { it.assets.isEmpty() || it.assets.all { a -> a.amount.compareTo(BigDecimal.ZERO) == 0 } }
+
+        // Sort categories: NAKIT first, then BIST, KRIPTO, EMTIA, FON, DOVIZ
+        val categoryOrder = listOf(AssetType.NAKIT, AssetType.BIST, AssetType.KRIPTO, AssetType.EMTIA, AssetType.FON, AssetType.DOVIZ)
+        categorySummaries.sortWith(compareBy { categoryOrder.indexOf(it.type).let { i -> if (i == -1) Int.MAX_VALUE else i } })
 
         // Inject 'Nakit' (Idle Cash) category as the first item if there is idle cash
         if (idleCashTry > BigDecimal.ZERO) {

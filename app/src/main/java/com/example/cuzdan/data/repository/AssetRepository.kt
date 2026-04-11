@@ -212,34 +212,84 @@ class AssetRepository @Inject constructor(
                 emit(Resource.Success(Unit))
                 return@flow
             }
+            val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+            val fundTypes = listOf("YAT", "BYF", "HEK", "EMK")
+
             fundAssets.forEach { asset ->
                 var price = BigDecimal.ZERO
-                try {
-                    val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                var prevPrice = BigDecimal.ZERO
+                var foundPriceDate: String? = null
+
+                // Son 30 günü tara – en son çalışan günü bul
+                outer@ for (dayOffset in 0..30) {
                     val cal = java.util.Calendar.getInstance()
-                    for (i in 0..7) {
-                        val dateStr = sdf.format(cal.time)
-                        val history = tefasApi.getFundHistory(
-                            fundType = "YAT",
-                            fundCode = asset.symbol.uppercase(),
-                            startDate = dateStr,
-                            endDate = dateStr
-                        )
-                        val entry = history.firstOrNull()
-                        if (entry != null) {
-                            val parsed = parseTefasPrice(entry.price)
-                            if (parsed > BigDecimal.ZERO) {
-                                price = parsed
-                                break
+                    cal.add(java.util.Calendar.DATE, -dayOffset)
+                    val dateStr = sdf.format(cal.time)
+
+                    for (ft in fundTypes) {
+                        try {
+                            val history = tefasApi.getFundHistory(
+                                fundType = ft,
+                                fundCode = asset.symbol.uppercase(),
+                                startDate = dateStr,
+                                endDate = dateStr
+                            )
+                            val entry = history.firstOrNull()
+                            if (entry != null) {
+                                val parsed = parseTefasPrice(entry.price)
+                                if (parsed > BigDecimal.ZERO) {
+                                    price = parsed
+                                    foundPriceDate = dateStr
+                                    break@outer
+                                }
                             }
+                        } catch (e: Exception) {
+                            Log.w("TEFAS", "Fund [${asset.symbol}] type=$ft date=$dateStr: ${e.message}")
                         }
-                        cal.add(java.util.Calendar.DATE, -1)
                     }
-                } catch (e: Exception) {
-                    Log.w("TEFAS", "Owned fund history fetch failed: ${asset.symbol}: ${e.message}")
                 }
+
+                // Önceki işlem gününün fiyatını bul (günlük değişim için)
+                if (foundPriceDate != null) {
+                    // foundPriceDate'in bir önceki takvim günü değil, bir önceki işlem günü
+                    for (dayOffset in 1..30) {
+                        val cal = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                            .parse(foundPriceDate!!)?.let {
+                                java.util.Calendar.getInstance().apply { time = it }
+                            } ?: continue
+                        cal.add(java.util.Calendar.DATE, -dayOffset)
+                        val prevDateStr = sdf.format(cal.time)
+                        var found = false
+                        for (ft in fundTypes) {
+                            try {
+                                val prevHistory = tefasApi.getFundHistory(
+                                    fundType = ft,
+                                    fundCode = asset.symbol.uppercase(),
+                                    startDate = prevDateStr,
+                                    endDate = prevDateStr
+                                )
+                                val prevEntry = prevHistory.firstOrNull()
+                                if (prevEntry != null) {
+                                    val parsed = parseTefasPrice(prevEntry.price)
+                                    if (parsed > BigDecimal.ZERO) {
+                                        prevPrice = parsed
+                                        found = true
+                                        break
+                                    }
+                                }
+                            } catch (e: Exception) { /* ignore */ }
+                        }
+                        if (found) break
+                    }
+                }
+
                 if (price > BigDecimal.ZERO) {
-                    assetDao.updateAsset(asset.copy(currentPrice = price, dailyChangePercentage = BigDecimal.ZERO, currency = "TRY"))
+                    val dailyChange = if (prevPrice > BigDecimal.ZERO) {
+                        price.subtract(prevPrice).divide(prevPrice, 6, RoundingMode.HALF_UP)
+                            .multiply(BigDecimal("100")).setScale(2, RoundingMode.HALF_UP)
+                    } else BigDecimal.ZERO
+                    assetDao.updateAsset(asset.copy(currentPrice = price, dailyChangePercentage = dailyChange, currency = "TRY"))
+                    Log.d("TEFAS", "Owned fund updated ${asset.symbol}: price=$price change=${dailyChange}%")
                 } else {
                     Log.w("TEFAS", "Owned fund price stayed 0: ${asset.symbol}. Keeping existing price=${asset.currentPrice.setScale(4, RoundingMode.HALF_UP)}")
                 }
@@ -249,6 +299,7 @@ class AssetRepository @Inject constructor(
             emit(Resource.Error(e.message ?: "Fon fiyatları güncellenemedi"))
         }
     }
+
 
     private fun parseTefasPrice(rawPriceAny: Any?): BigDecimal {
         return when (rawPriceAny) {
@@ -314,51 +365,56 @@ class AssetRepository @Inject constructor(
                 }
                 AssetType.FON -> {
                     val symbols = listOf("TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU", "YAY", "TI1", "GMR", "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF", "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF", "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK", "EID", "ST1", "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD")
+                    val fundTypeList = listOf("YAT", "BYF", "HEK", "EMK")
                     val fundAssets = coroutineScope {
                         symbols.map { symbol ->
                             async {
                                 var price = BigDecimal.ZERO
                                 var fundName = "$symbol Fonu"
-                                try {
-                                    val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+                                val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
+
+                                // Bugünden geriye doğru 30 gün tara
+                                outer@ for (dayOffset in 0..30) {
                                     val cal = java.util.Calendar.getInstance()
-                                    for (i in 0..7) {
-                                        val dateStr = sdf.format(cal.time)
-                                        val history = tefasApi.getFundHistory(
-                                            fundType = "YAT",
-                                            fundCode = symbol,
-                                            startDate = dateStr,
-                                            endDate = dateStr
-                                        )
-                                        history.firstOrNull()?.let { entry ->
-                                            fundName = entry.fundName ?: fundName
-                                            val parsed = parseTefasPrice(entry.price)
-                                            if (parsed > BigDecimal.ZERO) {
-                                                price = parsed
-                                                return@async symbol to Triple(price, fundName, true)
+                                    cal.add(java.util.Calendar.DATE, -dayOffset)
+                                    val dateStr = sdf.format(cal.time)
+                                    for (ft in fundTypeList) {
+                                        try {
+                                            val history = tefasApi.getFundHistory(
+                                                fundType = ft,
+                                                fundCode = symbol,
+                                                startDate = dateStr,
+                                                endDate = dateStr
+                                            )
+                                            history.firstOrNull()?.let { entry ->
+                                                fundName = entry.fundName ?: fundName
+                                                val parsed = parseTefasPrice(entry.price)
+                                                if (parsed > BigDecimal.ZERO) {
+                                                    price = parsed
+                                                    return@async Triple(symbol, fundName, price)
+                                                }
                                             }
+                                        } catch (e: Exception) {
+                                            Log.w("TEFAS", "Market fund $symbol type=$ft date=$dateStr: ${e.message}")
                                         }
-                                        cal.add(java.util.Calendar.DATE, -1)
                                     }
-                                } catch (e: Exception) {
-                                    Log.w("TEFAS", "Market fund fetch failed: $symbol: ${e.message}")
                                 }
-                                symbol to Triple(price, fundName, false)
+                                Triple(symbol, fundName, price)
                             }
                         }.awaitAll()
                     }
-                    fundAssets.forEach { (symbol, data) ->
+                    fundAssets.forEach { (symbol, name, price) ->
                         // Even if TEFAS fails, keep the fund visible with last known/zero price.
                         val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.FON)
-                        val price = if (data.third) data.first else (existing?.currentPrice ?: BigDecimal.ZERO)
-                        val name = if (data.second.isNotBlank()) data.second else (existing?.name ?: "$symbol Fonu")
+                        val finalPrice = if (price > BigDecimal.ZERO) price else (existing?.currentPrice ?: BigDecimal.ZERO)
+                        val finalName = if (name.isNotBlank() && name != "$symbol Fonu") name else (existing?.name ?: "$symbol Fonu")
                         marketAssets.add(
                             MarketAsset(
                                 symbol = symbol,
-                                name = name,
-                                fullName = name,
-                                currentPrice = price,
-                                dailyChangePercentage = BigDecimal.ZERO,
+                                name = finalName,
+                                fullName = finalName,
+                                currentPrice = finalPrice,
+                                dailyChangePercentage = existing?.dailyChangePercentage ?: BigDecimal.ZERO,
                                 assetType = AssetType.FON,
                                 currency = "TRY",
                                 isFavorite = existing?.isFavorite ?: false
@@ -404,8 +460,6 @@ class AssetRepository @Inject constructor(
                     }
                     
                     val existing = marketAssetDao.getMarketAssetsByTypeOnce(type)
-                    val lastUpdate = existing.firstOrNull()?.lastUpdated ?: 0L
-                    if (System.currentTimeMillis() - lastUpdate < 30 * 60 * 1000 && existing.isNotEmpty()) return
 
                     val results = coroutineScope {
                         symbols.filter { it != "GRAM_ALTIN" }.map { sym ->
