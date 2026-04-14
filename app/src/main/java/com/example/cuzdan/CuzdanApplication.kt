@@ -47,13 +47,10 @@ class CuzdanApplication : Application(), Configuration.Provider, ImageLoaderFact
             .setRequiresBatteryNotLow(true)
             .build()
 
-        val initialDelay = calculateInitialDelayToNineAM()
-
-        val workRequest = PeriodicWorkRequestBuilder<PriceSyncWorker>(24, TimeUnit.HOURS)
+        val workRequest = PeriodicWorkRequestBuilder<PriceSyncWorker>(15, TimeUnit.MINUTES)
             .setConstraints(constraints)
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
             .build()
-
+        
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "PriceSyncWork",
             ExistingPeriodicWorkPolicy.UPDATE,

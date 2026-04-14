@@ -7,12 +7,8 @@
         <item name="colorSecondary">@color/accent_violet_light</item>
         <item name="colorSecondaryVariant">@color/accent_violet</item>
         <item name="colorOnSecondary">@color/black</item>
-    </style>
 
-    <style name="Theme.Cuzdan.Dark" parent="Theme.Cuzdan">
-        <item name="android:statusBarColor">@color/bg_dark_start</item>
-        <item name="android:windowBackground">@drawable/bg_main_gradient</item>
-        <item name="layoutBackground">@drawable/bg_main_gradient</item>
+        <!-- Global attribute defaults to prevent inflation crashes -->
         <item name="surfaceGlass">@color/surface_glass</item>
         <item name="surfaceGlassStrong">@color/surface_glass_strong</item>
         <item name="textPrimary">@color/white</item>
@@ -21,11 +17,17 @@
         <item name="accentGlow">@color/accent_violet_glow</item>
         <item name="iconTint">@color/white</item>
         <item name="divider_light">@color/divider_color</item>
+        <item name="sheetBackground">@drawable/bg_bottom_sheet</item>
+    </style>
+
+    <style name="Theme.Cuzdan.Dark" parent="Theme.Cuzdan">
+        <item name="android:statusBarColor">@color/bg_dark_start</item>
+        <item name="android:windowBackground">@drawable/bg_main_gradient</item>
+        <item name="layoutBackground">@drawable/bg_main_gradient</item>
         <item name="pill_red_bg">#33FF4081</item>
         <item name="pill_red_text">@color/accent_red</item>
         <item name="pill_green_bg">#3300FF88</item>
         <item name="pill_green_text">@color/accent_green</item>
-        <item name="sheetBackground">@drawable/bg_bottom_sheet</item>
     </style>
 
     <style name="Theme.Cuzdan.Light" parent="Theme.Cuzdan">

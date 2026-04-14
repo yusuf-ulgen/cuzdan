@@ -47,7 +47,7 @@
                 android:padding="9dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_add"
-                app:tint="?attr/accentColor" />
+                app:tint="?attr/iconTint" />
 
             <ImageButton
                 android:id="@+id/btn_currency_switcher"

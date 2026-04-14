@@ -45,6 +45,10 @@ class PortfolioRepository @Inject constructor(
         return portfolioDao.getIncludedPortfolios()
     }
 
+    suspend fun getIncludedPortfoliosOnce(): List<Portfolio> {
+        return portfolioDao.getIncludedPortfoliosOnce()
+    }
+
     /**
      * Portföye sermaye yatır (TRY cinsinden).
      * amountInTry: Yatırılacak tutar (pozitif = yatırma, negatif = çekme)

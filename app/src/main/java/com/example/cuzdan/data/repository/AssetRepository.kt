@@ -166,36 +166,43 @@ class AssetRepository @Inject constructor(
                 defaultOther.forEach { assetDao.insertAsset(it) }
             }
 
-            var onsPrice: BigDecimal? = null
-            var usdTryPrice: BigDecimal? = null
-            var onsChange: BigDecimal = BigDecimal.ZERO
-            var usdTryChange: BigDecimal = BigDecimal.ZERO
-
             val currentOtherAssets = getOtherAssets().first()
-            currentOtherAssets.forEach { asset ->
-                if (asset.symbol == "GRAM_ALTIN") return@forEach
-                try {
-                    val response = yahooFinanceApi.getChartData(asset.symbol)
-                    val result = response.chart.result?.firstOrNull()?.meta
-                    val price = result?.regularMarketPrice ?: BigDecimal.ZERO
-                    val prevClose = result?.previousClose ?: BigDecimal.ZERO
-                    val changePerc = if (prevClose > BigDecimal.ZERO) {
-                        price.subtract(prevClose).divide(prevClose, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100"))
-                    } else BigDecimal.ZERO
-                    val currency = result?.currency ?: "USD"
+            val symbolsToFetch = currentOtherAssets.map { it.symbol }.filter { it != "GRAM_ALTIN" }
+            
+            if (symbolsToFetch.isNotEmpty()) {
+                val response = yahooFinanceApi.getQuotes(symbolsToFetch.joinToString(","))
+                val quotes = response.quoteResponse.result ?: emptyList()
 
-                    if (asset.symbol == "GC=F") { onsPrice = price; onsChange = changePerc }
-                    if (asset.symbol == "TRY=X") { usdTryPrice = price; usdTryChange = changePerc }
+                var onsPrice: BigDecimal? = null
+                var usdTryPrice: BigDecimal? = null
+                var onsChange: BigDecimal = BigDecimal.ZERO
+                var usdTryChange: BigDecimal = BigDecimal.ZERO
 
-                    assetDao.updateAsset(asset.copy(currentPrice = price, dailyChangePercentage = changePerc, currency = currency))
-                } catch (e: Exception) { e.printStackTrace() }
-            }
+                currentOtherAssets.forEach { asset ->
+                    if (asset.symbol == "GRAM_ALTIN") return@forEach
+                    val quote = quotes.find { it.symbol == asset.symbol }
+                    if (quote != null) {
+                        val price = quote.regularMarketPrice ?: BigDecimal.ZERO
+                        val changePerc = quote.regularMarketChangePercent ?: BigDecimal.ZERO
+                        val currency = quote.currency ?: "USD"
 
-            if (onsPrice != null && usdTryPrice != null) {
-                val gramGoldPrice = onsPrice!!.divide(BigDecimal("31.1"), 8, RoundingMode.HALF_UP).multiply(usdTryPrice!!)
-                val gramGoldChange = onsChange.add(usdTryChange)
-                assetDao.getAssetBySymbol("GRAM_ALTIN")?.let { asset ->
-                    assetDao.updateAsset(asset.copy(currentPrice = gramGoldPrice, dailyChangePercentage = gramGoldChange))
+                        if (asset.symbol == "GC=F") { onsPrice = price; onsChange = changePerc }
+                        if (asset.symbol == "TRY=X") { usdTryPrice = price; usdTryChange = changePerc }
+
+                        assetDao.updateAsset(asset.copy(
+                            currentPrice = price, 
+                            dailyChangePercentage = changePerc, 
+                            currency = currency
+                        ))
+                    }
+                }
+
+                if (onsPrice != null && usdTryPrice != null) {
+                    val gramGoldPrice = onsPrice!!.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usdTryPrice!!)
+                    val gramGoldChange = onsChange.add(usdTryChange)
+                    assetDao.getAssetBySymbol("GRAM_ALTIN")?.let { asset ->
+                        assetDao.updateAsset(asset.copy(currentPrice = gramGoldPrice, dailyChangePercentage = gramGoldChange))
+                    }
                 }
             }
             emit(Resource.Success(Unit))
@@ -364,7 +371,13 @@ class AssetRepository @Inject constructor(
                     }
                 }
                 AssetType.FON -> {
-                    val symbols = listOf("TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU", "YAY", "TI1", "GMR", "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF", "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF", "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK", "EID", "ST1", "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD")
+                    val symbols = listOf(
+                        "TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU", "YAY", "TI1", "GMR", "TE3", "HVS", 
+                        "TDF", "IKL", "NJR", "BUY", "NNF", "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF", 
+                        "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK", "EID", "ST1", "GAY", "DBH", "YHS", "ZPC", "AES", 
+                        "IPJ", "GUH", "IEY", "YTD", "YEG", "ZPF", "ZRE", "KDJ", "KRA", "OJK", "AME", "OKT", "HAY", "TUK", "TUA", 
+                        "TPZ", "TUT", "TID", "TIE", "TIG", "TIV", "TKF", "TLA", "TLM", "TLE", "TMS", "TMG"
+                    )
                     val fundTypeList = listOf("YAT", "BYF", "HEK", "EMK")
                     val fundAssets = coroutineScope {
                         symbols.map { symbol ->
@@ -443,7 +456,6 @@ class AssetRepository @Inject constructor(
                 }
                 AssetType.BIST, AssetType.DOVIZ, AssetType.EMTIA -> {
                     if (type == AssetType.DOVIZ) {
-                        // CRITICAL: Delete legacy AED symbol if it exists
                         marketAssetDao.deleteAed()
                     }
                     if (type == AssetType.BIST) {
@@ -459,25 +471,17 @@ class AssetRepository @Inject constructor(
                         else -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F", "GRAM_ALTIN", "USDTRY=X")
                     }
                     
-                    val existing = marketAssetDao.getMarketAssetsByTypeOnce(type)
+                    val symbolsToFetch = symbols.filter { it != "GRAM_ALTIN" }
+                    val response = yahooFinanceApi.getQuotes(symbolsToFetch.joinToString(","))
+                    val quotes = response.quoteResponse.result ?: emptyList()
 
-                    val results = coroutineScope {
-                        symbols.filter { it != "GRAM_ALTIN" }.map { sym ->
-                            async {
-                                try {
-                                    val result = yahooFinanceApi.getChartData(sym).chart.result?.firstOrNull()?.meta
-                                    if (result != null) {
-                                        val current = result.regularMarketPrice
-                                        val prev = result.previousClose
-                                        val change = if (prev > BigDecimal.ZERO) (current - prev).divide(prev, 4, RoundingMode.HALF_UP).multiply(BigDecimal("100")) else BigDecimal.ZERO
-                                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
-                                        cleanMarketAssetNaming(MarketAsset(sym, sym, result.longName ?: result.shortName, current.setScale(2, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type)
-                                    } else null
-                                } catch (e: Exception) { null }
-                            }
-                        }.awaitAll().filterNotNull()
+                    quotes.forEach { quote ->
+                        val sym = quote.symbol
+                        val current = quote.regularMarketPrice ?: BigDecimal.ZERO
+                        val change = quote.regularMarketChangePercent ?: BigDecimal.ZERO
+                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
+                        marketAssets.add(cleanMarketAssetNaming(MarketAsset(sym, sym, quote.longName ?: quote.shortName ?: sym, current.setScale(2, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type))
                     }
-                    marketAssets.addAll(results)
 
                     if (type == AssetType.EMTIA && symbols.contains("GRAM_ALTIN")) {
                         val ons = marketAssets.find { it.symbol == "GC=F" }
@@ -697,26 +701,40 @@ class AssetRepository @Inject constructor(
     private fun cleanMarketAssetNaming(asset: MarketAsset, type: AssetType): MarketAsset {
         var name = asset.name; var fullName = asset.fullName ?: asset.name; var symbol = asset.symbol; val cleanSymbol = symbol.uppercase()
         when {
-            type == AssetType.BIST -> name = name.replace(".IS", "").trim()
+            type == AssetType.BIST -> {
+                name = name.replace(".IS", "").replace(".is", "").trim()
+                symbol = symbol.replace(".IS", "").replace(".is", "").trim()
+            }
+            type == AssetType.KRIPTO -> {
+                symbol = symbol.replace("USDT", "").replace("usdt", "").trim()
+                if (name.contains("USDT", ignoreCase = true)) {
+                    name = name.replace("USDT", "", ignoreCase = true).trim()
+                }
+            }
             type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
                 val localized = when { 
-                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "Amerikan Doları"
-                    cleanSymbol.startsWith("EURTRY") -> "Euro"
-                    cleanSymbol.startsWith("GBPTRY") -> "İngiliz Sterlini"
-                    cleanSymbol.startsWith("CHFTRY") -> "İsviçre Frangı"
-                    cleanSymbol.startsWith("JPYTRY") -> "Japon Yeni"
-                    cleanSymbol.startsWith("AUDTRY") -> "Avustralya Doları"
-                    cleanSymbol.startsWith("CADTRY") -> "Kanada Doları"
-                    cleanSymbol.startsWith("AEDTRY") -> "Birleşik Arap Emirlikleri Dirhemi"
+                    cleanSymbol.contains("USDTRY") || cleanSymbol == "TRY=X" || cleanSymbol == "USD" -> "Amerikan Doları"
+                    cleanSymbol.contains("EURTRY") || cleanSymbol == "EUR" -> "Euro"
+                    cleanSymbol.contains("GBPTRY") || cleanSymbol == "GBP" -> "İngiliz Sterlini"
+                    cleanSymbol.contains("CHFTRY") || cleanSymbol == "CHF" -> "İsviçre Frangı"
+                    cleanSymbol.contains("JPYTRY") || cleanSymbol == "JPY" -> "Japon Yeni"
+                    cleanSymbol.contains("AUDTRY") || cleanSymbol == "AUD" -> "Avustralya Doları"
+                    cleanSymbol.contains("CADTRY") || cleanSymbol == "CAD" -> "Kanada Doları"
+                    cleanSymbol.contains("AEDTRY") || cleanSymbol == "AED" -> "Birleşik Arap Emirlikleri Dirhemi"
                     else -> fullName 
                 }
                 fullName = localized
                 name = localized
-                if (type == AssetType.NAKIT) symbol = when { 
-                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "USD"
-                    cleanSymbol.startsWith("EURTRY") -> "EUR"
-                    cleanSymbol.startsWith("GBPTRY") -> "GBP"
-                    cleanSymbol.startsWith("AEDTRY") -> "AED"
+                
+                symbol = when { 
+                    cleanSymbol.contains("USD") -> "USD"
+                    cleanSymbol.contains("EUR") -> "EUR"
+                    cleanSymbol.contains("GBP") -> "GBP"
+                    cleanSymbol.contains("CHF") -> "CHF"
+                    cleanSymbol.contains("JPY") -> "JPY"
+                    cleanSymbol.contains("AUD") -> "AUD"
+                    cleanSymbol.contains("CAD") -> "CAD"
+                    cleanSymbol.contains("AED") -> "AED"
                     else -> symbol 
                 }
             }
@@ -730,9 +748,10 @@ class AssetRepository @Inject constructor(
                     cleanSymbol.startsWith("GRAM_ALTIN") -> "Gram Altın"
                     else -> name 
                 }
-                // Strip "Month Year" if it contains patterns like "May 26", "Jun 26"
                 fullName = name.replace(Regex("\\s+[A-Za-z]{3}\\s+\\d{2}$"), "").trim()
                 name = fullName
+                if (cleanSymbol.startsWith("GC=F")) symbol = "GOLD"
+                if (cleanSymbol.startsWith("SI=F")) symbol = "SILVER"
             }
         }
         return asset.copy(name = name, fullName = fullName, symbol = symbol)
@@ -741,24 +760,37 @@ class AssetRepository @Inject constructor(
     private fun cleanAssetNaming(asset: Asset, type: AssetType): Asset {
         var name = asset.name; var symbol = asset.symbol; val cleanSymbol = symbol.uppercase()
         when {
-            type == AssetType.BIST -> name = name.replace(".IS", "").trim()
+            type == AssetType.BIST -> {
+                name = name.replace(".IS", "").replace(".is", "").trim()
+                symbol = symbol.replace(".IS", "").replace(".is", "").trim()
+            }
+            type == AssetType.KRIPTO -> {
+                symbol = symbol.replace("USDT", "").replace("usdt", "").trim()
+                if (name.contains("USDT", ignoreCase = true)) {
+                    name = name.replace("USDT", "", ignoreCase = true).trim()
+                }
+            }
             type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
                 name = when { 
-                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "Amerikan Doları"
-                    cleanSymbol.startsWith("EURTRY") -> "Euro"
-                    cleanSymbol.startsWith("GBPTRY") -> "İngiliz Sterlini"
-                    cleanSymbol.startsWith("CHFTRY") -> "İsviçre Frangı"
-                    cleanSymbol.startsWith("JPYTRY") -> "Japon Yeni"
-                    cleanSymbol.startsWith("AUDTRY") -> "Avustralya Doları"
-                    cleanSymbol.startsWith("CADTRY") -> "Kanada Doları"
-                    cleanSymbol.startsWith("AEDTRY") -> "Birleşik Arap Emirlikleri Dirhemi"
+                    cleanSymbol.contains("USD") -> "Amerikan Doları"
+                    cleanSymbol.contains("EUR") -> "Euro"
+                    cleanSymbol.contains("GBP") -> "İngiliz Sterlini"
+                    cleanSymbol.contains("CHF") -> "İsviçre Frangı"
+                    cleanSymbol.contains("JPY") -> "Japon Yeni"
+                    cleanSymbol.contains("AUD") -> "Avustralya Doları"
+                    cleanSymbol.contains("CAD") -> "Kanada Doları"
+                    cleanSymbol.contains("AED") -> "Birleşik Arap Emirlikleri Dirhemi"
                     else -> name 
                 }
-                if (type == AssetType.NAKIT) symbol = when { 
-                    cleanSymbol.startsWith("USDTRY") || cleanSymbol == "TRY=X" -> "USD"
-                    cleanSymbol.startsWith("EURTRY") -> "EUR"
-                    cleanSymbol.startsWith("GBPTRY") -> "GBP"
-                    cleanSymbol.startsWith("AEDTRY") -> "AED"
+                symbol = when { 
+                    cleanSymbol.contains("USD") -> "USD"
+                    cleanSymbol.contains("EUR") -> "EUR"
+                    cleanSymbol.contains("GBP") -> "GBP"
+                    cleanSymbol.contains("CHF") -> "CHF"
+                    cleanSymbol.contains("JPY") -> "JPY"
+                    cleanSymbol.contains("AUD") -> "AUD"
+                    cleanSymbol.contains("CAD") -> "CAD"
+                    cleanSymbol.contains("AED") -> "AED"
                     else -> symbol 
                 }
             }
@@ -773,6 +805,8 @@ class AssetRepository @Inject constructor(
                     else -> name 
                 }
                 name = name.replace(Regex("\\s+[A-Za-z]{3}\\s+\\d{2}$"), "").trim()
+                if (cleanSymbol.startsWith("GC=F")) symbol = "GOLD"
+                if (cleanSymbol.startsWith("SI=F")) symbol = "SILVER"
             }
         }
         return asset.copy(name = name, symbol = symbol)

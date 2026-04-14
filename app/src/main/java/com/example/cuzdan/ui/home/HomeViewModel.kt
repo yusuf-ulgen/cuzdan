@@ -126,17 +126,33 @@ class HomeViewModel @Inject constructor(
                     val totalValueBase = balanceBase.add(idleCashInTry)
                     val convBalance = totalValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
 
-                    // depositedAmount varsa kâr = (anlık değer - yatırılan sermaye)
-                    // depositedAmount yoksa kâr = (anlık değer - maliyet)
-                    val depositConv = p.depositedAmount.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-                    val effectiveCost = if (p.depositedAmount > BigDecimal.ZERO) depositConv else convCost
-                    val profitLoss = convBalance.subtract(effectiveCost)
-                    val profitBase = if (p.depositedAmount > BigDecimal.ZERO) p.depositedAmount else costBase
-                    val profitPerc = if (profitBase > BigDecimal.ZERO) {
-                        totalValueBase.subtract(profitBase).divide(profitBase, 4, RoundingMode.HALF_UP).multiply(BigDecimal(100))
+                    // DAILY CHANGE Calculation for the portfolio
+                    var portfolioDailyProfitBase = BigDecimal.ZERO
+                    var portfolioPrevValueBase = idleCashInTry // Start with cash, which has 0 change
+
+                    assets.forEach { asset ->
+                        val assetRate = when (asset.currency) {
+                            "USD" -> usdRate ?: BigDecimal("32.5")
+                            "EUR" -> eurRate ?: BigDecimal("35.2")
+                            else -> BigDecimal.ONE
+                        }
+                        if (asset.amount > BigDecimal.ZERO) {
+                            val denom = BigDecimal.ONE.add(asset.dailyChangePercentage.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
+                            if (denom.compareTo(BigDecimal.ZERO) != 0) {
+                                val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
+                                val diff = asset.currentPrice.subtract(prevPrice)
+                                portfolioDailyProfitBase = portfolioDailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
+                                portfolioPrevValueBase = portfolioPrevValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
+                            }
+                        }
+                    }
+
+                    val dailyChangeAbs = portfolioDailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+                    val dailyChangePerc = if (portfolioPrevValueBase > BigDecimal.ZERO) {
+                        portfolioDailyProfitBase.multiply(BigDecimal("100")).divide(portfolioPrevValueBase, 2, RoundingMode.HALF_UP)
                     } else BigDecimal.ZERO
 
-                    PortfolioWithBalance(p, convBalance, profitLoss, profitPerc, convCost, p.depositedAmount)
+                    PortfolioWithBalance(p, convBalance, dailyChangeAbs, dailyChangePerc, convCost, p.depositedAmount)
                 }
 
 
@@ -312,27 +328,36 @@ class HomeViewModel @Inject constructor(
         // 1. Calculate Idle Cash in Base Currency (TRY)
         val currentId = _selectedPortfolioId.value
         val portfolios = _uiState.value.portfolios
-        val totalDepositedBase = if (currentId == -1L) {
-            portfolios.filter { it.portfolio.isIncludedInTotal }.sumOf { it.portfolio.depositedAmount }
-        } else {
-            portfolios.find { it.portfolio.id == currentId }?.portfolio?.depositedAmount ?: BigDecimal.ZERO
-        }
+        
+        val finalTotalBalance: BigDecimal
+        val dailyChangeAbs: BigDecimal
+        val dailyChangePerc: BigDecimal
+        val idleCashTry: BigDecimal
+        val idleCashConv: BigDecimal
 
-        // idleCashTry: stays as deposited amount, ignoring asset costs
-        val idleCashTry = totalDepositedBase
-        val idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        
-        // 2. Final Total Balance = Market value of all current assets + Idle Cash
-        val convertedAssetValue = totalBalanceBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val finalTotalBalance = convertedAssetValue.add(idleCashConv)
-        
-        // 3. Daily Change calculation from sum of individual assets' daily change
-        val dailyChangeAbs = totalDailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
-        val totalPrevDayValueWithCash = totalPrevDayValueBase.add(idleCashTry)
-        val dailyChangePerc = if (totalPrevDayValueWithCash > BigDecimal.ZERO) {
-            totalDailyProfitBase.multiply(BigDecimal("100"))
-                .divide(totalPrevDayValueWithCash, 2, RoundingMode.HALF_UP)
-        } else BigDecimal.ZERO
+        if (currentId == -1L) {
+            // "Portföyler Toplamı" mode: Sum of all included portfolios' balance
+            val includedPortfolios = portfolios.filter { it.portfolio.isIncludedInTotal }
+            finalTotalBalance = includedPortfolios.sumOf { it.balance }
+            dailyChangeAbs = includedPortfolios.sumOf { it.dailyChangeAbs }
+            
+            // Percentage for total is weighted based on total previous value
+            val totalPrevValueTry = totalPrevDayValueBase.add(includedPortfolios.sumOf { it.portfolio.depositedAmount })
+            dailyChangePerc = if (totalPrevValueTry > BigDecimal.ZERO) {
+                totalDailyProfitBase.multiply(BigDecimal("100")).divide(totalPrevValueTry, 2, RoundingMode.HALF_UP)
+            } else BigDecimal.ZERO
+            
+            idleCashTry = includedPortfolios.sumOf { it.portfolio.depositedAmount }
+            idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        } else {
+            // Single portfolio mode
+            val p = portfolios.find { it.portfolio.id == currentId }
+            finalTotalBalance = p?.balance ?: BigDecimal.ZERO
+            dailyChangeAbs = p?.dailyChangeAbs ?: BigDecimal.ZERO
+            dailyChangePerc = p?.dailyChangePerc ?: BigDecimal.ZERO
+            idleCashTry = p?.portfolio?.depositedAmount ?: BigDecimal.ZERO
+            idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
+        }
 
         // Record a history snapshot if none exists for today (for tomorrow's reference)
         viewModelScope.launch {
@@ -464,7 +489,7 @@ class HomeViewModel @Inject constructor(
         categorySummaries.sortWith(compareBy { categoryOrder.indexOf(it.type).let { i -> if (i == -1) Int.MAX_VALUE else i } })
 
         // Inject 'Nakit' (Idle Cash) category as the first item if there is idle cash
-        if (idleCashTry > BigDecimal.ZERO) {
+        if (idleCashConv > BigDecimal.ZERO) {
             // Remove any existing NAKIT from assets (those are actual fx holdings)
             // The idle cash Nakit is a separate concept: uninvested deposited money
             val existingNakitIndex = categorySummaries.indexOfFirst { it.type == AssetType.NAKIT }
@@ -510,7 +535,17 @@ class HomeViewModel @Inject constructor(
                 catAssets.forEachIndexed { index, asset ->
                     val assetValue = asset.amount.multiply(asset.currentPrice)
                     val weight = assetValue.divide(catTotal, 4, RoundingMode.HALF_UP).toFloat()
-                    segments.add(DonutChartView.Segment(weight, getAssetColor(index), asset.symbol))
+                    
+                    // Clean symbol for display in the chart
+                    val cleanLabel = asset.symbol.uppercase()
+                        .replace(".IS", "")
+                        .replace("USDT", "")
+                        .replace("TRY=X", "")
+                        .replace("USDTRY", "USD")
+                        .replace("EURTRY", "EUR")
+                        .replace("GBPTRY", "GBP")
+                    
+                    segments.add(DonutChartView.Segment(weight, getAssetColor(index), cleanLabel))
                 }
                 // If it's Nakit, add the idle cash portion as a segment
                 if (expandedCategory == AssetType.NAKIT && idleCashTry > BigDecimal.ZERO) {

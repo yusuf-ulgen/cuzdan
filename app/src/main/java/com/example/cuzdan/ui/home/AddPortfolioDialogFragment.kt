@@ -40,8 +40,14 @@ class AddPortfolioDialogFragment : BottomSheetDialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = DialogAddPortfolioBinding.inflate(inflater, container, false)
-        return binding.root
+        return try {
+            _binding = DialogAddPortfolioBinding.inflate(inflater, container, false)
+            binding.root
+        } catch (e: Exception) {
+            android.util.Log.e("CuzdanDebug", "Portföy ekleme diyaloğu şişirilirken hata oluştu!", e)
+            // Hata durumunda boş bir view dönüp çökmesini engelleyelim veya hatayı görelim
+            View(requireContext())
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

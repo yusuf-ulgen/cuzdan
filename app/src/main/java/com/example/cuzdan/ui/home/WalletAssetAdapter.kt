@@ -37,6 +37,10 @@ class WalletAssetAdapter(
             // 1. Asset Name (Top-Left)
             tvAssetName.text = asset.name
             
+            // Set individual asset icon
+            val iconRes = com.example.cuzdan.util.AssetUtils.getAssetIcon(asset.symbol, asset.assetType)
+            ivAssetIcon.setImageResource(iconRes)
+            
             // 2. Total Value (Top-Right)
             if (isPrivacyEnabled) {
                 tvAssetPrice.text = "**** $currency"
