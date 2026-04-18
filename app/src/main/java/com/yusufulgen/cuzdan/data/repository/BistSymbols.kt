@@ -51,7 +51,16 @@ object BistSymbols {
         "USAK.IS", "VAKBN.IS", "VAKFN.IS", "VAKKO.IS", "VANGD.IS", "VBTYZ.IS", "VERTU.IS", "VERUS.IS", "VESBE.IS", "VESTL.IS",
         "VKGYO.IS", "VKING.IS", "VRGYO.IS", "YAPRK.IS", "YATAS.IS", "YAYLA.IS", "YBTAS.IS", "YEOTK.IS", "YESIL.IS", "YGGYO.IS",
         "YGYO.IS", "YKBNK.IS", "YKSLN.IS", "YONGA.IS", "YOTAS.IS", "YUNSA.IS", "YYAPI.IS", "YYLGD.IS", "ZEDUR.IS", "ZOREN.IS",
-        "ZRGYO.IS"
+        "ZRGYO.IS",
+        // 2024-2025 Yeni Halka Arzlar
+        "CORTS.IS", "MGNYO.IS", "TURSK.IS", "KERVT.IS", "MEDYA.IS", "DMRGD.IS",
+        "PEKGY.IS", "FZLGY.IS", "AGROT.IS", "AYCES.IS", "BLCYT.IS", "MWGYO.IS",
+        "TMGYO.IS", "FENER.IS", "BJKAS.IS", "GSRAY.IS", "TSPOR.IS", "TRCAS.IS",
+        "EDATA.IS", "FORMT.IS", "FLAP.IS", "FADE.IS", "OBAMS.IS", "SKYMD.IS",
+        "SMART.IS", "SMRTG.IS", "QUAGR.IS", "ATAGY.IS", "ATAKP.IS", "KMEPU.IS",
+        "KMPUR.IS", "BIENY.IS", "BIGCH.IS", "BINHO.IS", "DGNMO.IS", "DNISI.IS",
+        "GOKNR.IS", "GLCVY.IS", "KMPUR.IS", "RALYH.IS", "VKING.IS", "VERUS.IS",
+        "VERTU.IS", "VBTYZ.IS", "UNLU.IS", "TURGG.IS", "TUCLK.IS", "TRKN.IS"
     )
     
     val popular = listOf(

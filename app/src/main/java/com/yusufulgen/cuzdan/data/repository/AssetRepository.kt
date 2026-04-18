@@ -465,32 +465,57 @@ class AssetRepository @Inject constructor(
 
                     val symbols = when(type) {
                         AssetType.DOVIZ -> listOf(
-                            "USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X", "AUDTRY=X", "CADTRY=X", 
-                            "SARTRY=X", "QARTRY=X", "RUBTRY=X", "CNYTRY=X", "AZNTRY=X"
+                            "USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X",
+                            "AUDTRY=X", "CADTRY=X", "SARTRY=X", "QARTRY=X", "RUBTRY=X",
+                            "CNYTRY=X", "AZNTRY=X", "SGDTRY=X", "NOKTRY=X", "SEKTRY=X",
+                            "DKKTRY=X", "NZDTRY=X", "MXNTRY=X", "BRLTRY=X", "INRTRY=X",
+                            "KRWTRY=X", "HKDTRY=X", "PLNTRY=X", "CZKTRY=X", "HUFTRY=X",
+                            "RONTRY=X", "ILSTRY=X", "KWDTRY=X", "AEDTRY=X", "OMRTRY=X",
+                            "BHDTRY=X", "THBTRY=X", "MYRTRY=X", "IDRTRY=X", "PHPTRY=X",
+                            "EGPTRY=X", "ZARTRY=X", "MADTRY=X", "GELTRY=X", "UAHTRY=X",
+                            "BGNTRY=X", "ISKTRY=X", "KAZTRY=X", "VNDDTRY=X", "PKRTRY=X"
                         )
-                        else -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F", "GRAM_ALTIN", "USDTRY=X")
+                        else -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F")
                     }
                     
                     val symbolsToFetch = symbols.filter { it != "GRAM_ALTIN" }
-                    val response = yahooFinanceApi.getQuotes(symbolsToFetch.joinToString(","))
-                    val quotes = response.quoteResponse.result ?: emptyList()
-
-                    quotes.forEach { quote ->
-                        val sym = quote.symbol
-                        val current = quote.regularMarketPrice ?: BigDecimal.ZERO
-                        val change = quote.regularMarketChangePercent ?: BigDecimal.ZERO
-                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
-                        marketAssets.add(cleanMarketAssetNaming(MarketAsset(sym, sym, quote.longName ?: quote.shortName ?: sym, current.setScale(2, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type))
+                    
+                    if (type == AssetType.DOVIZ) {
+                        // Manually add Turkish Lira to DOVIZ category too
+                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce("TRY", AssetType.DOVIZ)
+                        marketAssets.add(MarketAsset("TRY", "Türk Lirası", "Türk Lirası", BigDecimal.ONE, BigDecimal.ZERO, AssetType.DOVIZ, "TRY", exist?.isFavorite ?: false))
                     }
 
-                    if (type == AssetType.EMTIA && symbols.contains("GRAM_ALTIN")) {
-                        val ons = marketAssets.find { it.symbol == "GC=F" }
-                        val usd = marketAssets.find { it.symbol == "USDTRY=X" }
-                        if (ons != null && usd != null) {
-                            val gp = ons.currentPrice.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usd.currentPrice)
+                    // Chunk fetching to avoid long URL issues (Yahoo API limits)
+                    symbolsToFetch.chunked(15).forEach { chunk ->
+                        try {
+                            val response = yahooFinanceApi.getQuotes(chunk.joinToString(","))
+                            val quotes = response.quoteResponse.result ?: emptyList()
+
+                            quotes.forEach { quote ->
+                                val sym = quote.symbol
+                                val current = quote.regularMarketPrice ?: BigDecimal.ZERO
+                                val change = quote.regularMarketChangePercent ?: BigDecimal.ZERO
+                                val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
+                                marketAssets.add(cleanMarketAssetNaming(MarketAsset(sym, sym, quote.longName ?: quote.shortName ?: sym, current.setScale(2, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type))
+                            }
+                        } catch (e: Exception) {
+                            Log.e("AssetRepository", "Error fetching chunk for $type: ${e.message}")
+                        }
+                    }
+
+                    if (type == AssetType.EMTIA) {
+                        // Fetch USDTRY separately for Gram Altin calculation
+                        val usdTryQuote = try {
+                            yahooFinanceApi.getQuotes("USDTRY=X").quoteResponse.result?.firstOrNull()
+                        } catch(e: Exception) { null }
+                        val usdTryPrice = usdTryQuote?.regularMarketPrice ?: BigDecimal.ZERO
+
+                        val ons = marketAssets.find { it.symbol == "GOLD" || it.symbol == "GC=F" }
+                        if (ons != null && usdTryPrice > BigDecimal.ZERO) {
+                            val gp = ons.currentPrice.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usdTryPrice)
                             marketAssets.add(MarketAsset("GRAM_ALTIN", "Gram Altın", "Gram Altın", gp.setScale(2, RoundingMode.HALF_UP), ons.dailyChangePercentage, AssetType.EMTIA, "TRY"))
                         }
-                        marketAssets.removeAll { it.symbol == "USDTRY=X" }
                     }
                 }
             }
@@ -712,7 +737,7 @@ class AssetRepository @Inject constructor(
                 }
             }
             type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
-                val localized = when { 
+                val localized = when {
                     cleanSymbol.contains("USDTRY") || cleanSymbol == "TRY=X" || cleanSymbol == "USD" -> "Amerikan Doları"
                     cleanSymbol.contains("EURTRY") || cleanSymbol == "EUR" -> "Euro"
                     cleanSymbol.contains("GBPTRY") || cleanSymbol == "GBP" -> "İngiliz Sterlini"
@@ -720,13 +745,50 @@ class AssetRepository @Inject constructor(
                     cleanSymbol.contains("JPYTRY") || cleanSymbol == "JPY" -> "Japon Yeni"
                     cleanSymbol.contains("AUDTRY") || cleanSymbol == "AUD" -> "Avustralya Doları"
                     cleanSymbol.contains("CADTRY") || cleanSymbol == "CAD" -> "Kanada Doları"
-                    cleanSymbol.contains("AEDTRY") || cleanSymbol == "AED" -> "Birleşik Arap Emirlikleri Dirhemi"
-                    else -> fullName 
+                    cleanSymbol.contains("AEDTRY") || cleanSymbol == "AED" -> "BAE Dirhemi"
+                    cleanSymbol.contains("SARTRY") || cleanSymbol == "SAR" -> "Suudi Arabistan Riyali"
+                    cleanSymbol.contains("QARTRY") || cleanSymbol == "QAR" -> "Katar Riyali"
+                    cleanSymbol.contains("RUBTRY") || cleanSymbol == "RUB" -> "Rus Rublesi"
+                    cleanSymbol.contains("CNYTRY") || cleanSymbol == "CNY" -> "Çin Yuanı"
+                    cleanSymbol.contains("AZNTRY") || cleanSymbol == "AZN" -> "Azerbaycan Manatı"
+                    cleanSymbol.contains("SGDTRY") || cleanSymbol == "SGD" -> "Singapur Doları"
+                    cleanSymbol.contains("NOKTRY") || cleanSymbol == "NOK" -> "Norveç Kronu"
+                    cleanSymbol.contains("SEKTRY") || cleanSymbol == "SEK" -> "İsveç Kronu"
+                    cleanSymbol.contains("DKKTRY") || cleanSymbol == "DKK" -> "Danimarka Kronu"
+                    cleanSymbol.contains("NZDTRY") || cleanSymbol == "NZD" -> "Yeni Zelanda Doları"
+                    cleanSymbol.contains("MXNTRY") || cleanSymbol == "MXN" -> "Meksika Pesosu"
+                    cleanSymbol.contains("BRLTRY") || cleanSymbol == "BRL" -> "Brezilya Reali"
+                    cleanSymbol.contains("INRTRY") || cleanSymbol == "INR" -> "Hint Rupisi"
+                    cleanSymbol.contains("KRWTRY") || cleanSymbol == "KRW" -> "Güney Kore Wonu"
+                    cleanSymbol.contains("HKDTRY") || cleanSymbol == "HKD" -> "Hong Kong Doları"
+                    cleanSymbol.contains("PLNTRY") || cleanSymbol == "PLN" -> "Polonya Zlotisi"
+                    cleanSymbol.contains("CZKTRY") || cleanSymbol == "CZK" -> "Çek Korunası"
+                    cleanSymbol.contains("HUFTRY") || cleanSymbol == "HUF" -> "Macar Forinti"
+                    cleanSymbol.contains("RONTRY") || cleanSymbol == "RON" -> "Rumen Leyi"
+                    cleanSymbol.contains("ILSTRY") || cleanSymbol == "ILS" -> "İsrail Şekeli"
+                    cleanSymbol.contains("KWDTRY") || cleanSymbol == "KWD" -> "Kuveyt Dinarı"
+                    cleanSymbol.contains("OMRTRY") || cleanSymbol == "OMR" -> "Umman Riyali"
+                    cleanSymbol.contains("BHDTRY") || cleanSymbol == "BHD" -> "Bahreyn Dinarı"
+                    cleanSymbol.contains("THBTRY") || cleanSymbol == "THB" -> "Tayland Bahtı"
+                    cleanSymbol.contains("MYRTRY") || cleanSymbol == "MYR" -> "Malezya Ringgiti"
+                    cleanSymbol.contains("IDRTRY") || cleanSymbol == "IDR" -> "Endonezya Rupisi"
+                    cleanSymbol.contains("PHPTRY") || cleanSymbol == "PHP" -> "Filipin Pesosu"
+                    cleanSymbol.contains("PKRTRY") || cleanSymbol == "PKR" -> "Pakistan Rupisi"
+                    cleanSymbol.contains("EGPTRY") || cleanSymbol == "EGP" -> "Mısır Poundu"
+                    cleanSymbol.contains("ZARTRY") || cleanSymbol == "ZAR" -> "Güney Afrika Randı"
+                    cleanSymbol.contains("MADTRY") || cleanSymbol == "MAD" -> "Fas Dirhemi"
+                    cleanSymbol.contains("GELTRY") || cleanSymbol == "GEL" -> "Gürcistan Larisi"
+                    cleanSymbol.contains("UAHTRY") || cleanSymbol == "UAH" -> "Ukrayna Grivnası"
+                    cleanSymbol.contains("BGNTRY") || cleanSymbol == "BGN" -> "Bulgar Levası"
+                    cleanSymbol.contains("ISKTRY") || cleanSymbol == "ISK" -> "İzlanda Kronu"
+                    cleanSymbol.contains("KAZTRY") || cleanSymbol == "KZT" -> "Kazakistan Tengesi"
+                    cleanSymbol.contains("VNDDTRY") || cleanSymbol == "VND" -> "Vietnam Dongu"
+                    else -> fullName
                 }
                 fullName = localized
                 name = localized
-                
-                symbol = when { 
+
+                symbol = when {
                     cleanSymbol.contains("USD") -> "USD"
                     cleanSymbol.contains("EUR") -> "EUR"
                     cleanSymbol.contains("GBP") -> "GBP"
@@ -735,7 +797,44 @@ class AssetRepository @Inject constructor(
                     cleanSymbol.contains("AUD") -> "AUD"
                     cleanSymbol.contains("CAD") -> "CAD"
                     cleanSymbol.contains("AED") -> "AED"
-                    else -> symbol 
+                    cleanSymbol.contains("SAR") -> "SAR"
+                    cleanSymbol.contains("QAR") -> "QAR"
+                    cleanSymbol.contains("RUB") -> "RUB"
+                    cleanSymbol.contains("CNY") -> "CNY"
+                    cleanSymbol.contains("AZN") -> "AZN"
+                    cleanSymbol.contains("SGD") -> "SGD"
+                    cleanSymbol.contains("NOK") -> "NOK"
+                    cleanSymbol.contains("SEK") -> "SEK"
+                    cleanSymbol.contains("DKK") -> "DKK"
+                    cleanSymbol.contains("NZD") -> "NZD"
+                    cleanSymbol.contains("MXN") -> "MXN"
+                    cleanSymbol.contains("BRL") -> "BRL"
+                    cleanSymbol.contains("INR") -> "INR"
+                    cleanSymbol.contains("KRW") -> "KRW"
+                    cleanSymbol.contains("HKD") -> "HKD"
+                    cleanSymbol.contains("PLN") -> "PLN"
+                    cleanSymbol.contains("CZK") -> "CZK"
+                    cleanSymbol.contains("HUF") -> "HUF"
+                    cleanSymbol.contains("RON") -> "RON"
+                    cleanSymbol.contains("ILS") -> "ILS"
+                    cleanSymbol.contains("KWD") -> "KWD"
+                    cleanSymbol.contains("OMR") -> "OMR"
+                    cleanSymbol.contains("BHD") -> "BHD"
+                    cleanSymbol.contains("THB") -> "THB"
+                    cleanSymbol.contains("MYR") -> "MYR"
+                    cleanSymbol.contains("IDR") -> "IDR"
+                    cleanSymbol.contains("PHP") -> "PHP"
+                    cleanSymbol.contains("PKR") -> "PKR"
+                    cleanSymbol.contains("EGP") -> "EGP"
+                    cleanSymbol.contains("ZAR") -> "ZAR"
+                    cleanSymbol.contains("MAD") -> "MAD"
+                    cleanSymbol.contains("GEL") -> "GEL"
+                    cleanSymbol.contains("UAH") -> "UAH"
+                    cleanSymbol.contains("BGN") -> "BGN"
+                    cleanSymbol.contains("ISK") -> "ISK"
+                    cleanSymbol.contains("KAZ") || cleanSymbol.contains("KZT") -> "KZT"
+                    cleanSymbol.contains("VND") -> "VND"
+                    else -> symbol
                 }
             }
             type == AssetType.EMTIA -> {

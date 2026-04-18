@@ -85,11 +85,6 @@ class BesCalculatorDialogFragment : DialogFragment() {
         binding.editAnnualReturn.addTextChangedListener { binding.editAnnualReturn.error = null }
         binding.editStateRate.addTextChangedListener { binding.editStateRate.error = null }
 
-        // Sensible defaults
-        binding.editYears.setText("10")
-        binding.editAnnualReturn.setText("30")
-        binding.editStateRate.setText("30")
-
         return dialog
     }
 

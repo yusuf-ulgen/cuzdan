@@ -143,16 +143,57 @@ class MarketAdapter(
             }
 
             // Set Icon/Logo
-            val iconUrl = getAssetIconUrl(item)
-            if (iconUrl != null) {
-                imageMarketIcon.load(iconUrl) {
-                    crossfade(true)
-                    placeholder(placeholderRes)
-                    error(placeholderRes)
+            val isDovizOrNakit = item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.DOVIZ ||
+                                  item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.NAKIT
+            val isEmtiaType = item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.EMTIA
+
+            when {
+                isCashTool -> {
+                    // Force Turkish flag for all Nakit tools (Kasa, BES, etc)
+                    val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(root.context, "🇹🇷", 32f)
+                    imageMarketIcon.setImageDrawable(d)
+                    ImageViewCompat.setImageTintList(imageMarketIcon, null)
                 }
-            } else {
-                imageMarketIcon.setImageResource(placeholderRes)
-                applyCurrencyCustomTint(imageMarketIcon, placeholderRes)
+                isDovizOrNakit -> {
+                    // Use emoji country flag
+                    val code = item.symbol.uppercase().let { sym ->
+                        if (sym.contains("/")) sym.substringBefore("/") else sym
+                    }.take(3)
+                    val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.currencyToFlagEmoji(code)
+                    if (emoji != null) {
+                        val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(root.context, emoji, 32f)
+                        imageMarketIcon.setImageDrawable(d)
+                        ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                    } else {
+                        imageMarketIcon.setImageResource(placeholderRes)
+                        applyCurrencyCustomTint(imageMarketIcon, placeholderRes)
+                    }
+                }
+                isEmtiaType -> {
+                    val sym = item.symbol.uppercase()
+                    val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.commodityToEmoji(sym)
+                    if (emoji != null) {
+                        val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(root.context, emoji, 28f)
+                        imageMarketIcon.setImageDrawable(d)
+                        ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                    } else {
+                        imageMarketIcon.setImageResource(placeholderRes)
+                        ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                    }
+                }
+                else -> {
+                    val iconUrl = getAssetIconUrl(item)
+                    if (iconUrl != null) {
+                        imageMarketIcon.load(iconUrl) {
+                            crossfade(true)
+                            placeholder(placeholderRes)
+                            error(placeholderRes)
+                        }
+                    } else {
+                        imageMarketIcon.setImageResource(placeholderRes)
+                        applyCurrencyCustomTint(imageMarketIcon, placeholderRes)
+                    }
+                }
             }
 
             root.setOnClickListener {

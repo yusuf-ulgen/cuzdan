@@ -75,6 +75,7 @@
             android:layout_width="match_parent"
             android:layout_height="56dp"
             android:orientation="horizontal"
+            android:background="@color/surface_glass_strong"
             android:padding="6dp">
 
             <Button

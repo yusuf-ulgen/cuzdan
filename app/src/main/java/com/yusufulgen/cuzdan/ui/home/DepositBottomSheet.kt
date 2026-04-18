@@ -28,9 +28,9 @@ class DepositBottomSheet : BottomSheetDialogFragment() {
     private var selectedCurrency = "TL"
     private var isWithdrawMode = false
 
-    private val colorPurple get() = android.content.res.ColorStateList.valueOf(0xFF8B5CF6.toInt())
-    private val colorRed    get() = android.content.res.ColorStateList.valueOf(0xFFEF4444.toInt())
-    private val colorClear  get() = android.content.res.ColorStateList.valueOf(Color.TRANSPARENT)
+    private val colorPurple   get() = android.content.res.ColorStateList.valueOf(0xFF8B5CF6.toInt())
+    private val colorRed       get() = android.content.res.ColorStateList.valueOf(0xFFEF4444.toInt())
+    private val colorInactive  get() = android.content.res.ColorStateList.valueOf(0x22FFFFFF)
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialog)
@@ -66,25 +66,19 @@ class DepositBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun updateModeButtons() {
-        val textSecondaryColor = run {
-            val tv = android.util.TypedValue()
-            requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textSecondary, tv, true)
-            tv.data
-        }
-
         if (!isWithdrawMode) {
             binding.btnModeDeposit.backgroundTintList = colorPurple
             binding.btnModeDeposit.setTextColor(Color.WHITE)
-            binding.btnModeWithdraw.backgroundTintList = colorClear
-            binding.btnModeWithdraw.setTextColor(textSecondaryColor)
+            binding.btnModeWithdraw.backgroundTintList = colorInactive
+            binding.btnModeWithdraw.setTextColor(0xAAFFFFFF.toInt())
             binding.textTitle.text = getString(R.string.deposit_title)
             binding.btnConfirm.text = getString(R.string.deposit_confirm)
             binding.btnConfirm.backgroundTintList = colorPurple
         } else {
             binding.btnModeWithdraw.backgroundTintList = colorPurple
             binding.btnModeWithdraw.setTextColor(Color.WHITE)
-            binding.btnModeDeposit.backgroundTintList = colorClear
-            binding.btnModeDeposit.setTextColor(textSecondaryColor)
+            binding.btnModeDeposit.backgroundTintList = colorInactive
+            binding.btnModeDeposit.setTextColor(0xAAFFFFFF.toInt())
             binding.textTitle.text = getString(R.string.withdraw_title)
             binding.btnConfirm.text = getString(R.string.withdraw_confirm)
             binding.btnConfirm.backgroundTintList = colorPurple

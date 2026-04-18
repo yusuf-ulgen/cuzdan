@@ -4,8 +4,15 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.yusufulgen.cuzdan.databinding.ItemAssetTypeBinding
+import com.yusufulgen.cuzdan.util.EmojiDrawableHelper
 
-data class AssetType(val id: Int, val title: String, val assetType: String, val iconRes: Int)
+data class AssetType(
+    val id: Int,
+    val title: String,
+    val assetType: String,
+    val iconRes: Int,
+    val emojiIcon: String? = null  // Optional emoji override for the icon
+)
 
 class AssetTypeAdapter(private val items: List<AssetType>, private val onClick: (AssetType) -> Unit) :
     RecyclerView.Adapter<AssetTypeAdapter.ViewHolder>() {
@@ -20,7 +27,12 @@ class AssetTypeAdapter(private val items: List<AssetType>, private val onClick: 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.binding.textTitle.text = item.title
-        holder.binding.imageIcon.setImageResource(item.iconRes)
+        if (item.emojiIcon != null) {
+            val drawable = EmojiDrawableHelper.emojiToDrawable(holder.binding.root.context, item.emojiIcon, 36f)
+            holder.binding.imageIcon.setImageDrawable(drawable)
+        } else {
+            holder.binding.imageIcon.setImageResource(item.iconRes)
+        }
         holder.binding.root.setOnClickListener { onClick(item) }
     }
 
