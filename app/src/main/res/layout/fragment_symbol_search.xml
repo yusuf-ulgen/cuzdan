@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground">
+    android:background="?android:attr/windowBackground">
 
 
     <ImageButton
@@ -18,7 +18,7 @@
         android:src="@drawable/ic_chevron_left"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
 
     <TextView
@@ -31,7 +31,7 @@
         android:maxLines="1"
         android:ellipsize="end"
         android:text="Varlık Seç"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toStartOf="@id/btn_currency_switcher"
@@ -50,7 +50,7 @@
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toStartOf="@id/btn_favorites"
         app:layout_constraintTop_toTopOf="@id/btn_back"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
     <ImageButton
         android:id="@+id/btn_favorites"
@@ -63,7 +63,7 @@
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/btn_back"
-        app:tint="?attr/accentColor" />
+        app:tint="?attr/colorPrimary" />
 
 
 
@@ -95,8 +95,8 @@
             android:hint="@string/asset_search_hint"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:textColor="?attr/textPrimary"
-            android:textColorHint="?attr/textSecondary"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?android:attr/textColorSecondary"
 
             android:textSize="15sp" />
     </LinearLayout>

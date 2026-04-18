@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground"
+    android:background="?android:attr/windowBackground"
     tools:context=".ui.markets.MarketsFragment">
 
     <!-- Header -->
@@ -15,7 +15,7 @@
         android:layout_marginTop="32dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/title_markets"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="32sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -31,7 +31,7 @@
         app:layout_constraintBottom_toBottomOf="@id/text_markets_header"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_markets_header"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
     <ImageButton
         android:id="@+id/btn_favorites"
@@ -44,7 +44,7 @@
         app:layout_constraintBottom_toBottomOf="@id/text_markets_header"
         app:layout_constraintEnd_toStartOf="@id/btn_sort"
         app:layout_constraintTop_toTopOf="@id/text_markets_header"
-        app:tint="?attr/accentColor" />
+        app:tint="?attr/colorPrimary" />
 
 
     <!-- Search Box -->
@@ -75,8 +75,8 @@
             android:layout_marginStart="12dp"
             android:background="@android:color/transparent"
             android:hint="@string/asset_search_hint"
-            android:textColor="?attr/textPrimary"
-            android:textColorHint="?attr/textSecondary"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?android:attr/textColorSecondary"
             android:textSize="14sp" />
     </LinearLayout>
 

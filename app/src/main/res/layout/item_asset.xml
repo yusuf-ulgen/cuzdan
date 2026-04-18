@@ -26,7 +26,7 @@
         app:layout_constraintEnd_toEndOf="@id/viewIconBg"
         app:layout_constraintStart_toStartOf="@id/viewIconBg"
         app:layout_constraintTop_toTopOf="@id/viewIconBg"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
     <!-- Top Left: Asset Name -->
     <TextView
@@ -34,7 +34,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:fontFamily="sans-serif-bold"
         app:layout_constraintStart_toEndOf="@id/viewIconBg"
@@ -47,7 +47,7 @@
         android:id="@+id/tvAssetPrice"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="15sp"
         android:fontFamily="sans-serif-bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -59,7 +59,7 @@
         android:id="@+id/tvAssetChangePerc"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintStart_toStartOf="@id/tvAssetName"
@@ -71,7 +71,7 @@
         android:id="@+id/tvAssetChangeAbs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         android:fontFamily="sans-serif-medium"
         app:layout_constraintEnd_toEndOf="parent"

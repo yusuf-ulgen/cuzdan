@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/cash_term_deposit_desc"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="13sp" />
 
     <com.google.android.material.textfield.TextInputLayout
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/cash_result_placeholder"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="14sp" />
 
 </LinearLayout>

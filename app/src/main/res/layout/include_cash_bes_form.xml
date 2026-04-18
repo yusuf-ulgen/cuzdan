@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/cash_bes_desc"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="13sp" />
 
     <EditText
@@ -20,8 +20,8 @@
         android:hint="@string/cash_input_principal_try"
         android:inputType="numberDecimal"
         android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary" />
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?android:attr/textColorSecondary" />
 
     <EditText
         android:id="@+id/edit_years"
@@ -32,8 +32,8 @@
         android:hint="@string/cash_input_years"
         android:inputType="number"
         android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary" />
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?android:attr/textColorSecondary" />
 
     <EditText
         android:id="@+id/edit_annual_return"
@@ -44,8 +44,8 @@
         android:hint="@string/cash_input_annual_return_rate"
         android:inputType="numberDecimal"
         android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary" />
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?android:attr/textColorSecondary" />
 
     <EditText
         android:id="@+id/edit_state_rate"
@@ -56,8 +56,8 @@
         android:hint="@string/cash_input_state_contribution_rate"
         android:inputType="numberDecimal"
         android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary" />
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?android:attr/textColorSecondary" />
 
     <TextView
         android:id="@+id/text_result"
@@ -65,7 +65,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/cash_result_placeholder"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="14sp" />
 
 </LinearLayout>

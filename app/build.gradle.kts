@@ -9,14 +9,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.cuzdan"
-    compileSdk = 34
+    namespace = "com.yusufulgen.cuzdan"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.cuzdan"
+        applicationId = "com.yusufulgen.cuzdan"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        versionCode = 2
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

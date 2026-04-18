@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="layoutBackground" format="reference" />
-    <attr name="surfaceGlass" format="color" />
-    <attr name="surfaceGlassStrong" format="color" />
-    <attr name="textPrimary" format="color" />
-    <attr name="textSecondary" format="color" />
-    <attr name="accentColor" format="color" />
-    <attr name="accentGlow" format="color" />
-    <attr name="iconTint" format="color" />
-    <attr name="divider_light" format="color" />
-    <attr name="pill_red_bg" format="color" />
-    <attr name="pill_red_text" format="color" />
-    <attr name="pill_green_bg" format="color" />
-    <attr name="pill_green_text" format="color" />
-    <attr name="sheetBackground" format="reference" />
+    <declare-styleable name="CuzdanTheme">
+        <attr name="layoutBackground" format="reference" />
+        <attr name="surfaceGlass" format="reference|color" />
+        <attr name="surfaceGlassStrong" format="reference|color" />
+        <attr name="textPrimary" format="reference|color" />
+        <attr name="textSecondary" format="reference|color" />
+        <attr name="accentColor" format="reference|color" />
+        <attr name="accentGlow" format="reference|color" />
+        <attr name="iconTint" format="reference|color" />
+        <attr name="divider_light" format="reference|color" />
+        <attr name="pill_red_bg" format="reference|color" />
+        <attr name="pill_red_text" format="reference|color" />
+        <attr name="pill_green_bg" format="reference|color" />
+        <attr name="pill_green_text" format="reference|color" />
+        <attr name="sheetBackground" format="reference" />
+    </declare-styleable>
 </resources>

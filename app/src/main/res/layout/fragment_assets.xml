@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground"
+    android:background="?android:attr/windowBackground"
     tools:context=".ui.assets.AssetsFragment">
 
     <TextView
@@ -15,7 +15,7 @@
         android:layout_marginTop="48dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/nav_add_asset"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="32sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

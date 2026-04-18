@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground">
+    android:background="?android:attr/windowBackground">
 
 
     <ImageButton
@@ -18,7 +18,7 @@
         android:src="@drawable/ic_chevron_left"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
 
     <TextView
@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-black"
         android:text="@string/detail_title"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="22sp"
         android:transitionName="shared_asset_name"
         app:layout_constraintBottom_toTopOf="@id/text_portfolio_name"
@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif"
         android:text="Portföy: Ana Portföy"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
         app:layout_constraintEnd_toEndOf="parent"
@@ -56,7 +56,7 @@
         android:layout_marginTop="12dp"
         android:transitionName="shared_asset_icon"
         android:src="@drawable/ic_asset_placeholder"
-        app:tint="?attr/iconTint"
+        app:tint="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_portfolio_name" />
@@ -72,7 +72,7 @@
         app:layout_constraintEnd_toStartOf="@id/btn_delete"
         app:layout_constraintTop_toTopOf="@id/btn_back"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
-        app:tint="?attr/accentColor" />
+        app:tint="?attr/colorPrimary" />
 
     <ImageButton
         android:id="@+id/btn_delete"
@@ -85,7 +85,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/btn_back"
         app:layout_constraintBottom_toBottomOf="@id/btn_back"
-        app:tint="?attr/accentColor" />
+        app:tint="?attr/colorPrimary" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -104,7 +104,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardBackgroundColor="@color/surface_glass_strong"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -121,7 +121,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif-black"
                         android:text="₺0.00"
-                        android:textColor="?attr/textPrimary"
+                        android:textColor="?attr/colorOnSurface"
                         android:textSize="28sp"
 
                         app:layout_constraintStart_toStartOf="parent"
@@ -133,7 +133,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:text="+0.00%"
-                        android:textColor="?attr/pill_green_text"
+                        android:textColor="?attr/colorPrimary"
                         android:textSize="14sp"
                         app:layout_constraintBottom_toBottomOf="@id/text_current_price"
                         app:layout_constraintStart_toEndOf="@id/text_current_price"
@@ -161,35 +161,35 @@
 
                         <Button
                             android:id="@+id/btnRange1W"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:text="7G"
                             android:textSize="10sp"
-                            android:textColor="?attr/textPrimary"
-                            app:strokeColor="?attr/surfaceGlassStrong" />
+                            android:textColor="?attr/colorOnSurface"
+                            app:strokeColor="@color/divider_color" />
 
 
                         <Button
                             android:id="@+id/btnRange1M"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:text="1A"
                             android:textSize="10sp"
-                            android:textColor="?attr/textPrimary"
-                            app:strokeColor="?attr/surfaceGlassStrong" />
+                            android:textColor="?attr/colorOnSurface"
+                            app:strokeColor="@color/divider_color" />
 
 
                         <Button
                             android:id="@+id/btnRange1Y"
-                            style="?attr/materialButtonOutlinedStyle"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="36dp"
                             android:text="1Y"
                             android:textSize="10sp"
-                            android:textColor="?attr/textPrimary"
-                            app:strokeColor="?attr/surfaceGlassStrong" />
+                            android:textColor="?attr/colorOnSurface"
+                            app:strokeColor="@color/divider_color" />
 
 
                     </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -205,7 +205,7 @@
                 android:layout_marginStart="8dp"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/detail_quantity_cost"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="20sp" />
 
 
@@ -213,7 +213,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardBackgroundColor="@color/surface_glass_strong"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -244,7 +244,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Eldeki: 0.00"
-                            android:textColor="?attr/accentColor"
+                            android:textColor="?attr/colorPrimary"
                             android:textSize="12sp"
                             android:layout_marginEnd="8dp"
                             android:fontFamily="sans-serif-medium" />
@@ -254,7 +254,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/detail_unit"
-                            android:textColor="?attr/accentColor"
+                            android:textColor="?attr/colorPrimary"
                             android:textSize="12sp"
                             android:fontFamily="sans-serif-medium" />
                     </LinearLayout>
@@ -268,8 +268,8 @@
                         android:hint="0.00"
                         android:inputType="numberDecimal"
                         android:paddingHorizontal="16dp"
-                        android:textColor="?attr/textPrimary"
-                        android:textColorHint="?attr/textSecondary" />
+                        android:textColor="?attr/colorOnSurface"
+                        android:textColorHint="?android:attr/textColorSecondary" />
 
 
                     <LinearLayout
@@ -295,8 +295,8 @@
                             android:hint="0.00"
                             android:inputType="numberDecimal"
                             android:paddingHorizontal="16dp"
-                            android:textColor="?attr/textPrimary"
-                            android:textColorHint="?attr/textSecondary" />
+                            android:textColor="?attr/colorOnSurface"
+                            android:textColorHint="?android:attr/textColorSecondary" />
 
                     </LinearLayout>
 
@@ -316,25 +316,25 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnBuy"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:text="@string/detail_buy"
                     android:fontFamily="sans-serif-black"
-                    android:textColor="?attr/textPrimary"
-                    app:strokeColor="?attr/surfaceGlassStrong" />
+                    android:textColor="?attr/colorOnSurface"
+                    app:strokeColor="@color/divider_color" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSell"
-                    style="?attr/materialButtonOutlinedStyle"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:text="@string/detail_sell"
                     android:fontFamily="sans-serif-black"
-                    android:textColor="?attr/textPrimary"
-                    app:strokeColor="?attr/surfaceGlassStrong" />
+                    android:textColor="?attr/colorOnSurface"
+                    app:strokeColor="@color/divider_color" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 

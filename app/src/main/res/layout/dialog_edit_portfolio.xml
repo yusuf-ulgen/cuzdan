@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-black"
         android:text="Portföyü Düzenle"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="20sp" />
 
     <EditText
@@ -22,8 +22,8 @@
         android:background="@drawable/bg_input_field"
         android:hint="Portföy Adı"
         android:paddingHorizontal="16dp"
-        android:textColor="?attr/textPrimary"
-        android:textColorHint="?attr/textSecondary"
+        android:textColor="?attr/colorOnSurface"
+        android:textColorHint="?android:attr/textColorSecondary"
         android:textSize="16sp" />
 
     <com.google.android.material.switchmaterial.SwitchMaterial
@@ -32,17 +32,17 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Portföyler Toplamına Dahil Et"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:fontFamily="sans-serif-medium"
-        app:thumbTint="?attr/accentColor"
-        app:trackTint="?attr/divider_light" />
+        app:thumbTint="?attr/colorPrimary"
+        app:trackTint="@color/divider_color" />
 
     <Button
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginTop="32dp"
-        android:backgroundTint="?attr/accentColor"
+        android:backgroundTint="?attr/colorPrimary"
         android:fontFamily="sans-serif-black"
         android:text="GÜNCELLE"
         android:textColor="@color/white"

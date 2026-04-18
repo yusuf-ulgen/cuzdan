@@ -18,6 +18,17 @@
         <item name="iconTint">@color/white</item>
         <item name="divider_light">@color/divider_color</item>
         <item name="sheetBackground">@drawable/bg_bottom_sheet</item>
+
+        <!-- Material Attributes -->
+        <item name="colorSurface">@color/surface_card_dark</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/surface_glass_strong</item>
+        <item name="colorOutline">@color/divider_color</item>
+        <item name="colorPrimaryContainer">@color/accent_violet_glow</item>
+        <item name="colorError">@color/accent_red</item>
+        <item name="colorErrorContainer">#33FF4081</item>
+        <item name="android:colorBackground">@color/bg_dark_start</item>
+        <item name="colorOnBackground">@color/white</item>
     </style>
 
     <style name="Theme.Cuzdan.Dark" parent="Theme.Cuzdan">
@@ -55,10 +66,33 @@
         <item name="pill_green_text">@color/pill_green_text</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="sheetBackground">@drawable/bg_bottom_sheet_light</item>
+
+        <!-- Material Attributes Light -->
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">@color/text_primary_light</item>
+        <item name="colorSurfaceVariant">@color/surface_light_glass_strong</item>
+        <item name="colorOutline">@color/divider_light</item>
+        <item name="colorPrimaryContainer">#1A8B5CF6</item>
+        <item name="colorError">@color/accent_red</item>
+        <item name="colorErrorContainer">@color/pill_red_bg</item>
+        <item name="android:colorBackground">@color/bg_light_start</item>
+        <item name="colorOnBackground">@color/text_primary_light</item>
     </style>
 
     <style name="CustomBottomSheetDialog" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+        <!-- Inherit color tokens from our main theme so ?attr/ works inside dialogs -->
+        <item name="colorPrimary">@color/accent_violet</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSurface">@color/surface_card_dark</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/surface_glass_strong</item>
+        <item name="colorOutline">@color/divider_color</item>
+        <item name="colorPrimaryContainer">@color/accent_violet_glow</item>
+        <item name="colorError">@color/accent_red</item>
+        <item name="colorErrorContainer">#33FF4081</item>
+        <item name="android:colorBackground">@color/bg_dark_start</item>
+        <item name="colorOnBackground">@color/white</item>
     </style>
 
     <style name="CustomBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
@@ -67,7 +101,15 @@
 
     <style name="CustomDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_glass_dialog</item>
-        <item name="android:textColorPrimary">?attr/textPrimary</item>
-        <item name="colorAccent">?attr/accentColor</item>
+        <item name="colorPrimary">@color/accent_violet</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSurface">@color/surface_card_dark</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorSurfaceVariant">@color/surface_glass_strong</item>
+        <item name="colorOutline">@color/divider_color</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="colorAccent">@color/accent_violet</item>
+        <item name="android:colorBackground">@color/bg_dark_start</item>
+        <item name="colorOnBackground">@color/white</item>
     </style>
 </resources>

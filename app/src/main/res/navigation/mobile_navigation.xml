@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/navigation_assets"
-        android:name="com.example.cuzdan.ui.assets.AssetsFragment"
+        android:name="com.yusufulgen.cuzdan.ui.assets.AssetsFragment"
         android:label="@string/nav_add_asset"
         tools:layout="@layout/fragment_assets">
         <action
@@ -16,19 +16,19 @@
 
     <fragment
         android:id="@+id/navigation_reports"
-        android:name="com.example.cuzdan.ui.reports.ReportsFragment"
+        android:name="com.yusufulgen.cuzdan.ui.reports.ReportsFragment"
         android:label="@string/nav_reports"
         tools:layout="@layout/fragment_reports" />
 
     <fragment
         android:id="@+id/navigation_alerts"
-        android:name="com.example.cuzdan.ui.alerts.AlertsFragment"
+        android:name="com.yusufulgen.cuzdan.ui.alerts.AlertsFragment"
         android:label="@string/nav_alerts"
         tools:layout="@layout/fragment_alerts" />
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="com.example.cuzdan.ui.home.HomeFragment"
+        android:name="com.yusufulgen.cuzdan.ui.home.HomeFragment"
         android:label="@string/nav_wallet"
         tools:layout="@layout/fragment_home">
         <action
@@ -43,7 +43,7 @@
 
     <fragment
         android:id="@+id/navigation_markets"
-        android:name="com.example.cuzdan.ui.markets.MarketsFragment"
+        android:name="com.yusufulgen.cuzdan.ui.markets.MarketsFragment"
         android:label="@string/nav_markets"
         tools:layout="@layout/fragment_markets">
         <action
@@ -53,7 +53,7 @@
 
     <fragment
         android:id="@+id/navigation_asset_detail"
-        android:name="com.example.cuzdan.ui.markets.AssetDetailFragment"
+        android:name="com.yusufulgen.cuzdan.ui.markets.AssetDetailFragment"
         android:label="{name}"
         tools:layout="@layout/fragment_asset_detail">
         <argument
@@ -74,19 +74,19 @@
 
     <fragment
         android:id="@+id/navigation_settings"
-        android:name="com.example.cuzdan.ui.notifications.NotificationsFragment"
+        android:name="com.yusufulgen.cuzdan.ui.notifications.NotificationsFragment"
         android:label="@string/nav_settings"
         tools:layout="@layout/fragment_notifications" />
 
     <fragment
         android:id="@+id/navigation_profit_loss_chart"
-        android:name="com.example.cuzdan.ui.reports.ProfitLossChartFragment"
+        android:name="com.yusufulgen.cuzdan.ui.reports.ProfitLossChartFragment"
         android:label="@string/nav_profit_loss_chart"
         tools:layout="@layout/fragment_profit_loss_chart" />
 
     <fragment
         android:id="@+id/navigation_symbol_search"
-        android:name="com.example.cuzdan.ui.assets.SymbolSearchFragment"
+        android:name="com.yusufulgen.cuzdan.ui.assets.SymbolSearchFragment"
         android:label="@string/nav_select_asset"
         tools:layout="@layout/fragment_symbol_search">
         <argument
@@ -108,25 +108,25 @@
 
     <fragment
         android:id="@+id/termDepositCalculatorFragment"
-        android:name="com.example.cuzdan.ui.assets.TermDepositCalculatorFragment"
+        android:name="com.yusufulgen.cuzdan.ui.assets.TermDepositCalculatorFragment"
         android:label="@string/cash_tool_term_deposit_short"
         tools:layout="@layout/fragment_term_deposit_calculator" />
 
     <fragment
         android:id="@+id/demandDepositCalculatorFragment"
-        android:name="com.example.cuzdan.ui.assets.DemandDepositCalculatorFragment"
+        android:name="com.yusufulgen.cuzdan.ui.assets.DemandDepositCalculatorFragment"
         android:label="@string/cash_tool_demand_deposit_short"
         tools:layout="@layout/fragment_demand_deposit_calculator" />
 
     <fragment
         android:id="@+id/besCalculatorFragment"
-        android:name="com.example.cuzdan.ui.assets.BesCalculatorFragment"
+        android:name="com.yusufulgen.cuzdan.ui.assets.BesCalculatorFragment"
         android:label="@string/cash_tool_bes_short"
         tools:layout="@layout/fragment_bes_calculator" />
 
     <fragment
         android:id="@+id/heatmapFragment"
-        android:name="com.example.cuzdan.ui.dashboard.HeatmapFragment"
+        android:name="com.yusufulgen.cuzdan.ui.dashboard.HeatmapFragment"
         android:label="Isı Haritası"
         tools:layout="@layout/fragment_heatmap" />
 </navigation>

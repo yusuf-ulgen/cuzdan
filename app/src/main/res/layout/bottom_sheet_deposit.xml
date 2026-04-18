@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/sheetBackground"
+    android:background="@color/surface_card_dark"
     android:paddingBottom="32dp">
 
     <!-- Handle -->
@@ -12,7 +12,7 @@
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_marginTop="8dp"
-        android:background="?attr/divider_light"
+        android:background="@color/divider_color"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -26,7 +26,7 @@
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/deposit_title"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="28sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/view_handle" />
@@ -42,7 +42,7 @@
         app:layout_constraintBottom_toBottomOf="@id/text_title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/text_title"
-        app:tint="?attr/iconTint" />
+        app:tint="?attr/colorOnSurface" />
 
     <!-- Subtitle -->
     <TextView
@@ -54,7 +54,7 @@
         android:alpha="0.6"
         android:fontFamily="sans-serif"
         android:text="@string/deposit_subtitle"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?android:attr/textColorSecondary"
         android:textSize="13sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/text_title" />
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        app:cardBackgroundColor="?attr/surfaceGlass"
+        app:cardBackgroundColor="@color/surface_card_dark"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:layout_constraintTop_toBottomOf="@id/text_subtitle">
@@ -95,7 +95,7 @@
                 android:layout_weight="1"
                 android:fontFamily="sans-serif-bold"
                 android:text="@string/deposit_withdraw"
-                android:textColor="?attr/textSecondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:textSize="14sp"
                 app:cornerRadius="12dp" />
         </LinearLayout>
@@ -110,7 +110,7 @@
         android:layout_marginTop="24dp"
         android:fontFamily="sans-serif-bold"
         android:text="@string/deposit_amount_label"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_mode_toggle" />
@@ -133,7 +133,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            app:boxBackgroundColor="?attr/surfaceGlassStrong"
+            app:boxBackgroundColor="@color/surface_glass_strong"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
@@ -148,8 +148,8 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-bold"
                 android:inputType="numberDecimal"
-                android:textColor="?attr/textPrimary"
-                android:textColorHint="?attr/textSecondary"
+                android:textColor="?attr/colorOnSurface"
+                android:textColorHint="?android:attr/textColorSecondary"
                 android:textSize="18sp"
                 android:hint="0,00" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -160,7 +160,7 @@
             android:layout_width="wrap_content"
             android:layout_height="56dp"
             android:layout_marginStart="12dp"
-            app:cardBackgroundColor="?attr/surfaceGlassStrong"
+            app:cardBackgroundColor="@color/surface_glass_strong"
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp">
 
@@ -177,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
                     android:text="₺"
-                    android:textColor="?attr/textPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="20sp" />
 
                 <ImageView
@@ -185,7 +185,7 @@
                     android:layout_height="16dp"
                     android:layout_marginStart="4dp"
                     android:src="@drawable/ic_arrow_drop_down"
-                    app:tint="?attr/textSecondary" />
+                    app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
@@ -197,7 +197,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="16dp"
-        app:cardBackgroundColor="?attr/surfaceGlass"
+        app:cardBackgroundColor="@color/surface_card_dark"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:layout_constraintTop_toBottomOf="@id/layout_amount_row">
@@ -214,7 +214,7 @@
                 android:alpha="0.6"
                 android:fontFamily="sans-serif"
                 android:text="@string/deposit_current_invested"
-                android:textColor="?attr/textSecondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:textSize="12sp" />
 
             <TextView
@@ -224,7 +224,7 @@
                 android:layout_marginTop="2dp"
                 android:fontFamily="sans-serif-black"
                 android:text="₺0,00"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="20sp" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
@@ -236,7 +236,7 @@
         android:layout_height="56dp"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        android:backgroundTint="?attr/accentColor"
+        android:backgroundTint="?attr/colorPrimary"
         android:fontFamily="sans-serif-black"
         android:text="@string/deposit_confirm"
         android:textColor="@color/white"

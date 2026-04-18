@@ -2,7 +2,7 @@
     android:color="#40FFFFFF">
     <item>
         <shape android:shape="oval">
-            <solid android:color="?attr/surfaceGlassStrong" />
+            <solid android:color="@color/surface_glass_strong" />
         </shape>
     </item>
 </ripple>

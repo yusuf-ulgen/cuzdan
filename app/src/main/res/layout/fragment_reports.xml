@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground">
+    android:background="?android:attr/windowBackground">
 
 
     <!-- Top Bar with Header and Icons -->
@@ -17,7 +17,7 @@
         android:layout_marginEnd="12dp"
         android:fontFamily="sans-serif-black"
         android:text="@string/title_reports"
-        android:textColor="?attr/textPrimary"
+        android:textColor="?attr/colorOnSurface"
         android:textSize="24sp"
         android:maxLines="1"
         android:ellipsize="none"
@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:text="19:30"
-                android:textColor="?attr/textSecondary"
+                android:textColor="?android:attr/textColorSecondary"
                 android:textSize="10sp"
                 tools:text="19:30" />
 
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-black"
                 android:text="OFFLINE"
-                android:textColor="?attr/pill_red_text"
+                android:textColor="@color/accent_red"
                 android:textSize="10sp"
                 android:visibility="gone"
                 tools:visibility="visible" />
@@ -74,7 +74,7 @@
             android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_tl"
-            app:tint="?attr/iconTint" />
+            app:tint="?attr/colorOnSurface" />
 
         <ImageButton
             android:id="@+id/btn_privacy_toggle"
@@ -85,7 +85,7 @@
             android:padding="8dp"
             android:scaleType="centerInside"
             android:src="@drawable/ic_eye_on"
-            app:tint="?attr/iconTint" />
+            app:tint="?attr/colorOnSurface" />
 
     </LinearLayout>
 
@@ -121,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/label_profit_loss"
-                    android:textColor="?attr/textPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="24sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -147,7 +147,7 @@
                     android:layout_height="28dp"
                     android:padding="4dp"
                     android:src="@drawable/ic_chevron_left"
-                    app:tint="?attr/textPrimary" />
+                    app:tint="?attr/colorOnSurface" />
 
                 <TextView
                     android:id="@+id/text_portfolio_name"
@@ -156,7 +156,7 @@
                     android:layout_marginHorizontal="16dp"
                     android:fontFamily="sans-serif-black"
                     android:text="@string/total_portfolios"
-                    android:textColor="?attr/textPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp" />
 
                 <ImageView
@@ -165,7 +165,7 @@
                     android:layout_height="28dp"
                     android:padding="4dp"
                     android:src="@drawable/ic_chevron_right"
-                    app:tint="?attr/textPrimary" />
+                    app:tint="?attr/colorOnSurface" />
             </LinearLayout>
 
             <!-- Total Amount Section -->
@@ -174,7 +174,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="64dp"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="42sp"
                 android:textStyle="bold"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -191,7 +191,7 @@
                 android:background="@drawable/bg_pill"
                 android:paddingHorizontal="8dp"
                 android:paddingVertical="2dp"
-                android:textColor="?attr/pill_red_text"
+                android:textColor="@color/accent_red"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:visibility="gone"
@@ -219,7 +219,7 @@
                     android:id="@+id/text_daily_change_abs"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="?attr/pill_red_text"
+                    android:textColor="@color/accent_red"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     tools:text="- 1.643" />
@@ -229,7 +229,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
-                    android:textColor="?attr/pill_red_text"
+                    android:textColor="@color/accent_red"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     tools:text="%103,8" />
@@ -240,7 +240,7 @@
                     android:layout_height="20dp"
                     android:layout_marginStart="8dp"
                     android:src="@drawable/ic_arrow_drop_down"
-                    app:tint="?attr/pill_red_text" />
+                    app:tint="@color/accent_red" />
             </LinearLayout>
 
             <TextView
@@ -251,7 +251,7 @@
                 android:alpha="0.4"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/label_daily_profit_loss"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="11sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

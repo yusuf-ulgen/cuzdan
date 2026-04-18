@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/layoutBackground"
+    android:background="?android:attr/windowBackground"
 
     android:fillViewport="true">
 
@@ -22,7 +22,7 @@
             android:layout_marginTop="32dp"
             android:fontFamily="sans-serif-black"
             android:text="@string/title_home"
-            android:textColor="?attr/textPrimary"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="24sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -47,7 +47,7 @@
                 android:padding="9dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_add"
-                app:tint="?attr/iconTint" />
+                app:tint="?attr/colorOnSurface" />
 
             <ImageButton
                 android:id="@+id/btn_currency_switcher"
@@ -58,7 +58,7 @@
                 android:padding="9dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_tl"
-                app:tint="?attr/iconTint" />
+                app:tint="?attr/colorOnSurface" />
 
             <ImageButton
                 android:id="@+id/btn_privacy_toggle"
@@ -69,14 +69,14 @@
                 android:padding="9dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_eye_on"
-                app:tint="?attr/iconTint" />
+                app:tint="?attr/colorOnSurface" />
 
         </LinearLayout>
 
 
 
         <!-- Donut Chart Centered Top -->
-        <com.example.cuzdan.ui.home.DonutChartView
+        <com.yusufulgen.cuzdan.ui.home.DonutChartView
             android:id="@+id/donut_chart"
             android:layout_width="0dp"
             android:layout_height="200dp"
@@ -113,7 +113,7 @@
                 android:layout_height="32dp"
                 android:padding="8dp"
                 android:src="@drawable/ic_chevron_left"
-                app:tint="?attr/textPrimary" />
+                app:tint="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/text_portfolio_name"
@@ -123,7 +123,7 @@
                 android:fontFamily="sans-serif-black"
                 android:text="@string/total_portfolios"
                 android:visibility="visible"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp" />
 
             <ImageView
@@ -132,7 +132,7 @@
                 android:layout_height="32dp"
                 android:padding="8dp"
                 android:src="@drawable/ic_chevron_right"
-                app:tint="?attr/textPrimary" />
+                app:tint="?attr/colorOnSurface" />
         </LinearLayout>
 
 
@@ -155,7 +155,7 @@
                 android:fontFamily="sans-serif-black"
                 android:letterSpacing="-0.03"
                 android:text="₺0,00"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="44sp" />
 
             <!-- Daily Change Section (Pill) -->
@@ -178,7 +178,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="+₺0,00 (%0,00)"
-                    android:textColor="?attr/pill_green_text"
+                    android:textColor="@color/accent_green"
                     android:fontFamily="sans-serif-bold"
                     android:textSize="14sp" />
                 
@@ -188,7 +188,7 @@
                     android:layout_marginStart="4dp"
                     android:src="@drawable/ic_arrow_drop_down"
                     android:alpha="0.5"
-                    app:tint="?attr/textSecondary" />
+                    app:tint="?android:attr/textColorSecondary" />
             </LinearLayout>
 
             <TextView
@@ -199,7 +199,7 @@
                 android:alpha="0.4"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/label_daily_change_header"
-                android:textColor="?attr/textPrimary"
+                android:textColor="?attr/colorOnSurface"
                 android:textSize="11sp" />
 
         </LinearLayout>
