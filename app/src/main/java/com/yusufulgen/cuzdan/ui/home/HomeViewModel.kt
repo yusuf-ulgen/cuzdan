@@ -57,6 +57,11 @@ data class WalletCategorySummary(
     val iconRes: Int = 0
 )
 
+data class AssetDailyValues(
+    val dailyProfitBase: BigDecimal,
+    val prevValueBase: BigDecimal
+)
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val assetRepository: AssetRepository,
@@ -128,23 +133,19 @@ class HomeViewModel @Inject constructor(
 
                     // DAILY CHANGE Calculation for the portfolio
                     var portfolioDailyProfitBase = BigDecimal.ZERO
-                    var portfolioPrevValueBase = idleCashInTry // Start with cash, which has 0 change
+                    var portfolioPrevValueBase = idleCashInTry
+
+                    val cal = java.util.Calendar.getInstance()
+                    val dayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+                    val isWeekend = dayOfWeek == java.util.Calendar.SATURDAY || dayOfWeek == java.util.Calendar.SUNDAY
+                    val hr = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                    val min = cal.get(java.util.Calendar.MINUTE)
+                    val isBistClosed = isWeekend || (hr < 9) || (hr == 9 && min < 55)
 
                     assets.forEach { asset ->
-                        val assetRate = when (asset.currency) {
-                            "USD" -> usdRate ?: BigDecimal("32.5")
-                            "EUR" -> eurRate ?: BigDecimal("35.2")
-                            else -> BigDecimal.ONE
-                        }
-                        if (asset.amount > BigDecimal.ZERO) {
-                            val denom = BigDecimal.ONE.add(asset.dailyChangePercentage.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
-                            if (denom.compareTo(BigDecimal.ZERO) != 0) {
-                                val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
-                                val diff = asset.currentPrice.subtract(prevPrice)
-                                portfolioDailyProfitBase = portfolioDailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
-                                portfolioPrevValueBase = portfolioPrevValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
-                            }
-                        }
+                        val values = calculateAssetDailyValues(asset, usdRate, eurRate, isBistClosed)
+                        portfolioDailyProfitBase = portfolioDailyProfitBase.add(values.dailyProfitBase)
+                        portfolioPrevValueBase = portfolioPrevValueBase.add(values.prevValueBase)
                     }
 
                     val dailyChangeAbs = portfolioDailyProfitBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
@@ -299,30 +300,14 @@ class HomeViewModel @Inject constructor(
         var totalDailyProfitBase = BigDecimal.ZERO
         var totalPrevDayValueBase = BigDecimal.ZERO
 
+        val isBistClosed = isBistClosedForToday
         assets.forEach { asset ->
-            val assetRate = when (asset.currency) {
-                "USD" -> usdRate ?: BigDecimal("32.5")
-                "EUR" -> eurRate ?: BigDecimal("35.2")
-                else -> BigDecimal.ONE
-            }
-            totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
-            totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
+            totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(when(asset.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}))
+            totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(when(asset.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}))
             
-            // Calculate individual asset daily P/L
-            if (asset.amount > BigDecimal.ZERO) {
-                var pct = asset.dailyChangePercentage
-                if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
-                    pct = BigDecimal.ZERO
-                }
-
-                val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
-                if (denom.compareTo(BigDecimal.ZERO) != 0) {
-                    val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
-                    val diff = asset.currentPrice.subtract(prevPrice)
-                    totalDailyProfitBase = totalDailyProfitBase.add(asset.amount.multiply(diff).multiply(assetRate))
-                    totalPrevDayValueBase = totalPrevDayValueBase.add(asset.amount.multiply(prevPrice).multiply(assetRate))
-                }
-            }
+            val values = calculateAssetDailyValues(asset, usdRate, eurRate, isBistClosed)
+            totalDailyProfitBase = totalDailyProfitBase.add(values.dailyProfitBase)
+            totalPrevDayValueBase = totalPrevDayValueBase.add(values.prevValueBase)
         }
 
         // 1. Calculate Idle Cash in Base Currency (TRY)
@@ -336,18 +321,27 @@ class HomeViewModel @Inject constructor(
         val idleCashConv: BigDecimal
 
         if (currentId == -1L) {
-            // "Portföyler Toplamı" mode: Sum of all included portfolios' balance
+            // "Portföyler Toplamı" mode
             val includedPortfolios = portfolios.filter { it.portfolio.isIncludedInTotal }
             finalTotalBalance = includedPortfolios.sumOf { it.balance }
             dailyChangeAbs = includedPortfolios.sumOf { it.dailyChangeAbs }
             
-            // Percentage for total is weighted based on total previous value
-            val totalPrevValueTry = totalPrevDayValueBase.add(includedPortfolios.sumOf { it.portfolio.depositedAmount })
+            val totalIdleCashTry = includedPortfolios.sumOf { p ->
+                // Recalculate idle cash correctly: Investment - Cost
+                var pCostBase = BigDecimal.ZERO
+                assets.filter { it.portfolioId == p.portfolio.id }.forEach { a ->
+                    val aRate = when(a.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}
+                    pCostBase = pCostBase.add(a.amount.multiply(a.averageBuyPrice).multiply(aRate))
+                }
+                (p.portfolio.depositedAmount - pCostBase).coerceAtLeast(BigDecimal.ZERO)
+            }
+            
+            val totalPrevValueTry = totalPrevDayValueBase.add(totalIdleCashTry)
             dailyChangePerc = if (totalPrevValueTry > BigDecimal.ZERO) {
                 totalDailyProfitBase.multiply(BigDecimal("100")).divide(totalPrevValueTry, 2, RoundingMode.HALF_UP)
             } else BigDecimal.ZERO
             
-            idleCashTry = includedPortfolios.sumOf { it.portfolio.depositedAmount }
+            idleCashTry = totalIdleCashTry
             idleCashConv = idleCashTry.divide(exchangeRate, 2, RoundingMode.HALF_UP)
         } else {
             // Single portfolio mode
@@ -671,4 +665,29 @@ class HomeViewModel @Inject constructor(
         calculateStats(_currentAssets.value, _expandedCategory.value, _homeCurrency.value, _usdRate.value, _eurRate.value, activityContext)
     }
 
+    private fun calculateAssetDailyValues(asset: Asset, usdRate: BigDecimal?, eurRate: BigDecimal?, isBistClosed: Boolean): AssetDailyValues {
+        val assetRate = when (asset.currency) {
+            "USD" -> usdRate ?: BigDecimal("32.5")
+            "EUR" -> eurRate ?: BigDecimal("35.2")
+            else -> BigDecimal.ONE
+        }
+        
+        if (asset.amount <= BigDecimal.ZERO) return AssetDailyValues(BigDecimal.ZERO, BigDecimal.ZERO)
+        
+        var pct = asset.dailyChangePercentage
+        if (asset.assetType == AssetType.BIST && isBistClosed) {
+            pct = BigDecimal.ZERO
+        }
+        
+        val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 12, RoundingMode.HALF_UP))
+        if (denom.compareTo(BigDecimal.ZERO) == 0) return AssetDailyValues(BigDecimal.ZERO, asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+        
+        val prevPrice = asset.currentPrice.divide(denom, 12, RoundingMode.HALF_UP)
+        val diff = asset.currentPrice.subtract(prevPrice)
+        
+        return AssetDailyValues(
+            dailyProfitBase = asset.amount.multiply(diff).multiply(assetRate),
+            prevValueBase = asset.amount.multiply(prevPrice).multiply(assetRate)
+        )
+    }
 }

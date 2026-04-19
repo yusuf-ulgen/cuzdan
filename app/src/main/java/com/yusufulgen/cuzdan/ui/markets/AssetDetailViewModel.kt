@@ -70,10 +70,11 @@ class AssetDetailViewModel @Inject constructor(
         }
     }
 
-    fun updateRange(range: String) {
+    fun updateRange(rangeInput: String) {
+        val range = if (rangeInput == "1w") "5d" else rangeInput
         val interval = when (range) {
             "1d" -> "1m"
-            "1w" -> "30m"
+            "5d" -> "15m"
             "1mo" -> "1h"
             "1y" -> "1d"
             else -> "1d"

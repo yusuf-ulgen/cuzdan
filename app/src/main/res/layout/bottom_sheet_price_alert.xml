@@ -111,7 +111,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/alert_above"
-            android:textSize="11sp"
+            android:textSize="10sp"
+            android:lines="2"
+            android:paddingHorizontal="1dp"
+            android:paddingVertical="2dp"
+            android:ellipsize="none"
             app:strokeColor="@color/divider_color" />
 
         <com.google.android.material.button.MaterialButton
@@ -121,7 +125,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/alert_equals"
-            android:textSize="11sp"
+            android:textSize="10sp"
+            android:lines="2"
+            android:paddingHorizontal="1dp"
+            android:paddingVertical="2dp"
+            android:ellipsize="none"
             app:strokeColor="@color/divider_color" />
 
         <com.google.android.material.button.MaterialButton
@@ -131,7 +139,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/alert_below"
-            android:textSize="11sp"
+            android:textSize="10sp"
+            android:lines="2"
+            android:paddingHorizontal="1dp"
+            android:paddingVertical="2dp"
+            android:ellipsize="none"
             app:strokeColor="@color/divider_color" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>

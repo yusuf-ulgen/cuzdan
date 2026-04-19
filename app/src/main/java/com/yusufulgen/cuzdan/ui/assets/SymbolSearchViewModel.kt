@@ -67,18 +67,22 @@ class SymbolSearchViewModel @Inject constructor(
                 val shouldRefresh = marketAssets.isEmpty() || (type == AssetType.NAKIT && marketAssets.size <= 1)
                 
                 if (shouldRefresh) {
+                    android.util.Log.d("CuzdanDebug", "LoadInitialSymbols: type=$type, current results size=${_uiState.value.results.size}")
                     repository.refreshMarketAssets(type).collect { resource ->
                         if (resource is com.yusufulgen.cuzdan.util.Resource.Success) {
                             val refreshedAssets = repository.getMarketAssetsOnce(type)
+                            android.util.Log.d("CuzdanDebug", "Refresh Success: type=$type, new size=${refreshedAssets.size}")
                             val filteredAssets = filterByType(refreshedAssets, type)
                             val finalAssets = if (_uiState.value.isFavoritesOnly) filteredAssets.filter { it.isFavorite } else filteredAssets
                             _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                         } else if (resource is com.yusufulgen.cuzdan.util.Resource.Error) {
+                            android.util.Log.e("CuzdanDebug", "Refresh Error: ${resource.message}")
                             _uiState.update { it.copy(isLoading = false, error = resource.message) }
                         }
                     }
                 } else {
                     val filteredAssets = filterByType(marketAssets, type)
+                    android.util.Log.d("CuzdanDebug", "LoadInitialSymbols (Cache hit): type=$type, size=${filteredAssets.size}")
                     val finalAssets = if (_uiState.value.isFavoritesOnly) filteredAssets.filter { it.isFavorite } else filteredAssets
                     _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
                 }

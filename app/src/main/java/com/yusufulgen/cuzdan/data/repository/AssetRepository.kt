@@ -463,6 +463,7 @@ class AssetRepository @Inject constructor(
                         return
                     }
 
+                    android.util.Log.d("CuzdanDebug", "refreshMarketAssets: start for type=$type")
                     val symbols = when(type) {
                         AssetType.DOVIZ -> listOf(
                             "USDTRY=X", "EURTRY=X", "GBPTRY=X", "CHFTRY=X", "JPYTRY=X",
@@ -475,52 +476,82 @@ class AssetRepository @Inject constructor(
                             "EGPTRY=X", "ZARTRY=X", "MADTRY=X", "GELTRY=X", "UAHTRY=X",
                             "BGNTRY=X", "ISKTRY=X", "KAZTRY=X", "VNDDTRY=X", "PKRTRY=X"
                         )
-                        else -> listOf("GC=F", "SI=F", "PL=F", "PA=F", "HG=F")
+                        else -> listOf(
+                            "GC=F", "XAUUSD=X", "SI=F", "XAGUSD=X", "PL=F", "PA=F", "HG=F", // Ana Metaller
+                            "ALI=F", "NI=F", "ZN=F", "PB=F", "SN=F", // Diğer Metaller
+                            "CL=F", "BZ=F", "NG=F", "RB=F", "HO=F", // Enerji
+                            "KC=F", "CC=F", "CT=F", "SB=F", "ZC=F", "ZW=F", "ZS=F", // Tarım
+                            "LBS=F" // Orman Ürünleri
+                        )
                     }
+                    android.util.Log.d("CuzdanDebug", "Symbols to fetch count: ${symbols.size}")
                     
                     val symbolsToFetch = symbols.filter { it != "GRAM_ALTIN" }
                     
                     if (type == AssetType.DOVIZ) {
-                        // Manually add Turkish Lira to DOVIZ category too
-                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce("TRY", AssetType.DOVIZ)
-                        marketAssets.add(MarketAsset("TRY", "Türk Lirası", "Türk Lirası", BigDecimal.ONE, BigDecimal.ZERO, AssetType.DOVIZ, "TRY", exist?.isFavorite ?: false))
+                        marketAssetDao.deleteAed()
                     }
-
-                    // Chunk fetching to avoid long URL issues (Yahoo API limits)
-                    symbolsToFetch.chunked(15).forEach { chunk ->
-                        try {
-                            val response = yahooFinanceApi.getQuotes(chunk.joinToString(","))
-                            val quotes = response.quoteResponse.result ?: emptyList()
-
-                            quotes.forEach { quote ->
-                                val sym = quote.symbol
-                                val current = quote.regularMarketPrice ?: BigDecimal.ZERO
-                                val change = quote.regularMarketChangePercent ?: BigDecimal.ZERO
-                                val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
-                                marketAssets.add(cleanMarketAssetNaming(MarketAsset(sym, sym, quote.longName ?: quote.shortName ?: sym, current.setScale(2, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type))
+                    
+                    // Manually add Turkish Lira to DOVIZ category too
+                    val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce("TRY", AssetType.DOVIZ)
+                    if (exist == null) {
+                        marketAssets.add(MarketAsset("TRY", "Türk Lirası", "Türk Lirası", BigDecimal.ONE, BigDecimal.ZERO, AssetType.DOVIZ, "TRY", false))
+                    } else {
+                        marketAssets.add(exist.copy(currentPrice = BigDecimal.ONE, dailyChangePercentage = BigDecimal.ZERO))
+                    }
+                    
+                    // IMPORTANT: We switch ALL Doviz/Emtia to getChartData pattern because v7/quote is returning 401 Unauthorized
+                    val results = coroutineScope {
+                        symbols.mapIndexed { index, sym ->
+                            async {
+                                try {
+                                    // Add small staggered delay to avoid Yahoo rate limits
+                                    delay(index * 150L) 
+                                    val result = yahooFinanceApi.getChartData(sym).chart.result?.firstOrNull()?.meta
+                                    if (result != null) {
+                                        val current = result.regularMarketPrice ?: BigDecimal.ZERO
+                                        val prev = result.previousClose ?: BigDecimal.ZERO
+                                        val change = if (prev > BigDecimal.ZERO) (current - prev).divide(prev, 10, RoundingMode.HALF_UP).multiply(BigDecimal("100")) else BigDecimal.ZERO
+                                        val exist = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(sym, type)
+                                        cleanMarketAssetNaming(MarketAsset(sym, sym, result.shortName ?: sym, current.setScale(4, RoundingMode.HALF_UP), change.setScale(2, RoundingMode.HALF_UP), type, "TRY", exist?.isFavorite ?: false), type)
+                                    } else null
+                                } catch (e: Exception) {
+                                    android.util.Log.e("CuzdanDebug", "Resilient fetch FAILED for $sym: ${e.message}")
+                                    null
+                                }
                             }
-                        } catch (e: Exception) {
-                            Log.e("AssetRepository", "Error fetching chunk for $type: ${e.message}")
-                        }
+                        }.awaitAll().filterNotNull()
                     }
+                    marketAssets.addAll(results)
 
                     if (type == AssetType.EMTIA) {
-                        // Fetch USDTRY separately for Gram Altin calculation
-                        val usdTryQuote = try {
-                            yahooFinanceApi.getQuotes("USDTRY=X").quoteResponse.result?.firstOrNull()
-                        } catch(e: Exception) { null }
-                        val usdTryPrice = usdTryQuote?.regularMarketPrice ?: BigDecimal.ZERO
-
-                        val ons = marketAssets.find { it.symbol == "GOLD" || it.symbol == "GC=F" }
+                        // Safe Gram Altin Calculation using getChartData for USDTRY as well
+                        val usdTryPrice = try {
+                            val res = yahooFinanceApi.getChartData("USDTRY=X").chart.result?.firstOrNull()?.meta
+                            res?.regularMarketPrice ?: BigDecimal.ZERO
+                        } catch(e: Exception) {
+                            // Last resort fallback to DB
+                            marketAssetDao.getMarketAssetBySymbolAndTypeOnce("USDTRY=X", AssetType.DOVIZ)?.currentPrice ?: BigDecimal.ZERO
+                        }
+                        
+                        val ons = marketAssets.find { it.symbol == "GOLD" || it.symbol == "GC=F" || it.symbol == "XAUUSD=X" }
+                        android.util.Log.d("CuzdanDebug", "EMTIA processing: onsFound=${ons != null}, usdTryPrice=$usdTryPrice")
+                        
                         if (ons != null && usdTryPrice > BigDecimal.ZERO) {
                             val gp = ons.currentPrice.divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP).multiply(usdTryPrice)
                             marketAssets.add(MarketAsset("GRAM_ALTIN", "Gram Altın", "Gram Altın", gp.setScale(2, RoundingMode.HALF_UP), ons.dailyChangePercentage, AssetType.EMTIA, "TRY"))
+                        } else if (marketAssets.find { it.symbol == "GRAM_ALTIN" } == null) {
+                            marketAssets.add(MarketAsset("GRAM_ALTIN", "Gram Altın", "Gram Altın", BigDecimal.ZERO, BigDecimal.ZERO, AssetType.EMTIA, "TRY"))
                         }
                     }
+                    android.util.Log.d("CuzdanDebug", "Final results to save for $type: ${marketAssets.size}")
                 }
             }
-            if (marketAssets.isNotEmpty()) marketAssetDao.insertMarketAssets(marketAssets)
-        } catch (e: Exception) { Log.e("AssetRepo", "Internal error: ${e.message}") }
+            if (marketAssets.isNotEmpty()) {
+                marketAssetDao.insertMarketAssets(marketAssets)
+                android.util.Log.d("CuzdanDebug", "Successfully saved to Database")
+            }
+        } catch (e: Exception) { android.util.Log.e("CuzdanDebug", "Internal error: ${e.message}") }
     }
 
     suspend fun searchAssets(query: String, type: AssetType): List<MarketAsset> {
@@ -738,7 +769,8 @@ class AssetRepository @Inject constructor(
             }
             type == AssetType.DOVIZ || type == AssetType.NAKIT || (type == AssetType.EMTIA && (cleanSymbol == "TRY=X" || cleanSymbol == "USDTRY=X")) -> {
                 val localized = when {
-                    cleanSymbol.contains("USDTRY") || cleanSymbol == "TRY=X" || cleanSymbol == "USD" -> "Amerikan Doları"
+                    cleanSymbol.contains("USDTRY") || cleanSymbol == "USD" -> "Amerikan Doları"
+                    cleanSymbol == "TRY=X" || cleanSymbol == "TRY"  -> "Türk Lirası"
                     cleanSymbol.contains("EURTRY") || cleanSymbol == "EUR" -> "Euro"
                     cleanSymbol.contains("GBPTRY") || cleanSymbol == "GBP" -> "İngiliz Sterlini"
                     cleanSymbol.contains("CHFTRY") || cleanSymbol == "CHF" -> "İsviçre Frangı"
@@ -774,8 +806,8 @@ class AssetRepository @Inject constructor(
                     cleanSymbol.contains("IDRTRY") || cleanSymbol == "IDR" -> "Endonezya Rupisi"
                     cleanSymbol.contains("PHPTRY") || cleanSymbol == "PHP" -> "Filipin Pesosu"
                     cleanSymbol.contains("PKRTRY") || cleanSymbol == "PKR" -> "Pakistan Rupisi"
-                    cleanSymbol.contains("EGPTRY") || cleanSymbol == "EGP" -> "Mısır Poundu"
-                    cleanSymbol.contains("ZARTRY") || cleanSymbol == "ZAR" -> "Güney Afrika Randı"
+                    cleanSymbol.contains("EGPTRY") || cleanSymbol == "EGP" -> "Mısır Lirası"
+                    cleanSymbol.contains("ZARTRY") || cleanSymbol == "ZAR" -> "G. Afrika Randı"
                     cleanSymbol.contains("MADTRY") || cleanSymbol == "MAD" -> "Fas Dirhemi"
                     cleanSymbol.contains("GELTRY") || cleanSymbol == "GEL" -> "Gürcistan Larisi"
                     cleanSymbol.contains("UAHTRY") || cleanSymbol == "UAH" -> "Ukrayna Grivnası"
@@ -783,6 +815,14 @@ class AssetRepository @Inject constructor(
                     cleanSymbol.contains("ISKTRY") || cleanSymbol == "ISK" -> "İzlanda Kronu"
                     cleanSymbol.contains("KAZTRY") || cleanSymbol == "KZT" -> "Kazakistan Tengesi"
                     cleanSymbol.contains("VNDDTRY") || cleanSymbol == "VND" -> "Vietnam Dongu"
+                    cleanSymbol == "LBS=F" -> "Kereste"
+                    cleanSymbol == "RB=F" -> "RBOB Benzin"
+                    cleanSymbol == "HO=F" -> "Isınma Yakıtı"
+                    cleanSymbol == "ALI=F" -> "Alüminyum"
+                    cleanSymbol == "NI=F" -> "Nikel"
+                    cleanSymbol == "ZN=F" -> "Çinko"
+                    cleanSymbol == "PB=F" -> "Kurşun"
+                    cleanSymbol == "SN=F" -> "Kalay"
                     else -> fullName
                 }
                 fullName = localized
@@ -839,18 +879,34 @@ class AssetRepository @Inject constructor(
             }
             type == AssetType.EMTIA -> {
                 name = when { 
-                    cleanSymbol.startsWith("GC=F") || cleanSymbol == "GOLD" -> "Altın (Ons)"
-                    cleanSymbol.startsWith("SI=F") || cleanSymbol == "SILVER" -> "Gümüş"
-                    cleanSymbol.startsWith("PL=F") -> "Platin"
-                    cleanSymbol.startsWith("PA=F") -> "Paladyum"
-                    cleanSymbol.startsWith("HG=F") -> "Bakır"
-                    cleanSymbol.startsWith("GRAM_ALTIN") -> "Gram Altın"
+                    cleanSymbol.contains("GC=F") || cleanSymbol == "GOLD" || cleanSymbol == "XAUUSD=X" -> "Altın (Ons)"
+                    cleanSymbol.contains("SI=F") || cleanSymbol == "SILVER" || cleanSymbol == "XAGUSD=X" -> "Gümüş"
+                    cleanSymbol.contains("PL=F") -> "Platin"
+                    cleanSymbol.contains("PA=F") -> "Paladyum"
+                    cleanSymbol.contains("HG=F") -> "Bakır"
+                    cleanSymbol.contains("GRAM_ALTIN") -> "Gram Altın"
+                    cleanSymbol.contains("ALI=F") -> "Alüminyum"
+                    cleanSymbol.contains("NI=F") -> "Nikel"
+                    cleanSymbol.contains("ZN=F") -> "Çinko"
+                    cleanSymbol.contains("PB=F") -> "Kurşun"
+                    cleanSymbol.contains("SN=F") -> "Kalay"
+                    cleanSymbol.contains("CL=F") -> "Ham Petrol"
+                    cleanSymbol.contains("BZ=F") -> "Brent Petrol"
+                    cleanSymbol.contains("NG=F") -> "Doğalgaz"
+                    cleanSymbol.contains("KC=F") -> "Kahve"
+                    cleanSymbol.contains("CC=F") -> "Kakao"
+                    cleanSymbol.contains("CT=F") -> "Pamuk"
+                    cleanSymbol.contains("SB=F") -> "Şeker"
+                    cleanSymbol.contains("ZC=F") -> "Mısır"
+                    cleanSymbol.contains("ZW=F") -> "Buğday"
+                    cleanSymbol.contains("ZS=F") -> "Soya Fasulyesi"
+                    cleanSymbol.contains("LBS=F") -> "Kereste"
                     else -> name 
                 }
                 fullName = name.replace(Regex("\\s+[A-Za-z]{3}\\s+\\d{2}$"), "").trim()
                 name = fullName
-                if (cleanSymbol.startsWith("GC=F")) symbol = "GOLD"
-                if (cleanSymbol.startsWith("SI=F")) symbol = "SILVER"
+                if (cleanSymbol.contains("GC=F")) symbol = "GOLD"
+                if (cleanSymbol.contains("SI=F")) symbol = "SILVER"
             }
         }
         return asset.copy(name = name, fullName = fullName, symbol = symbol)

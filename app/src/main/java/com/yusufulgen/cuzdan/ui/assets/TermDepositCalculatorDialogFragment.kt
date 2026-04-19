@@ -51,7 +51,7 @@ class TermDepositCalculatorDialogFragment : DialogFragment() {
                     return@setOnClickListener
                 }
 
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
                 val startDate = try { LocalDate.parse(startDateStr, formatter) } catch (_: Exception) { null }
                 if (startDate == null) {
                     binding.editStartDate.error = getString(R.string.error_invalid_date)
@@ -88,11 +88,11 @@ class TermDepositCalculatorDialogFragment : DialogFragment() {
         binding.editAnnualRate.addTextChangedListener { binding.editAnnualRate.error = null }
         binding.editStopajRate.addTextChangedListener { binding.editStopajRate.error = null }
         binding.editStartDate.addTextChangedListener { binding.editStartDate.error = null }
+        binding.editStartDate.addTextChangedListener(com.yusufulgen.cuzdan.util.DateMaskWatcher(binding.editStartDate))
 
-        // Prefill start date as today in yyyy-MM-dd
-        val todayMillis = System.currentTimeMillis()
-        val today = java.time.Instant.ofEpochMilli(todayMillis).atZone(ZoneId.systemDefault()).toLocalDate()
-        binding.editStartDate.setText(today.toString())
+        // Set hint based on language
+        val isTurkish = java.util.Locale.getDefault().language == "tr"
+        binding.editStartDate.hint = if (isTurkish) "gg.aa.yyyy" else "dd.mm.yyyy"
 
         return dialog
     }

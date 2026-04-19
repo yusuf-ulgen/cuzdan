@@ -31,10 +31,6 @@ class BesCalculatorFragment : Fragment() {
         base.textTitle.text = getString(R.string.cash_tool_bes_short)
         base.btnBack.setOnClickListener { findNavController().navigateUp() }
         base.btnCalculate.setOnClickListener { calculate() }
-
-        form.editYears.setText("10")
-        form.editAnnualReturn.setText("30")
-        form.editStateRate.setText("30")
     }
 
     private fun calculate() {

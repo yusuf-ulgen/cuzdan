@@ -252,8 +252,11 @@ class AssetDetailFragment : Fragment() {
                 requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
 
                 textColor = typedValue.data
-                setDrawGridLines(false)
+                setDrawGridLines(true) // Enabled for better price reference
+                gridColor = Color.parseColor("#33FFFFFF") // Subtle grid
+                setDrawLabels(true) // Ensure labels are visible
                 axisLineColor = Color.TRANSPARENT
+                setPosition(com.github.mikephil.charting.components.YAxis.YAxisLabelPosition.INSIDE_CHART)
             }
             axisRight.isEnabled = false
             

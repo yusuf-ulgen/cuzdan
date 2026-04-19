@@ -52,10 +52,8 @@ class WalletCategoryAdapter(
                     textCategoryTotal.text = "**** $currency"
                 } else {
                     textCategoryTotal.text = item.totalValue.formatCurrency(currency)
-                    val textPrimaryValue = android.util.TypedValue()
-                    holder.itemView.context.theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
-                    textCategoryTotal.setTextColor(textPrimaryValue.data)
                 }
+                textCategoryTotal.visibility = View.VISIBLE
             } else {
                 // Normal categories: show P/L
                 textCategoryChangePerc.visibility = View.VISIBLE
@@ -81,12 +79,10 @@ class WalletCategoryAdapter(
                     textCategoryChangeAbs.text = item.totalProfitLoss.formatCurrency(currency, showSign = true)
                     textCategoryChangePerc.text = String.format("%%%+.1f", item.profitLossPerc)
                     
-                    val textPrimaryValue = android.util.TypedValue()
-                    holder.itemView.context.theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, textPrimaryValue, true)
-                    textCategoryTotal.setTextColor(textPrimaryValue.data)
                     textCategoryChangeAbs.setTextColor(colorInt)
                     textCategoryChangePerc.setTextColor(colorInt)
                 }
+                textCategoryTotal.visibility = View.VISIBLE
                 
                 imageExpandArrow.visibility = View.VISIBLE
                 imageExpandArrow.rotation = if (isExpanded) 180f else 0f

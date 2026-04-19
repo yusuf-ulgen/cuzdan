@@ -27,6 +27,10 @@ object AssetUtils {
             AssetType.EMTIA -> {
                 when {
                     sym.contains("GOLD") || sym.contains("ALTIN") -> R.drawable.emtia
+                    sym.contains("SILVER") || sym.contains("GUMUS") || sym.contains("SI=F") || sym.contains("XAG") -> R.drawable.ic_commodity
+                    sym.contains("OIL") || sym.contains("PETROL") || sym.contains("CL=F") || sym.contains("BZ=F") -> R.drawable.ic_commodity
+                    sym.contains("GAS") || sym.contains("GAZ") || sym.contains("NG=F") -> R.drawable.ic_commodity
+                    sym.contains("ALUMIN") || sym.contains("ALI=F") || sym.contains("NICKEL") || sym.contains("NI=F") || sym.contains("ZINC") || sym.contains("ZN=F") -> R.drawable.ic_commodity
                     else -> R.drawable.emtia
                 }
             }
