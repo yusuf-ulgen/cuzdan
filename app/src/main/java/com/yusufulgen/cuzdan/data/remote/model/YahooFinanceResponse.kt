@@ -40,7 +40,11 @@ data class Meta(
     @SerializedName("regularMarketPrice")
     val regularMarketPrice: BigDecimal,
     @SerializedName("previousClose")
-    val previousClose: BigDecimal,
+    val previousClose: BigDecimal? = null,
+    @SerializedName("chartPreviousClose")
+    val chartPreviousClose: BigDecimal? = null,
+    @SerializedName("regularMarketChangePercent")
+    val regularMarketChangePercent: Double? = null,
     @SerializedName("symbol")
     val symbol: String,
     @SerializedName("currency")

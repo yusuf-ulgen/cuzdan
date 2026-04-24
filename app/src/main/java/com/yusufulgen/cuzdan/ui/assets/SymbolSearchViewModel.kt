@@ -154,14 +154,22 @@ class SymbolSearchViewModel @Inject constructor(
             assets
         }
 
-        if (type != AssetType.KRIPTO || currency == "USD") return sortedAssets
-        
-        return sortedAssets.map { asset ->
-            asset.copy(
-                currentPrice = asset.currentPrice.multiply(usdRate).setScale(2, java.math.RoundingMode.HALF_UP),
-                currency = "TRY"
-            )
+        val results = sortedAssets.map { asset ->
+            if (currency == "TL" && asset.currency == "USD") {
+                asset.copy(
+                    currentPrice = asset.currentPrice.multiply(usdRate).setScale(2, java.math.RoundingMode.HALF_UP),
+                    currency = "TRY"
+                )
+            } else if (currency == "USD" && asset.currency == "TRY" && asset.symbol != "TRY" && asset.symbol != "TL") {
+                asset.copy(
+                    currentPrice = if (usdRate > BigDecimal.ZERO) asset.currentPrice.divide(usdRate, 4, java.math.RoundingMode.HALF_UP) else asset.currentPrice,
+                    currency = "USD"
+                )
+            } else {
+                asset
+            }
         }
+        return results
     }
 
     fun toggleCurrency(type: AssetType) {

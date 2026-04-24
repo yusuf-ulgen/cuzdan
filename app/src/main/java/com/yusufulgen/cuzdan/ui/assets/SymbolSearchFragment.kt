@@ -49,7 +49,7 @@ class SymbolSearchFragment : Fragment() {
         assetType = arguments?.getString("assetType")
         val type = try { AssetType.valueOf(assetType ?: "BIST") } catch (e: Exception) { AssetType.BIST }
 
-        if (type == AssetType.KRIPTO) {
+        if (type == AssetType.KRIPTO || type == AssetType.EMTIA) {
             binding.btnCurrencySwitcher.visibility = View.VISIBLE
             binding.btnCurrencySwitcher.setOnClickListener {
                 viewModel.toggleCurrency(type)

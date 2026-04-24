@@ -121,16 +121,19 @@ class PriceSyncManager @Inject constructor(
         }
     }
 
-    // ─── Döviz + Emtia: Hafta içi, her 1 dakika ──────────────────────────────
+    // ─── Döviz + Emtia + Portföy Geneli: Hafta içi, her 1 dakika ──────────────────────────────
     private fun startForexCommodityPolling() {
         if (forexCommodityJob?.isActive == true) return
         forexCommodityJob = scope.launch {
             while (isActive) {
                 if (isWeekday()) {
                     try {
+                        Log.d("PriceSyncManager", "Starting Forex/Commodity/Portfolio refresh...")
                         repository.refreshMarketAssets(AssetType.DOVIZ).collect { }
                         repository.refreshMarketAssets(AssetType.EMTIA).collect { }
-                        Log.d("PriceSyncManager", "Forex/Commodity refresh completed")
+                        repository.refreshYahooPrices().collect { } // Portföydeki varlıkları günceller
+                        
+                        Log.d("PriceSyncManager", "Forex/Commodity/Portfolio refresh completed")
                         _syncStatus.value = SyncStatus(lastUpdate = System.currentTimeMillis(), isOffline = false)
                     } catch (e: Exception) {
                         _syncStatus.value = _syncStatus.value.copy(isOffline = true)

@@ -11,3 +11,26 @@ data class TefasHistoryResponse(
     val date: Long? = null
 )
 
+data class TefasWrapper(
+    @SerializedName("d")
+    val data: List<TefasHistoryResponse> = emptyList()
+)
+
+data class TefasRequest(
+    val fontip: String,
+    val fonkod: String,
+    val bastarih: String,
+    val bittarih: String,
+    val sfontur: String = "",
+    val fongrup: String = "",
+    val fonturkod: String = "",
+    val fonunvantip: String = "",
+    val kurucukod: String = "",
+    val isin: String = "",
+    val sorunlu: String = "",
+    val datedes: String = "",
+    val fontur: String = "",
+    val unvan: String = "",
+    val fankod: String = ""
+)
+

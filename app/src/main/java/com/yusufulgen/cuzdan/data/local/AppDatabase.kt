@@ -18,7 +18,7 @@ import com.yusufulgen.cuzdan.data.local.dao.PriceAlertDao
 
 @Database(
     entities = [Asset::class, Portfolio::class, MarketAsset::class, PortfolioHistory::class, PriceAlert::class],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 

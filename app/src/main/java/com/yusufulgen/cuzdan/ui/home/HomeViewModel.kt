@@ -1,6 +1,7 @@
 package com.yusufulgen.cuzdan.ui.home
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yusufulgen.cuzdan.R
@@ -88,6 +89,17 @@ class HomeViewModel @Inject constructor(
     init {
         observePortfolios()
         observeAssets()
+        refreshPrices()
+    }
+
+    fun refreshPrices() {
+        val TAG = "CUZDAN_LOG"
+        viewModelScope.launch {
+            Log.d(TAG, "Manual refresh triggered from HomeViewModel")
+            assetRepository.refreshYahooPrices().collect { }
+            assetRepository.refreshCryptoPrices().collect { }
+            assetRepository.refreshOwnedFundPrices().collect { }
+        }
     }
 
     private fun observePortfolios() {
@@ -157,34 +169,30 @@ class HomeViewModel @Inject constructor(
                 }
 
 
-                if (portfolios.isNotEmpty()) {
-                    val currentId = _selectedPortfolioId.value
-                    // IMPORTANT: Do not auto-select a portfolio.
-                    // If the user is in "total / none selected" (-1), keep it that way. This prevents
-                    // silently attaching new assets to the first portfolio on fresh installs.
-                    val newId = when {
-                        currentId == -1L -> -1L
-                        portfolios.any { it.id == currentId } -> currentId
-                        else -> -1L
-                    }
-                    val selectedPortfolio = portfolios.find { it.id == newId }
-                    val localizedName =
-                        if (newId == -1L) context.getString(R.string.total_portfolios)
-                        else selectedPortfolio?.name.orEmpty()
-
-                    _selectedPortfolioId.value = newId
-                    prefManager.setSelectedPortfolioId(newId)
-                    
-                    prefManager.setSelectedPortfolioId(newId)
-
-                    _uiState.update { it.copy(
-                        portfolios = portfolioList,
-                        selectedPortfolioId = newId,
-                        selectedPortfolioName = localizedName,
-                        currency = currency
-                    )}
-                    calculateStats(_currentAssets.value, _expandedCategory.value, currency, usdRate, eurRate)
+                val currentId = _selectedPortfolioId.value
+                // IMPORTANT: Do not auto-select a portfolio.
+                // If the user is in "total / none selected" (-1), keep it that way. This prevents
+                // silently attaching new assets to the first portfolio on fresh installs.
+                val newId = when {
+                    currentId == -1L -> -1L
+                    portfolios.any { it.id == currentId } -> currentId
+                    else -> -1L
                 }
+                val selectedPortfolio = portfolios.find { it.id == newId }
+                val localizedName =
+                    if (newId == -1L) context.getString(R.string.total_portfolios)
+                    else selectedPortfolio?.name.orEmpty()
+
+                _selectedPortfolioId.value = newId
+                prefManager.setSelectedPortfolioId(newId)
+                
+                _uiState.update { it.copy(
+                    portfolios = portfolioList,
+                    selectedPortfolioId = newId,
+                    selectedPortfolioName = localizedName,
+                    currency = currency
+                )}
+                calculateStats(_currentAssets.value, _expandedCategory.value, currency, usdRate, eurRate)
             }.collect()
 
         }
@@ -302,8 +310,11 @@ class HomeViewModel @Inject constructor(
 
         val isBistClosed = isBistClosedForToday
         assets.forEach { asset ->
-            totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(when(asset.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}))
-            totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(when(asset.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}))
+            val assetRate = when(asset.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}
+            val costRate = when(asset.buyCurrency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}
+            
+            totalBalanceBase = totalBalanceBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
+            totalCostBase = totalCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(costRate))
             
             val values = calculateAssetDailyValues(asset, usdRate, eurRate, isBistClosed)
             totalDailyProfitBase = totalDailyProfitBase.add(values.dailyProfitBase)
@@ -330,8 +341,8 @@ class HomeViewModel @Inject constructor(
                 // Recalculate idle cash correctly: Investment - Cost
                 var pCostBase = BigDecimal.ZERO
                 assets.filter { it.portfolioId == p.portfolio.id }.forEach { a ->
-                    val aRate = when(a.currency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}
-                    pCostBase = pCostBase.add(a.amount.multiply(a.averageBuyPrice).multiply(aRate))
+                    val costRate = when(a.buyCurrency){"USD"->usdRate?:"32.5".toBigDecimal() "EUR"->eurRate?:"35.2".toBigDecimal() else->BigDecimal.ONE}
+                    pCostBase = pCostBase.add(a.amount.multiply(a.averageBuyPrice).multiply(costRate))
                 }
                 (p.portfolio.depositedAmount - pCostBase).coerceAtLeast(BigDecimal.ZERO)
             }
@@ -386,9 +397,14 @@ class HomeViewModel @Inject constructor(
                     "EUR" -> eurRate ?: BigDecimal("35.2")
                     else -> BigDecimal.ONE
                 }
+                val costRate = when (asset.buyCurrency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
                 val assetValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
                 catValueBase = catValueBase.add(assetValue)
-                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
+                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(costRate))
                 
                 // Daily P/L: prevPrice = currentPrice / (1 + dailyChangePercentage/100)
                 if (asset.amount > BigDecimal.ZERO) {
@@ -396,6 +412,8 @@ class HomeViewModel @Inject constructor(
                     if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
                         pct = BigDecimal.ZERO
                     }
+
+                    Log.d("CUZDAN_LOG", "Calculating Home Item: ${asset.symbol} | Amount: ${asset.amount} | Price: ${asset.currentPrice} | Pct: $pct%")
 
                     val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
                     if (denom.compareTo(BigDecimal.ZERO) != 0) {
@@ -448,7 +466,13 @@ class HomeViewModel @Inject constructor(
                     "EUR" -> eurRate ?: BigDecimal("35.2")
                     else -> BigDecimal.ONE
                 }
-                val finalRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                val costRate = when (asset.buyCurrency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                val finalPriceRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                val finalCostRate = costRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
                 
                 var adjustedDailyPerc = asset.dailyChangePercentage
                 if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
@@ -456,8 +480,8 @@ class HomeViewModel @Inject constructor(
                 }
 
                 asset.copy(
-                    currentPrice = asset.currentPrice.multiply(finalRate),
-                    averageBuyPrice = asset.averageBuyPrice.multiply(finalRate),
+                    currentPrice = asset.currentPrice.multiply(finalPriceRate),
+                    averageBuyPrice = asset.averageBuyPrice.multiply(finalCostRate),
                     currency = currency,
                     dailyChangePercentage = adjustedDailyPerc
                 )
@@ -652,6 +676,13 @@ class HomeViewModel @Inject constructor(
         _homeCurrency.value = currency
         _uiState.update { it.copy(currency = currency) }
         calculateStats(_currentAssets.value, _expandedCategory.value, currency, _usdRate.value, _eurRate.value)
+    }
+
+    fun resetState() {
+        _selectedPortfolioId.value = -1L
+        _homeCurrency.value = prefManager.getHomeCurrency()
+        _expandedCategory.value = null
+        _uiState.update { WalletUiState(currency = _homeCurrency.value) }
     }
 
 

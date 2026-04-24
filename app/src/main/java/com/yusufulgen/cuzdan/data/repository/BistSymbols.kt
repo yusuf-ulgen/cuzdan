@@ -51,7 +51,7 @@ object BistSymbols {
         "USAK.IS", "VAKBN.IS", "VAKFN.IS", "VAKKO.IS", "VANGD.IS", "VBTYZ.IS", "VERTU.IS", "VERUS.IS", "VESBE.IS", "VESTL.IS",
         "VKGYO.IS", "VKING.IS", "VRGYO.IS", "YAPRK.IS", "YATAS.IS", "YAYLA.IS", "YBTAS.IS", "YEOTK.IS", "YESIL.IS", "YGGYO.IS",
         "YGYO.IS", "YKBNK.IS", "YKSLN.IS", "YONGA.IS", "YOTAS.IS", "YUNSA.IS", "YYAPI.IS", "YYLGD.IS", "ZEDUR.IS", "ZOREN.IS",
-        "ZRGYO.IS",
+        "ZRGYO.IS", "AAGYO.IS",
         // 2024-2025 Yeni Halka Arzlar
         "CORTS.IS", "MGNYO.IS", "TURSK.IS", "KERVT.IS", "MEDYA.IS", "DMRGD.IS",
         "PEKGY.IS", "FZLGY.IS", "AGROT.IS", "AYCES.IS", "BLCYT.IS", "MWGYO.IS",

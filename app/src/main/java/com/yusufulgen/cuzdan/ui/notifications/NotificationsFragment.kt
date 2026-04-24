@@ -9,8 +9,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.yusufulgen.cuzdan.R
+import com.yusufulgen.cuzdan.ui.home.HomeViewModel
 import com.yusufulgen.cuzdan.databinding.DialogSupportBinding
 import com.yusufulgen.cuzdan.databinding.FragmentNotificationsBinding
 import com.yusufulgen.cuzdan.util.showToast
@@ -30,6 +35,8 @@ class NotificationsFragment : Fragment() {
 
     @Inject
     lateinit var portfolioRepository: PortfolioRepository
+
+    private val homeViewModel: HomeViewModel by activityViewModels()
 
     private var _binding: FragmentNotificationsBinding? = null
     private val binding get() = _binding!!
@@ -132,7 +139,7 @@ class NotificationsFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.settings_currency)
             .setItems(currencies) { _, which ->
-                prefManager.setHomeCurrency(currencies[which])
+                homeViewModel.setCurrency(currencies[which])
                 setupRecyclerView()
             }
             .show()
@@ -146,6 +153,7 @@ class NotificationsFragment : Fragment() {
                 viewLifecycleOwner.lifecycleScope.launch {
                     portfolioRepository.clearAllData()
                     prefManager.resetPreferences()
+                    homeViewModel.resetState()
                     showToast(R.string.toast_account_reset_success)
                     requireActivity().recreate()
                 }

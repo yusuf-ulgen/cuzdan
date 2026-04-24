@@ -25,12 +25,18 @@ interface MarketAssetDao {
     @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%' OR fullName LIKE '%' || :query || '%') AND assetType = :type LIMIT 50")
     fun searchMarketAssets(query: String, type: AssetType): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
 
+    @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%' OR fullName LIKE '%' || :query || '%') AND assetType = :type LIMIT 50")
+    suspend fun searchMarketAssetsOnce(query: String, type: AssetType): List<MarketAsset>
+
     @Query("SELECT * FROM market_assets WHERE (symbol LIKE '%' || :query || '%' OR name LIKE '%' || :query || '%' OR fullName LIKE '%' || :query || '%') LIMIT 50")
     fun searchAllMarketAssets(query: String): kotlinx.coroutines.flow.Flow<List<MarketAsset>>
 
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMarketAssets(assets: List<MarketAsset>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMarketAsset(asset: MarketAsset)
 
     @Query("DELETE FROM market_assets WHERE assetType = :type")
     suspend fun deleteMarketAssetsByType(type: AssetType)
@@ -55,6 +61,9 @@ interface MarketAssetDao {
 
     @Query("DELETE FROM market_assets WHERE symbol = 'AEDTRY=X'")
     suspend fun deleteAed()
+    
+    @Query("DELETE FROM market_assets WHERE assetType = 'BIST' AND symbol LIKE '%.IS'")
+    suspend fun cleanStaleBistSymbols()
 
     @Query("DELETE FROM market_assets WHERE assetType = 'KRIPTO' AND symbol NOT LIKE '%USDT'")
     suspend fun deleteNonUsdtCrypto()

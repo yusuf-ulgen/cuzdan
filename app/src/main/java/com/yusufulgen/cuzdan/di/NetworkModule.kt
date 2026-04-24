@@ -12,12 +12,34 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    /**
+     * Simple in-memory CookieJar for Tefas to handle session and security cookies.
+     */
+    private class TefasCookieJar : CookieJar {
+        private val cookies = mutableListOf<Cookie>()
+
+        override fun saveFromResponse(url: HttpUrl, responseCookies: List<Cookie>) {
+            // Remove old cookies from the same domain/name
+            val newNames = responseCookies.map { it.name }
+            cookies.removeAll { it.name in newNames }
+            cookies.addAll(responseCookies)
+        }
+
+        override fun loadForRequest(url: HttpUrl): List<Cookie> {
+            // Only return cookies that match the URL's domain
+            return cookies.filter { it.matches(url) }
+        }
+    }
 
     @Provides
     @Singleton
@@ -30,6 +52,30 @@ object NetworkModule {
             .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .build()
+                chain.proceed(request)
+            }
+            .addInterceptor(NetworkInterceptor())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("TefasOkHttpClient")
+    fun provideTefasOkHttpClient(): OkHttpClient {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.HEADERS
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .cookieJar(TefasCookieJar()) // Critical for WAF bypass
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
+                    .header("Accept-Encoding", "gzip, deflate, br")
                     .build()
                 chain.proceed(request)
             }
@@ -62,11 +108,14 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("TefasRetrofit")
-    fun provideTefasRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideTefasRetrofit(@Named("TefasOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
+        val gson = com.google.gson.GsonBuilder()
+            .setLenient()
+            .create()
         return Retrofit.Builder()
             .baseUrl("https://www.tefas.gov.tr/")
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

@@ -169,8 +169,13 @@ class ReportsViewModel @Inject constructor(
                 "EUR" -> eurRate ?: BigDecimal("35.2")
                 else -> BigDecimal.ONE
             }
+            val costRate = when (asset.buyCurrency) {
+                "USD" -> usdRate ?: BigDecimal("32.5")
+                "EUR" -> eurRate ?: BigDecimal("35.2")
+                else -> BigDecimal.ONE
+            }
             val assetValue = asset.amount.multiply(asset.currentPrice).multiply(assetRate)
-            val assetCost = asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate)
+            val assetCost = asset.amount.multiply(asset.averageBuyPrice).multiply(costRate)
             totalValueBase = totalValueBase.add(assetValue)
             totalCostBase = totalCostBase.add(assetCost)
         }
@@ -230,8 +235,13 @@ class ReportsViewModel @Inject constructor(
                     "EUR" -> eurRate ?: BigDecimal("35.2")
                     else -> BigDecimal.ONE
                 }
+                val costRate = when (asset.buyCurrency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
                 catValueBase = catValueBase.add(asset.amount.multiply(asset.currentPrice).multiply(assetRate))
-                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(assetRate))
+                catCostBase = catCostBase.add(asset.amount.multiply(asset.averageBuyPrice).multiply(costRate))
             }
             
             val convCatValue = catValueBase.divide(exchangeRate, 2, RoundingMode.HALF_UP)
@@ -277,7 +287,13 @@ class ReportsViewModel @Inject constructor(
                     "EUR" -> eurRate ?: BigDecimal("35.2")
                     else -> BigDecimal.ONE
                 }
-                val finalRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                val costRate = when (asset.buyCurrency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
+                }
+                val finalPriceRate = assetRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
+                val finalCostRate = costRate.divide(exchangeRate, 12, RoundingMode.HALF_UP)
                 
                 var adjustedDailyPerc = asset.dailyChangePercentage
                 if (asset.assetType == AssetType.BIST && isBistClosedForToday) {
@@ -285,8 +301,8 @@ class ReportsViewModel @Inject constructor(
                 }
 
                 asset.copy(
-                    currentPrice = asset.currentPrice.multiply(finalRate),
-                    averageBuyPrice = asset.averageBuyPrice.multiply(finalRate),
+                    currentPrice = asset.currentPrice.multiply(finalPriceRate),
+                    averageBuyPrice = asset.averageBuyPrice.multiply(finalCostRate),
                     currency = currency,
                     dailyChangePercentage = adjustedDailyPerc
                 )

@@ -180,7 +180,7 @@ class AssetDetailFragment : Fragment() {
     }
 
     private fun updateUI(state: AssetDetailUiState) {
-        binding.textCurrentPrice.text = state.currentPrice.formatCurrency()
+        binding.textCurrentPrice.text = state.currentPrice.formatCurrency(state.displayCurrency)
         binding.textPortfolioName.text = getString(R.string.detail_portfolio_prefix, state.portfolioName)
         
         // Load icon: each asset type uses its own primitive category icon

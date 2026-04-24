@@ -22,6 +22,7 @@ data class Asset(
     val dailyChangePercentage: BigDecimal = BigDecimal.ZERO,
     val assetType: AssetType,
     val portfolioId: Long = 0, // Varsayılan portföy ID
-    val currency: String = "TRY"
+    val currency: String = "TRY",
+    val buyCurrency: String = "TRY"
 ) : Parcelable
 

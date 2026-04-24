@@ -1,5 +1,6 @@
 package com.yusufulgen.cuzdan.ui.markets
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yusufulgen.cuzdan.data.local.entity.Asset
@@ -25,6 +26,7 @@ data class AssetDetailUiState(
     val currentPrice: BigDecimal = BigDecimal.ZERO,
     val dailyChangePercentage: BigDecimal = BigDecimal.ZERO,
     val currency: String = "TRY",
+    val displayCurrency: String = "TRY",
     val history: List<Pair<Long, Double>> = emptyList(),
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
@@ -32,6 +34,7 @@ data class AssetDetailUiState(
     val errorMessage: String? = null,
     val currentAmount: BigDecimal = BigDecimal.ZERO,
     val averageBuyPrice: BigDecimal = BigDecimal.ZERO,
+    val buyCurrency: String = "TRY",
     val portfolioName: String = "Ana Portföy",
     val transactionType: TransactionType = TransactionType.BUY
 )
@@ -50,10 +53,39 @@ class AssetDetailViewModel @Inject constructor(
     fun init(symbol: String, name: String, typeString: String, currency: String = "TRY") {
         if (_uiState.value.symbol.isNotEmpty()) return 
         
-        _uiState.update { it.copy(symbol = symbol, name = name, currency = currency) }
+        val type = try { AssetType.valueOf(typeString) } catch (e: Exception) { AssetType.BIST }
+        val displayCurrency = when(type) {
+            AssetType.KRIPTO -> prefManager.getCryptoCurrency()
+            AssetType.EMTIA -> prefManager.getCryptoCurrency() // Shared for now or add getCommodityCurrency
+            else -> currency
+        }
+
+        _uiState.update { it.copy(symbol = symbol, name = name, currency = currency, displayCurrency = displayCurrency) }
         loadHistory(symbol)
         observeCurrentPrice(symbol)
         loadExistingAsset(symbol)
+        observeUsdRate()
+    }
+
+    private var usdRate: BigDecimal = BigDecimal("32.5")
+
+    private fun observeUsdRate() {
+        viewModelScope.launch {
+            repository.getLatestPrice("USDTRY=X").collect { rate ->
+                if (rate != null && rate > BigDecimal.ZERO) {
+                    usdRate = rate
+                    // Refresh display if currency is TL
+                    if (_uiState.value.displayCurrency == "TL") {
+                        refreshDisplayPrices()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun refreshDisplayPrices() {
+        // Trigger a refresh of history and current price based on new rate
+        loadHistory(_uiState.value.symbol)
     }
 
     private fun loadExistingAsset(symbol: String) {
@@ -65,6 +97,7 @@ class AssetDetailViewModel @Inject constructor(
             _uiState.update { it.copy(
                 currentAmount = existing?.amount ?: BigDecimal.ZERO,
                 averageBuyPrice = existing?.averageBuyPrice ?: BigDecimal.ZERO,
+                buyCurrency = existing?.buyCurrency ?: "TRY",
                 portfolioName = portfolio?.name ?: "—"
             ) }
         }
@@ -87,20 +120,34 @@ class AssetDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val history = repository.getAssetHistory(symbol, range, interval)
-            _uiState.update { it.copy(history = history, isLoading = false) }
+            
+            val convertedHistory = if (_uiState.value.displayCurrency == "TL" && (_uiState.value.currency == "USD" || _uiState.value.symbol.endsWith("USDT") || _uiState.value.symbol.endsWith("=F"))) {
+                history.map { it.first to (it.second * usdRate.toDouble()) }
+            } else history
+
+            _uiState.update { it.copy(history = convertedHistory, isLoading = false) }
         }
     }
 
     private fun observeCurrentPrice(symbol: String) {
+        val TAG = "CUZDAN_LOG"
         viewModelScope.launch {
             repository.getMarketAssetBySymbolFlow(symbol).collect { marketAsset ->
                 if (marketAsset != null) {
+                    Log.d(TAG, "Detail observed price update for $symbol: Price=${marketAsset.currentPrice}, Change=${marketAsset.dailyChangePercentage}%")
+                    
+                    val displayPrice = if (_uiState.value.displayCurrency == "TL" && marketAsset.currency == "USD") {
+                        marketAsset.currentPrice.multiply(usdRate)
+                    } else marketAsset.currentPrice
+
                     _uiState.update { state ->
                         state.copy(
-                            currentPrice = marketAsset.currentPrice,
+                            currentPrice = displayPrice,
                             dailyChangePercentage = marketAsset.dailyChangePercentage
                         )
                     }
+                } else {
+                    Log.w(TAG, "Detail observed NULL market asset for $symbol")
                 }
             }
         }
@@ -138,35 +185,61 @@ class AssetDetailViewModel @Inject constructor(
             val assetType = try { AssetType.valueOf(typeString) } catch (e: Exception) { AssetType.BIST }
             val isCash = assetType == AssetType.NAKIT
             
+            // Get current exchange rates for normalization if needed
+            val usdRate = repository.getMarketAssetBySymbolAndTypeOnce("USDTRY=X", AssetType.DOVIZ)?.currentPrice ?: BigDecimal("32.5")
+            val eurRate = repository.getMarketAssetBySymbolAndTypeOnce("EURTRY=X", AssetType.DOVIZ)?.currentPrice ?: BigDecimal("35.2")
+            val homeCurrency = prefManager.getHomeCurrency()
+
             // Ortalama maliyet hesabı
             val newAvgCost = if (transactionType == TransactionType.BUY) {
                 if (newAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    val currentValue = currentAmount.multiply(state.averageBuyPrice)
+                    // Existing cost normalization
+                    val normalizedExistingCost = if (state.buyCurrency != homeCurrency) {
+                        // Convert old cost to new home currency
+                        when {
+                            state.buyCurrency == "TRY" && homeCurrency == "USD" -> state.averageBuyPrice.divide(usdRate, 8, java.math.RoundingMode.HALF_UP)
+                            state.buyCurrency == "TRY" && homeCurrency == "EUR" -> state.averageBuyPrice.divide(eurRate, 8, java.math.RoundingMode.HALF_UP)
+                            state.buyCurrency == "USD" && homeCurrency == "TRY" -> state.averageBuyPrice.multiply(usdRate)
+                            state.buyCurrency == "EUR" && homeCurrency == "TRY" -> state.averageBuyPrice.multiply(eurRate)
+                            else -> state.averageBuyPrice
+                        }
+                    } else state.averageBuyPrice
+
+                    val currentValue = currentAmount.multiply(normalizedExistingCost)
                     val newValue = enteredAmount.multiply(enteredCost)
                     val totalCost = currentValue.add(newValue)
                     totalCost.divide(newAmount, 8, java.math.RoundingMode.HALF_UP)
                 } else enteredCost
             } else {
-                state.averageBuyPrice // Satışta maliyet değişmez
+                state.averageBuyPrice // Satışta maliyet değişmez (maliyet para birimi de değişmez)
             }
 
-            val finalCurrentPrice = if (isCash) BigDecimal.ONE else state.currentPrice
-            val finalAvgCost = if (isCash) BigDecimal.ONE else newAvgCost
+            val finalCurrentPrice = if (isCash) BigDecimal.ONE else {
+                // If we are in TL mode, we need to save the base (USD) price if the asset is natively USD
+                // OR we can save the displayed price and let the repository handle it.
+                // Market assets are usually USD. Let's convert back to USD for storage if needed, 
+                // but the repository usually updates the price from API anyway.
+                if (state.displayCurrency == "TL" && state.currency == "USD") state.currentPrice.divide(usdRate, 8, java.math.RoundingMode.HALF_UP)
+                else state.currentPrice
+            }
+            
+            val finalBuyCurrency = state.displayCurrency.let { if (it == "TL") "TRY" else it }
             
             val asset = Asset(
                 symbol = state.symbol,
                 name = state.name,
                 amount = newAmount,
-                averageBuyPrice = finalAvgCost,
+                averageBuyPrice = newAvgCost,
                 currentPrice = finalCurrentPrice,
                 dailyChangePercentage = if (isCash) BigDecimal.ZERO else state.dailyChangePercentage,
                 assetType = assetType,
                 portfolioId = portfolioId,
-                currency = if (isCash) "TRY" else state.currency
+                currency = if (isCash) "TRY" else state.currency,
+                buyCurrency = finalBuyCurrency
             )
 
             repository.addAsset(asset)
-            _uiState.update { it.copy(isSaved = true, currentAmount = newAmount, averageBuyPrice = finalAvgCost) }
+            _uiState.update { it.copy(isSaved = true, currentAmount = newAmount, averageBuyPrice = newAvgCost) }
         }
     }
 
