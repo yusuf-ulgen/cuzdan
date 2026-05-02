@@ -11,6 +11,9 @@ import com.yusufulgen.cuzdan.databinding.FragmentProfitLossChartBinding
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
+import com.github.mikephil.charting.formatter.ValueFormatter
 
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -145,6 +148,10 @@ class ProfitLossChartFragment : Fragment() {
             Entry(index.toFloat(), history.profitLoss.toFloat())
         }
 
+        val minVal = data.minOfOrNull { it.profitLoss.toFloat() } ?: 0f
+        val maxVal = data.maxOfOrNull { it.profitLoss.toFloat() } ?: 0f
+        val range = maxVal - minVal
+
         val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
         val dataSet = LineDataSet(entries, "P/L").apply {
@@ -157,6 +164,13 @@ class ProfitLossChartFragment : Fragment() {
             
             setDrawFilled(true)
             fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient_light, null)
+
+            // Highlight styling
+            highLightColor = resources.getColor(R.color.accent_gold, null)
+            highlightLineWidth = 1f
+            enableDashedHighlightLine(10f, 5f, 0f)
+            setDrawHorizontalHighlightIndicator(true)
+            setDrawVerticalHighlightIndicator(true)
         }
 
         binding.bigLineChart.apply {
@@ -167,53 +181,84 @@ class ProfitLossChartFragment : Fragment() {
             setScaleEnabled(true)
             setPinchZoom(true)
             
+            val typedValue = android.util.TypedValue()
+            val textColor = if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.WHITE
+            }
+            
+            val dividerColor = if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.divider_light, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.parseColor("#33FFFFFF")
+            }
+
             // Set Marker
             val mv = ChartMarkerView(requireContext(), data)
             mv.chartView = this
             marker = mv
             
             xAxis.apply {
-                val textColorAttr = com.yusufulgen.cuzdan.R.attr.textSecondary
-                val dividerColorAttr = com.yusufulgen.cuzdan.R.attr.divider_light
-                val typedValue = android.util.TypedValue()
-                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
-                val colorSecondary = typedValue.data
-                requireContext().theme.resolveAttribute(dividerColorAttr, typedValue, true)
-                val colorDivider = typedValue.data
-
-                textColor = colorSecondary
-                position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
+                isEnabled = true
+                this.textColor = textColor
+                textSize = 10f
+                position = XAxis.XAxisPosition.BOTTOM
                 setDrawGridLines(false)
-                axisLineColor = colorDivider
+                axisLineColor = dividerColor
+                yOffset = 8f
                 
-                // Add labels if possible (every few points)
-                valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
-                    val sdf = SimpleDateFormat("dd/MM", Locale.getDefault())
+                valueFormatter = object : ValueFormatter() {
+                    private val hourFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    private val dayFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
+                    private val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault())
+
                     override fun getFormattedValue(value: Float): String {
-                        val idx = value.toInt()
-                        return if (idx >= 0 && idx < data.size) {
-                            sdf.format(Date(data[idx].date))
-                        } else ""
+                        val index = value.toInt()
+                        if (index >= 0 && index < data.size) {
+                            val timestamp = data[index].date
+                            val totalDiff = data.last().date - data.first().date
+                            
+                            return when {
+                                totalDiff < 2 * 24 * 60 * 60 * 1000L -> hourFormat.format(Date(timestamp))
+                                totalDiff < 365 * 24 * 60 * 60 * 1000L -> dayFormat.format(Date(timestamp))
+                                else -> yearFormat.format(Date(timestamp))
+                            }
+                        }
+                        return ""
+                    }
+                }
+                granularity = 1f
+                setLabelCount(4, false)
+            }
+            axisLeft.apply {
+                isEnabled = true
+                this.textColor = textColor
+                textSize = 10f
+                setDrawGridLines(true)
+                gridColor = dividerColor
+                gridLineWidth = 0.5f
+                axisLineColor = Color.TRANSPARENT
+                setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART)
+                xOffset = 5f
+                
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return when {
+                            range > 10000 -> {
+                                if (value >= 1000000 || value <= -1000000) String.format("%.1fM", value / 1000000)
+                                else if (value >= 1000 || value <= -1000) String.format("%.1fK", value / 1000)
+                                else String.format("%.0f", value)
+                            }
+                            range > 100 -> String.format("%.0f", value)
+                            else -> String.format("%.2f", value)
+                        }
                     }
                 }
             }
-            axisLeft.apply {
-                val textColorAttr = com.yusufulgen.cuzdan.R.attr.textSecondary
-                val dividerColorAttr = com.yusufulgen.cuzdan.R.attr.divider_light
-                val typedValue = android.util.TypedValue()
-                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
-                val colorSecondary = typedValue.data
-                requireContext().theme.resolveAttribute(dividerColorAttr, typedValue, true)
-                val colorDivider = typedValue.data
-
-                textColor = colorSecondary
-                setDrawGridLines(true)
-                gridColor = colorDivider
-                gridLineWidth = 0.5f
-                axisLineColor = colorDivider
-            }
             axisRight.isEnabled = false
             
+            setExtraOffsets(8f, 8f, 8f, 12f)
             invalidate()
             animateX(1000)
         }

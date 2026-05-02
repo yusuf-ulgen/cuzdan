@@ -35,7 +35,7 @@
         android:textColor="?attr/colorOnSurface"
         android:fontFamily="sans-serif-medium"
         app:thumbTint="?attr/colorPrimary"
-        app:trackTint="@color/divider_color" />
+        app:trackTint="?attr/colorOutline" />
 
     <Button
         android:id="@+id/btn_save"

@@ -52,7 +52,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/surface_glass_strong"
+                app:cardBackgroundColor="?attr/surfaceGlassStrong"
                 app:cardCornerRadius="28dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
@@ -72,7 +72,7 @@
                 android:layout_height="60dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginBottom="32dp"
-                android:backgroundTint="@color/accent_violet"
+                android:backgroundTint="?attr/colorPrimary"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/cash_tool_action"
                 android:textColor="@color/white"

@@ -14,6 +14,7 @@ import com.yusufulgen.cuzdan.util.PreferenceManager
 import com.yusufulgen.cuzdan.util.PriceSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -193,7 +194,10 @@ class HomeViewModel @Inject constructor(
                     currency = currency
                 )}
                 calculateStats(_currentAssets.value, _expandedCategory.value, currency, usdRate, eurRate)
-            }.collect()
+            }
+            .conflate()
+            .flowOn(Dispatchers.Default)
+            .collect()
 
         }
     }
@@ -223,7 +227,10 @@ class HomeViewModel @Inject constructor(
             ) { assets, expanded, currency, usdRate, eurRate ->
                 _currentAssets.value = assets
                 calculateStats(assets, expanded, currency, usdRate, eurRate)
-            }.collect() // <--- SADECE İLK 5'İNİ DİNLİYORUZ
+            }
+            .conflate()
+            .flowOn(Dispatchers.Default)
+            .collect() // <--- SADECE İLK 5'İNİ DİNLİYORUZ
         }
 
         // SyncStatus'u (6. Flow'u) Ayrı Bir Yerde Dinliyoruz
@@ -413,7 +420,6 @@ class HomeViewModel @Inject constructor(
                         pct = BigDecimal.ZERO
                     }
 
-                    Log.d("CUZDAN_LOG", "Calculating Home Item: ${asset.symbol} | Amount: ${asset.amount} | Price: ${asset.currentPrice} | Pct: $pct%")
 
                     val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP))
                     if (denom.compareTo(BigDecimal.ZERO) != 0) {
@@ -675,7 +681,6 @@ class HomeViewModel @Inject constructor(
         prefManager.setHomeCurrency(currency)
         _homeCurrency.value = currency
         _uiState.update { it.copy(currency = currency) }
-        calculateStats(_currentAssets.value, _expandedCategory.value, currency, _usdRate.value, _eurRate.value)
     }
 
     fun resetState() {
@@ -693,7 +698,9 @@ class HomeViewModel @Inject constructor(
                    else portfolios.find { it.portfolio.id == currentId }?.portfolio?.name ?: ""
         
         _uiState.update { it.copy(selectedPortfolioName = name) }
-        calculateStats(_currentAssets.value, _expandedCategory.value, _homeCurrency.value, _usdRate.value, _eurRate.value, activityContext)
+        viewModelScope.launch(Dispatchers.Default) {
+            calculateStats(_currentAssets.value, _expandedCategory.value, _homeCurrency.value, _usdRate.value, _eurRate.value, activityContext)
+        }
     }
 
     private fun calculateAssetDailyValues(asset: Asset, usdRate: BigDecimal?, eurRate: BigDecimal?, isBistClosed: Boolean): AssetDailyValues {

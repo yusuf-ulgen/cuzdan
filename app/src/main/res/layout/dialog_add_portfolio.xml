@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface_card_dark"
+    android:background="?attr/colorSurface"
     android:paddingBottom="32dp">
 
     <!-- Handle -->
@@ -12,7 +12,7 @@
         android:layout_width="40dp"
         android:layout_height="4dp"
         android:layout_marginTop="12dp"
-        android:background="@color/divider_color"
+        android:background="?attr/colorOutline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -39,14 +39,14 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="24dp"
-        app:boxBackgroundColor="@color/surface_card_dark"
+        app:boxBackgroundColor="?attr/colorSurface"
         app:boxCornerRadiusBottomEnd="16dp"
         app:boxCornerRadiusBottomStart="16dp"
         app:boxCornerRadiusTopEnd="16dp"
         app:boxCornerRadiusTopStart="16dp"
         app:boxStrokeWidth="1dp"
         app:boxStrokeWidthFocused="2dp"
-        app:boxStrokeColor="@color/divider_color"
+        app:boxStrokeColor="?attr/colorOutline"
         app:hintEnabled="true"
         app:hintTextColor="?android:attr/textColorSecondary"
         app:layout_constraintTop_toBottomOf="@id/text_title">
@@ -70,7 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="16dp"
-        app:cardBackgroundColor="@color/surface_card_dark"
+        app:cardBackgroundColor="?attr/colorSurface"
         app:cardCornerRadius="16dp"
         app:cardElevation="0dp"
         app:layout_constraintTop_toBottomOf="@id/edit_name_layout">
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:checked="true"
                 app:thumbTint="?attr/colorPrimary"
-                app:trackTint="@color/divider_color" />
+                app:trackTint="?attr/colorOutline" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

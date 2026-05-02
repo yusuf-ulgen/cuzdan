@@ -331,11 +331,15 @@ class ReportsViewModel @Inject constructor(
         )
         reportCategories.sortBy { categoryOrder.indexOf(it.type).let { idx -> if (idx == -1) Int.MAX_VALUE else idx } }
 
+        val totalProfitPercAbs = if (totalCostBase > BigDecimal.ZERO) {
+            totalValueBase.subtract(totalCostBase).multiply(BigDecimal("100")).divide(totalCostBase, 2, RoundingMode.HALF_UP)
+        } else BigDecimal.ZERO
+
         _uiState.update { it.copy(
             categories = reportCategories,
-            totalValue = totalProfitLossAbs, // BÜYÜK BEYAZ YAZI: Toplam Kâr/Zarar (Varlık Değeri - Maliyet)
-            totalProfitLoss = dailyProfitAbs, // KÜÇÜK YAZI: Günlük Kâr/Zarar (eklemeler hariç)
-            totalProfitPerc = dailyProfitPerc, // KÜÇÜK YAZI: Günlük Kâr/Zarar (%)
+            totalValue = totalProfitLossAbs, // BÜYÜK YAZI: Toplam Kâr/Zarar (Varlık Değeri - Maliyet)
+            totalProfitLoss = totalProfitLossAbs, // KÜÇÜK YAZI: Toplam Kâr/Zarar
+            totalProfitPerc = totalProfitPercAbs, // KÜÇÜK YAZI: Toplam Kâr/Zarar (%)
             currency = currency
         )}
     }

@@ -109,7 +109,32 @@ class SymbolSearchViewModel @Inject constructor(
         searchJob = viewModelScope.launch {
             delay(500)
             _uiState.update { it.copy(isLoading = true) }
-            val searchResults = repository.searchAssets(query, type)
+            
+            val allAssets = repository.getMarketAssetsOnce(type)
+            val queryKeywords = query.trim().split("\\s+".toRegex())
+            
+            val searchResults = allAssets.filter { asset ->
+                val searchableText = (asset.name + " " + asset.symbol + " " + (asset.fullName ?: ""))
+                    .lowercase(java.util.Locale("tr", "TR"))
+                    .replace("ı", "i")
+                    .replace("ğ", "g")
+                    .replace("ü", "u")
+                    .replace("ş", "s")
+                    .replace("ö", "o")
+                    .replace("ç", "c")
+
+                queryKeywords.all { keyword ->
+                    val normalizedKeyword = keyword.lowercase(java.util.Locale("tr", "TR"))
+                        .replace("ı", "i")
+                        .replace("ğ", "g")
+                        .replace("ü", "u")
+                        .replace("ş", "s")
+                        .replace("ö", "o")
+                        .replace("ç", "c")
+                    searchableText.contains(normalizedKeyword)
+                }
+            }
+            
             val finalAssets = if (_uiState.value.isFavoritesOnly) searchResults.filter { it.isFavorite } else searchResults
             _uiState.update { it.copy(results = transformAssets(finalAssets, type), isLoading = false) }
         }
@@ -143,11 +168,17 @@ class SymbolSearchViewModel @Inject constructor(
     private fun transformAssets(assets: List<MarketAsset>, type: AssetType): List<MarketAsset> {
         val currency = _uiState.value.currency
         val prioritySymbols = listOf("BTC", "ETH", "USDT", "SOL", "BNB", "XRP", "USDC", "ADA", "DOGE", "AVAX", "SHIB", "DOT", "TRX", "LINK", "MATIC")
+        val priorityEmtia = listOf("GRAM_ALTIN", "GRAM_GUMUS", "GOLD", "SILVER")
 
         val sortedAssets = if (type == AssetType.KRIPTO) {
             assets.sortedWith(compareByDescending<MarketAsset> { asset ->
                 val cleanSym = asset.symbol.replace("USDT", "").replace("TRY", "")
                 val priorityIndex = prioritySymbols.indexOf(cleanSym)
+                if (priorityIndex != -1) 1000 - priorityIndex else 0
+            }.thenBy { it.name })
+        } else if (type == AssetType.EMTIA) {
+            assets.sortedWith(compareByDescending<MarketAsset> { asset ->
+                val priorityIndex = priorityEmtia.indexOf(asset.symbol)
                 if (priorityIndex != -1) 1000 - priorityIndex else 0
             }.thenBy { it.name })
         } else {

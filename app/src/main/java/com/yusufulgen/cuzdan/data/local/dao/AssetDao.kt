@@ -21,6 +21,9 @@ interface AssetDao {
     @Update
     suspend fun updateAsset(asset: Asset)
 
+    @Update
+    suspend fun updateAssets(assets: List<Asset>)
+
     @Delete
     suspend fun deleteAsset(asset: Asset)
 

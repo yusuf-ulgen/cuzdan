@@ -61,6 +61,7 @@
     <!-- Layout & UI Labels -->
     <string name="label_daily_change">GÜNLÜK DEĞİŞİM</string>
     <string name="label_daily_profit_loss">GÜNLÜK KÂR/ZARAR</string>
+    <string name="label_total_profit_loss">TOPLAM KÂR/ZARAR</string>
     <string name="label_distribution">Dağılım</string>
     <string name="label_profit_loss">Kar/Zarar</string>
     <string name="total_portfolios">Portföyler Toplamı</string>
@@ -88,8 +89,8 @@
     <string name="range_1_month">1 Ay</string>
     <string name="asset_search_hint">Varlık ara…</string>
     <string name="subheader_select_asset">Portföyüne eklemek istediğin varlığı seç</string>
-    <string name="total_portfolios_warning_title">Portföyler Totalı</string>
-    <string name="total_portfolios_warning_message">Şu an portföyler toplamındasınız. Buraya ekleme yapamazsınız, lütfen bir portföye geçiş yapın.</string>
+    <string name="total_portfolios_warning_title">Yeni Portföy Açmalısınız</string>
+    <string name="total_portfolios_warning_message">Varlık ekleyebilmek için önce bir portföy oluşturmalısınız. Ana sayfada sağ üst köşede bulunan " + " simgesini kullanabilirsiniz.</string>
     <string name="error_loading">Yükleme hatası</string>
  
     <!-- Markets & Currency -->

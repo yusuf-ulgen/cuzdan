@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/surface_card_dark"
+    android:background="?attr/colorSurface"
     android:padding="24dp">
 
     <View
         android:id="@+id/view_handle"
         android:layout_width="40dp"
         android:layout_height="4dp"
-        android:background="@color/surface_card_dark"
+        android:background="?attr/colorSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -116,7 +116,7 @@
             android:paddingHorizontal="1dp"
             android:paddingVertical="2dp"
             android:ellipsize="none"
-            app:strokeColor="@color/divider_color" />
+            app:strokeColor="?attr/colorOutline" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_equals"
@@ -130,7 +130,7 @@
             android:paddingHorizontal="1dp"
             android:paddingVertical="2dp"
             android:ellipsize="none"
-            app:strokeColor="@color/divider_color" />
+            app:strokeColor="?attr/colorOutline" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_below"
@@ -144,7 +144,7 @@
             android:paddingHorizontal="1dp"
             android:paddingVertical="2dp"
             android:ellipsize="none"
-            app:strokeColor="@color/divider_color" />
+            app:strokeColor="?attr/colorOutline" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -154,7 +154,7 @@
         android:layout_height="60dp"
         android:layout_marginTop="32dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="@color/accent_violet"
+        android:backgroundTint="?attr/colorPrimary"
         android:fontFamily="sans-serif-black"
         android:text="@string/alert_save"
         android:textColor="@color/white"

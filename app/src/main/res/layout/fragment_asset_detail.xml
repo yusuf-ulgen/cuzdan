@@ -9,12 +9,12 @@
 
     <ImageButton
         android:id="@+id/btn_back"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_icon"
-        android:padding="12dp"
+        android:padding="10dp"
         android:src="@drawable/ic_chevron_left"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -51,9 +51,9 @@
 
     <ImageView
         android:id="@+id/iv_asset_icon_detail"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="2dp"
         android:transitionName="shared_asset_icon"
         android:src="@drawable/ic_asset_placeholder"
         app:tint="?attr/colorOnSurface"
@@ -91,7 +91,7 @@
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/iv_asset_icon_detail">
 
@@ -104,9 +104,9 @@
             <!-- Chart Section -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                app:cardBackgroundColor="@color/surface_glass_strong"
-                app:cardCornerRadius="28dp"
+                android:layout_height="210dp"
+                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardCornerRadius="24dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
@@ -123,8 +123,7 @@
                         android:fontFamily="sans-serif-black"
                         android:text="₺0.00"
                         android:textColor="?attr/colorOnSurface"
-                        android:textSize="28sp"
-
+                        android:textSize="26sp"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -135,7 +134,7 @@
                         android:layout_marginStart="8dp"
                         android:text="+0.00%"
                         android:textColor="?attr/colorPrimary"
-                        android:textSize="14sp"
+                        android:textSize="12sp"
                         app:layout_constraintBottom_toBottomOf="@id/text_current_price"
                         app:layout_constraintStart_toEndOf="@id/text_current_price"
                         app:layout_constraintTop_toTopOf="@id/text_current_price" />
@@ -168,7 +167,7 @@
                             android:text="7G"
                             android:textSize="10sp"
                             android:textColor="?attr/colorOnSurface"
-                            app:strokeColor="@color/divider_color" />
+                            app:strokeColor="?attr/colorOutline" />
 
 
                         <Button
@@ -179,7 +178,7 @@
                             android:text="1A"
                             android:textSize="10sp"
                             android:textColor="?attr/colorOnSurface"
-                            app:strokeColor="@color/divider_color" />
+                            app:strokeColor="?attr/colorOutline" />
 
 
                         <Button
@@ -190,7 +189,7 @@
                             android:text="1Y"
                             android:textSize="10sp"
                             android:textColor="?attr/colorOnSurface"
-                            app:strokeColor="@color/divider_color" />
+                            app:strokeColor="?attr/colorOutline" />
 
 
                     </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -202,20 +201,20 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="6dp"
                 android:layout_marginStart="8dp"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/detail_quantity_cost"
                 android:textColor="?attr/colorOnSurface"
-                android:textSize="20sp" />
+                android:textSize="16sp" />
 
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/surface_glass_strong"
-                app:cardCornerRadius="28dp"
+                android:layout_marginTop="4dp"
+                app:cardBackgroundColor="?attr/surfaceGlassStrong"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="2dp"
                 app:strokeWidth="0dp">
 
@@ -224,7 +223,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp">
+                    android:padding="12dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -263,8 +262,8 @@
                     <EditText
                         android:id="@+id/editAmount"
                         android:layout_width="match_parent"
-                        android:layout_height="56dp"
-                        android:layout_marginTop="8dp"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="4dp"
                         android:background="@drawable/bg_search_bar"
                         android:hint="0.00"
                         android:inputType="numberDecimal"
@@ -282,7 +281,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
+                            android:layout_marginTop="12dp"
                             android:text="@string/detail_unit_cost_optional"
                             android:textColor="@color/text_secondary"
                             android:fontFamily="sans-serif-medium" />
@@ -290,8 +289,8 @@
                         <EditText
                             android:id="@+id/editCost"
                             android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="4dp"
                             android:background="@drawable/bg_search_bar"
                             android:hint="0.00"
                             android:inputType="numberDecimal"
@@ -308,9 +307,9 @@
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleTransactionType"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_height="42dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
                 app:checkedButton="@+id/btnBuy">
@@ -324,7 +323,7 @@
                     android:text="@string/detail_buy"
                     android:fontFamily="sans-serif-black"
                     android:textColor="?attr/colorOnSurface"
-                    app:strokeColor="@color/divider_color" />
+                    app:strokeColor="?attr/colorOutline" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSell"
@@ -335,21 +334,21 @@
                     android:text="@string/detail_sell"
                     android:fontFamily="sans-serif-black"
                     android:textColor="?attr/colorOnSurface"
-                    app:strokeColor="@color/divider_color" />
+                    app:strokeColor="?attr/colorOutline" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:layout_marginBottom="32dp"
-                android:backgroundTint="@color/accent_violet"
+                android:layout_height="48dp"
+                android:layout_marginBottom="4dp"
+                android:backgroundTint="?attr/colorPrimary"
                 android:fontFamily="sans-serif-black"
                 android:text="@string/detail_save"
                 android:textColor="@color/white"
-                android:textSize="16sp"
-                app:cornerRadius="30dp" />
+                android:textSize="15sp"
+                app:cornerRadius="24dp" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

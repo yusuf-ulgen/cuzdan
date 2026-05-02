@@ -38,7 +38,9 @@ fun Context.resolveCurrencySwitcherIcon(currencyCode: String): Int {
 }
 
 fun BigDecimal.formatCurrency(currencyCode: String = "TL", showSign: Boolean = false): String {
-    val format = NumberFormat.getCurrencyInstance(Locale("tr", "TR"))
+    val format = NumberFormat.getCurrencyInstance(Locale("tr", "TR")).apply {
+        maximumFractionDigits = 3
+    }
     try {
         val currency = java.util.Currency.getInstance(if (currencyCode == "TL") "TRY" else currencyCode)
         format.currency = currency

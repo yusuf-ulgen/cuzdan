@@ -43,8 +43,8 @@ class MarketsFragment : Fragment() {
         setupListeners()
         observeState()
         
-        // Markets sayfasını her açtığımızda varsayılan olarak "Hepsi" seçili olmalı
-        binding.chipAll.isChecked = true
+        // Markets sayfasını her açtığımızda varsayılan olarak "Borsa" seçili olmalı
+        binding.chipBist.isChecked = true
         
         return binding.root
     }

@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="6dp"
-    app:cardBackgroundColor="@color/surface_glass_strong"
+    app:cardBackgroundColor="?attr/surfaceGlassStrong"
     app:cardCornerRadius="28dp"
     app:cardElevation="2dp"
     app:strokeWidth="0dp">
@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:thumbTint="?attr/colorPrimary"
-            app:trackTint="@color/surface_card_dark"
+            app:trackTint="?attr/colorSurface"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"

@@ -81,16 +81,39 @@ object EmojiDrawableHelper {
     }
 
     /** Icon emoji for commodity assets */
-    fun commodityToEmoji(symbol: String): String? = when (symbol.uppercase()) {
-        "GC=F", "GOLD"      -> "🥇"
-        "GRAM_ALTIN"        -> "🏅"
-        "SI=F", "SILVER"    -> "🥈"
-        "HG=F"              -> "🟤"   // Copper (brown)
-        "PL=F"              -> "⬜"   // Platinum (white)
-        "PA=F"              -> "🔲"   // Palladium
-        "CL=F"              -> "🛢️"   // Oil
-        "NG=F"              -> "🔥"   // Natural Gas
-        "ZW=F", "ZC=F"      -> "🌾"   // Wheat / Corn
-        else                -> null
+    fun commodityToEmoji(symbol: String, name: String? = null): String? {
+        val sym = symbol.uppercase()
+        val nm = name?.uppercase() ?: ""
+        
+        fun String.matches(vararg keywords: String): Boolean {
+            return keywords.any { this.contains(it) }
+        }
+
+        return when {
+            // Energy
+            sym.matches("CL=F", "BZ=F", "OIL", "PETROL") || nm.matches("PETROL", "BRENT", "CRUDE") -> "🛢️"
+            sym.matches("NG=F", "GAS", "GAZ") || nm.matches("GAZ", "NATURAL GAS") -> "🔥"
+            sym.matches("RB=F", "GASOLINE", "BENZIN") || nm.matches("BENZIN", "GASOLINE") -> "⛽"
+            sym.matches("HO=F", "HEATING", "YAKIT") || nm.matches("YAKIT", "HEATING") -> "🌡️"
+            
+            // Agriculture
+            sym.matches("ZW=F", "WHEAT", "BUGDAY") || nm.matches("BUGDAY", "BUĞDAY", "WHEAT") -> "🌾"
+            sym.matches("ZC=F", "CORN", "MISIR") || nm.matches("MISIR", "CORN") -> "🌽"
+            sym.matches("KC=F", "COFFEE", "KAHVE") || nm.matches("KAHVE", "COFFEE") -> "☕"
+            sym.matches("CC=F", "COCOA", "KAKAO") || nm.matches("KAKAO", "COCOA") -> "🍫"
+            sym.matches("CT=F", "COTTON", "PAMUK") || nm.matches("PAMUK", "COTTON") -> "☁️"
+            sym.matches("ZS=F", "SOYBEAN", "SOYA") || nm.matches("SOYA", "SOYBEAN") -> "🫘"
+            sym.matches("SB=F", "SUGAR", "SEKER") || nm.matches("SEKER", "ŞEKER", "SUGAR") -> "🍬"
+            sym.matches("LBS=F", "LUMBER", "KERESTE") || nm.matches("KERESTE", "LUMBER", "WOOD") -> "🪵"
+            
+            // Metals (General)
+            sym.matches("HG=F", "COPPER", "BAKIR") || nm.matches("BAKIR", "COPPER") -> "🧱"
+            sym.matches("ALI=F", "ALUMIN") || nm.matches("ALUMIN", "ALÜM") -> "🥈"
+            sym.matches("PL=F", "PLATIN") || nm.matches("PLATIN", "PLATİN") -> "💍"
+            sym.matches("PA=F", "PALAD") || nm.matches("PALAD", "PALADYUM") -> "💎"
+            sym.matches("ZN=F", "ZNC", "CINKO") || nm.matches("CINK", "ÇİNK", "ÇINK") -> "🔩"
+            
+            else -> null
+        }
     }
 }

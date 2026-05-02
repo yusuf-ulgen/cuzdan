@@ -1,19 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <attr name="layoutBackground" format="reference" />
+    <attr name="surfaceGlass" format="reference|color" />
+    <attr name="surfaceGlassStrong" format="reference|color" />
+    <attr name="textPrimary" format="reference|color" />
+    <attr name="textSecondary" format="reference|color" />
+    <attr name="accentColor" format="reference|color" />
+    <attr name="accentGlow" format="reference|color" />
+    <attr name="iconTint" format="reference|color" />
+    <attr name="divider_light" format="reference|color" />
+    <attr name="pill_red_bg" format="reference|color" />
+    <attr name="pill_red_text" format="reference|color" />
+    <attr name="pill_green_bg" format="reference|color" />
+    <attr name="pill_green_text" format="reference|color" />
+    <attr name="sheetBackground" format="reference" />
+    
     <declare-styleable name="CuzdanTheme">
-        <attr name="layoutBackground" format="reference" />
-        <attr name="surfaceGlass" format="reference|color" />
-        <attr name="surfaceGlassStrong" format="reference|color" />
-        <attr name="textPrimary" format="reference|color" />
-        <attr name="textSecondary" format="reference|color" />
-        <attr name="accentColor" format="reference|color" />
-        <attr name="accentGlow" format="reference|color" />
-        <attr name="iconTint" format="reference|color" />
-        <attr name="divider_light" format="reference|color" />
-        <attr name="pill_red_bg" format="reference|color" />
-        <attr name="pill_red_text" format="reference|color" />
-        <attr name="pill_green_bg" format="reference|color" />
-        <attr name="pill_green_text" format="reference|color" />
-        <attr name="sheetBackground" format="reference" />
+        <attr name="layoutBackground" />
+        <attr name="surfaceGlass" />
+        <attr name="surfaceGlassStrong" />
+        <attr name="textPrimary" />
+        <attr name="textSecondary" />
+        <attr name="accentColor" />
+        <attr name="accentGlow" />
+        <attr name="iconTint" />
+        <attr name="divider_light" />
+        <attr name="pill_red_bg" />
+        <attr name="pill_red_text" />
+        <attr name="pill_green_bg" />
+        <attr name="pill_green_text" />
+        <attr name="sheetBackground" />
     </declare-styleable>
 </resources>

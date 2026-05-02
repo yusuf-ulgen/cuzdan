@@ -88,8 +88,8 @@
     <string name="range_1_month">1 Month</string>
     <string name="asset_search_hint">Search assets…</string>
     <string name="subheader_select_asset">Select the asset you want to add to your portfolio</string>
-    <string name="total_portfolios_warning_title">Total Portfolios</string>
-    <string name="total_portfolios_warning_message">You are currently in total portfolios. You cannot add assets here, please switch to a specific portfolio.</string>
+    <string name="total_portfolios_warning_title">Create a New Portfolio</string>
+    <string name="total_portfolios_warning_message">You need to create a portfolio before adding assets. You can create one from the Settings tab.</string>
     <string name="error_loading">Loading error</string>
 
     <!-- Markets & Currency -->

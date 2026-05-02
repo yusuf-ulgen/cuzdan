@@ -26,15 +26,17 @@ object NetworkModule {
      * Simple in-memory CookieJar for Tefas to handle session and security cookies.
      */
     private class TefasCookieJar : CookieJar {
-        private val cookies = mutableListOf<Cookie>()
+        private val cookies = java.util.concurrent.CopyOnWriteArrayList<Cookie>()
 
+        @Synchronized
         override fun saveFromResponse(url: HttpUrl, responseCookies: List<Cookie>) {
             // Remove old cookies from the same domain/name
             val newNames = responseCookies.map { it.name }
-            cookies.removeAll { it.name in newNames }
+            cookies.removeIf { it.name in newNames }
             cookies.addAll(responseCookies)
         }
 
+        @Synchronized
         override fun loadForRequest(url: HttpUrl): List<Cookie> {
             // Only return cookies that match the URL's domain
             return cookies.filter { it.matches(url) }

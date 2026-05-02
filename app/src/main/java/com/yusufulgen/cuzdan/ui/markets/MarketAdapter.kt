@@ -97,7 +97,7 @@ class MarketAdapter(
             
             val formattedPrice = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
                 minimumFractionDigits = 2
-                maximumFractionDigits = 4
+                maximumFractionDigits = 3
             }.format(item.currentPrice)
             
             val symbol = when(item.currency) {
@@ -170,14 +170,19 @@ class MarketAdapter(
                     }
                 }
                 isEmtiaType -> {
-                    val sym = item.symbol.uppercase()
-                    val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.commodityToEmoji(sym)
-                    if (emoji != null) {
-                        val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(root.context, emoji, 28f)
-                        imageMarketIcon.setImageDrawable(d)
-                        ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                    val iconRes = com.yusufulgen.cuzdan.util.AssetUtils.getAssetIcon(item.symbol, item.assetType)
+                    if (iconRes == R.drawable.ic_commodity) {
+                        val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.commodityToEmoji(item.symbol, item.name)
+                        if (emoji != null) {
+                            val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(root.context, emoji, 32f)
+                            imageMarketIcon.setImageDrawable(d)
+                            ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                        } else {
+                            imageMarketIcon.setImageResource(iconRes)
+                            ImageViewCompat.setImageTintList(imageMarketIcon, null)
+                        }
                     } else {
-                        imageMarketIcon.setImageResource(placeholderRes)
+                        imageMarketIcon.setImageResource(iconRes)
                         ImageViewCompat.setImageTintList(imageMarketIcon, null)
                     }
                 }
@@ -313,21 +318,22 @@ class MarketAdapter(
     override fun getItemCount() = items.size
 
     fun setItems(newItems: List<MarketAsset>) {
+        val oldItems = items // Capture current state for the diff calculation
         val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(object : androidx.recyclerview.widget.DiffUtil.Callback() {
-            override fun getOldListSize(): Int = items.size
+            override fun getOldListSize(): Int = oldItems.size
             override fun getNewListSize(): Int = newItems.size
 
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return items[oldItemPosition].symbol == newItems[newItemPosition].symbol &&
-                       items[oldItemPosition].assetType == newItems[newItemPosition].assetType
+                return oldItems[oldItemPosition].symbol == newItems[newItemPosition].symbol &&
+                       oldItems[oldItemPosition].assetType == newItems[newItemPosition].assetType
             }
 
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return items[oldItemPosition] == newItems[newItemPosition]
+                return oldItems[oldItemPosition] == newItems[newItemPosition]
             }
 
             override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
-                val old = items[oldItemPosition]
+                val old = oldItems[oldItemPosition]
                 val new = newItems[newItemPosition]
                 return if (old.isFavorite != new.isFavorite && 
                     old.copy(isFavorite = new.isFavorite) == new) {

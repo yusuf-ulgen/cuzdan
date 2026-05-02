@@ -61,6 +61,9 @@ interface MarketAssetDao {
 
     @Query("DELETE FROM market_assets WHERE symbol = 'AEDTRY=X'")
     suspend fun deleteAed()
+
+    @Query("DELETE FROM market_assets WHERE assetType = 'DOVIZ' AND ((name LIKE '%Türk Lirası%' AND currentPrice > 1.1) OR (name = 'Amerikan Doları' AND (symbol = 'TRY' OR symbol = 'USDTRY=X' OR symbol = ''))) AND symbol != 'USD'")
+    suspend fun deleteProblematicDoviz()
     
     @Query("DELETE FROM market_assets WHERE assetType = 'BIST' AND symbol LIKE '%.IS'")
     suspend fun cleanStaleBistSymbols()

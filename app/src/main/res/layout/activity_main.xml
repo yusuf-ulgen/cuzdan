@@ -10,7 +10,7 @@
         android:id="@+id/nav_view"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:background="@color/surface_glass_strong"
+        app:backgroundTint="?attr/colorSurfaceVariant"
         app:itemIconTint="@null"
         app:itemTextColor="@color/nav_item_color"
         app:labelVisibilityMode="labeled"
@@ -23,7 +23,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/surface_glass_strong"
+        android:background="?attr/divider_light"
         app:layout_constraintBottom_toTopOf="@id/nav_view" />
 
 

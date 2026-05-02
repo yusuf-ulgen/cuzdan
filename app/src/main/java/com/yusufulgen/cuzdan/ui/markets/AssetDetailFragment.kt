@@ -25,6 +25,12 @@ import com.yusufulgen.cuzdan.util.formatCurrency
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.YAxis
+import com.github.mikephil.charting.formatter.ValueFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -183,21 +189,49 @@ class AssetDetailFragment : Fragment() {
         binding.textCurrentPrice.text = state.currentPrice.formatCurrency(state.displayCurrency)
         binding.textPortfolioName.text = getString(R.string.detail_portfolio_prefix, state.portfolioName)
         
-        // Load icon: each asset type uses its own primitive category icon
-        val iconRes = when(args.assetType) {
-            "KRIPTO" -> R.drawable.ic_crypto
-            "FON" -> R.drawable.ic_funds
-            "BIST" -> R.drawable.ic_bist
-            "EMTIA" -> R.drawable.ic_commodity
-            "NAKIT", "DOVIZ" -> {
-                if (args.symbol == "TRY" || args.symbol == "TL") R.drawable.ic_tl
-                else if (args.symbol == "USD") R.drawable.ic_usd
-                else if (args.symbol == "EUR") R.drawable.ic_eur
-                else R.drawable.ic_currency
-            }
-            else -> R.drawable.ic_asset_placeholder
+        // Load icon using AssetUtils
+        val assetType = try {
+            com.yusufulgen.cuzdan.data.local.entity.AssetType.valueOf(args.assetType)
+        } catch (e: Exception) {
+            com.yusufulgen.cuzdan.data.local.entity.AssetType.EMTIA // Default
         }
-        binding.ivAssetIconDetail.setImageResource(iconRes)
+        val iconRes = com.yusufulgen.cuzdan.util.AssetUtils.getAssetIcon(args.symbol, assetType)
+        
+        if (args.assetType == "DOVIZ" || args.assetType == "NAKIT") {
+            val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.currencyToFlagEmoji(args.symbol)
+            if (emoji != null) {
+                val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(requireContext(), emoji, 32f)
+                binding.ivAssetIconDetail.setImageDrawable(d)
+                binding.ivAssetIconDetail.imageTintList = null
+            } else {
+                binding.ivAssetIconDetail.setImageResource(iconRes)
+                val typedValueTint = android.util.TypedValue()
+                if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, typedValueTint, true)) {
+                    binding.ivAssetIconDetail.imageTintList = android.content.res.ColorStateList.valueOf(typedValueTint.data)
+                }
+            }
+        } else if (args.assetType == "EMTIA" && iconRes == com.yusufulgen.cuzdan.R.drawable.ic_commodity) {
+            val emoji = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.commodityToEmoji(args.symbol, args.name)
+            if (emoji != null) {
+                val d = com.yusufulgen.cuzdan.util.EmojiDrawableHelper.emojiToDrawable(requireContext(), emoji, 32f)
+                binding.ivAssetIconDetail.setImageDrawable(d)
+                binding.ivAssetIconDetail.imageTintList = null
+            } else {
+                binding.ivAssetIconDetail.setImageResource(iconRes)
+                binding.ivAssetIconDetail.imageTintList = null
+            }
+        } else {
+            binding.ivAssetIconDetail.setImageResource(iconRes)
+            // Disable tint for colorful commodity icons
+            if (args.assetType == "EMTIA") {
+                binding.ivAssetIconDetail.imageTintList = null
+            } else {
+                val typedValueTint = android.util.TypedValue()
+                if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, typedValueTint, true)) {
+                    binding.ivAssetIconDetail.imageTintList = android.content.res.ColorStateList.valueOf(typedValueTint.data)
+                }
+            }
+        }
         
         // Show held amount
         binding.textCurrentAmountHeld.text = getString(R.string.detail_held_amount, state.currentAmount.toPlainString())
@@ -225,11 +259,15 @@ class AssetDetailFragment : Fragment() {
             Entry(index.toFloat(), pair.second.toFloat())
         }
 
+        val minVal = history.minOf { it.second }
+        val maxVal = history.maxOf { it.second }
+        val range = maxVal - minVal
+
         val accentViolet = resources.getColor(R.color.pastel_violet, null)
 
-        val dataSet = LineDataSet(entries, getString(R.string.label_profit_loss)).apply {
+        val dataSet = LineDataSet(entries, "").apply {
             color = accentViolet
-            lineWidth = 3f
+            lineWidth = 2.5f
             setDrawCircles(false)
             setDrawCircleHole(false)
             setDrawValues(false)
@@ -238,6 +276,13 @@ class AssetDetailFragment : Fragment() {
             
             setDrawFilled(true)
             fillDrawable = resources.getDrawable(R.drawable.bg_chart_gradient_light, null)
+            
+            // Highlight styling
+            highLightColor = resources.getColor(R.color.accent_gold, null)
+            highlightLineWidth = 1f
+            enableDashedHighlightLine(10f, 5f, 0f)
+            setDrawHorizontalHighlightIndicator(true)
+            setDrawVerticalHighlightIndicator(true)
         }
 
         binding.priceChart.apply {
@@ -245,27 +290,91 @@ class AssetDetailFragment : Fragment() {
             description.isEnabled = false
             legend.isEnabled = false
             
-            xAxis.isEnabled = false
-            axisLeft.apply {
-                val textColorAttr = com.yusufulgen.cuzdan.R.attr.textSecondary
-                val typedValue = android.util.TypedValue()
-                requireContext().theme.resolveAttribute(textColorAttr, typedValue, true)
-
-                textColor = typedValue.data
-                setDrawGridLines(true) // Enabled for better price reference
-                gridColor = Color.parseColor("#33FFFFFF") // Subtle grid
-                setDrawLabels(true) // Ensure labels are visible
-                axisLineColor = Color.TRANSPARENT
-                setPosition(com.github.mikephil.charting.components.YAxis.YAxisLabelPosition.INSIDE_CHART)
+            val typedValue = android.util.TypedValue()
+            val textColor = if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.textPrimary, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.WHITE
             }
+            
+            val dividerColor = if (requireContext().theme.resolveAttribute(com.yusufulgen.cuzdan.R.attr.divider_light, typedValue, true)) {
+                typedValue.data
+            } else {
+                Color.parseColor("#33FFFFFF")
+            }
+
+            // Set Marker
+            val mv = AssetChartMarkerView(requireContext(), history, viewModel.uiState.value.displayCurrency)
+            mv.chartView = this
+            marker = mv
+
+            xAxis.apply {
+                isEnabled = true
+                position = XAxis.XAxisPosition.BOTTOM
+                setDrawGridLines(false)
+                this.textColor = textColor
+                textSize = 10f
+                yOffset = 8f
+                axisLineColor = dividerColor
+                
+                valueFormatter = object : ValueFormatter() {
+                    private val hourFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    private val dayFormat = SimpleDateFormat("dd/MM", Locale.getDefault())
+                    private val yearFormat = SimpleDateFormat("yyyy", Locale.getDefault())
+
+                    override fun getFormattedValue(value: Float): String {
+                        val index = value.toInt()
+                        if (index >= 0 && index < history.size) {
+                            val timestamp = history[index].first
+                            val totalDiff = history.last().first - history.first().first
+                            
+                            return when {
+                                totalDiff < 2 * 24 * 60 * 60 * 1000L -> hourFormat.format(Date(timestamp))
+                                totalDiff < 365 * 24 * 60 * 60 * 1000L -> dayFormat.format(Date(timestamp))
+                                else -> yearFormat.format(Date(timestamp))
+                            }
+                        }
+                        return ""
+                    }
+                }
+                granularity = 1f
+                setLabelCount(3, false)
+            }
+
+            axisLeft.apply {
+                isEnabled = true
+                this.textColor = textColor
+                textSize = 10f
+                setDrawGridLines(true)
+                gridColor = dividerColor
+                axisLineColor = Color.TRANSPARENT
+                setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART)
+                xOffset = 5f
+                
+                valueFormatter = object : ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String {
+                        return when {
+                            range > 10000 -> {
+                                if (value >= 1000000 || value <= -1000000) String.format("%.1fM", value / 1000000)
+                                else if (value >= 1000 || value <= -1000) String.format("%.1fK", value / 1000)
+                                else String.format("%.0f", value)
+                            }
+                            range > 100 -> String.format("%.0f", value)
+                            else -> String.format("%.2f", value)
+                        }
+                    }
+                }
+            }
+            
             axisRight.isEnabled = false
             
             setTouchEnabled(true)
             setPinchZoom(true)
-            animateX(1200)
+            setScaleEnabled(true)
+            setExtraOffsets(8f, 8f, 8f, 12f) // Increased offsets
+            animateX(800)
             invalidate()
         }
-
     }
 
     private fun getLocalizedAssetName(name: String): String {

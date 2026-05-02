@@ -13,25 +13,17 @@ object AssetUtils {
                     sym.contains("EUR") -> R.drawable.ic_eur
                     sym.contains("TRY") || sym == "TL" -> R.drawable.ic_try
                     sym.contains("GBP") -> R.drawable.ic_gbp
-                    else -> R.drawable.doviz
+                    else -> R.drawable.ic_currency
                 }
             }
-            AssetType.KRIPTO -> {
-                when {
-                    sym.contains("BTC") || sym.contains("BITCOIN") -> R.drawable.kripto
-                    else -> R.drawable.kripto
-                }
-            }
-            AssetType.BIST -> R.drawable.borsa
-            AssetType.FON -> R.drawable.fon
+            AssetType.KRIPTO -> R.drawable.ic_crypto
+            AssetType.BIST -> R.drawable.ic_bist
+            AssetType.FON -> R.drawable.ic_funds
             AssetType.EMTIA -> {
                 when {
-                    sym.contains("GOLD") || sym.contains("ALTIN") -> R.drawable.emtia
-                    sym.contains("SILVER") || sym.contains("GUMUS") || sym.contains("SI=F") || sym.contains("XAG") -> R.drawable.ic_commodity
-                    sym.contains("OIL") || sym.contains("PETROL") || sym.contains("CL=F") || sym.contains("BZ=F") -> R.drawable.ic_commodity
-                    sym.contains("GAS") || sym.contains("GAZ") || sym.contains("NG=F") -> R.drawable.ic_commodity
-                    sym.contains("ALUMIN") || sym.contains("ALI=F") || sym.contains("NICKEL") || sym.contains("NI=F") || sym.contains("ZINC") || sym.contains("ZN=F") -> R.drawable.ic_commodity
-                    else -> R.drawable.emtia
+                    sym.contains("GOLD") || sym == "GC=F" || sym == "GRAM_ALTIN" -> R.drawable.commodity_gold
+                    sym.contains("SILVER") || sym == "SI=F" || sym.contains("GUMUS") -> R.drawable.commodity_silver
+                    else -> R.drawable.ic_commodity
                 }
             }
         }

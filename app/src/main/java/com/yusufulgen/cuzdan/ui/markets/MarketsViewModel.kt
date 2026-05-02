@@ -25,7 +25,7 @@ data class MarketsUiState(
     val prices: List<MarketAsset> = emptyList(),
     val filteredPrices: List<MarketAsset> = emptyList(),
     val isLoading: Boolean = false,
-    val selectedType: AssetType? = null,
+    val selectedType: AssetType? = AssetType.BIST,
     val searchQuery: String = "",
     val isFavoritesOnly: Boolean = false,
     val sortType: MarketsSortType = MarketsSortType.NAME_ASC,
@@ -39,7 +39,7 @@ class MarketsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
-    private val _selectedType = MutableStateFlow<AssetType?>(null)
+    private val _selectedType = MutableStateFlow<AssetType?>(AssetType.BIST)
     private val _isFavoritesOnly = MutableStateFlow(false)
     private val _sortType = MutableStateFlow(MarketsSortType.NAME_ASC)
     private val _isLoading = MutableStateFlow(false)
@@ -64,18 +64,41 @@ class MarketsViewModel @Inject constructor(
         val error = array[6] as? String
 
         val prioritySymbols = listOf("BTC", "ETH", "USDT", "SOL", "BNB", "XRP", "USDC", "ADA", "DOGE", "AVAX", "SHIB", "DOT", "TRX", "LINK", "MATIC")
+        val priorityEmtia = listOf("GRAM_ALTIN", "GRAM_GUMUS", "GOLD", "SILVER")
 
         val filtered = prices.filter { asset ->
-            (asset.name.contains(query, ignoreCase = true) || 
-             asset.symbol.contains(query, ignoreCase = true) || 
-             (asset.fullName?.contains(query, ignoreCase = true) == true)) &&
-            (!favoritesOnly || asset.isFavorite)
+            if (query.isBlank()) return@filter (!favoritesOnly || asset.isFavorite)
+            val queryKeywords = query.trim().split("\\s+".toRegex())
+            val searchableText = (asset.name + " " + asset.symbol + " " + (asset.fullName ?: ""))
+                .lowercase(java.util.Locale("tr", "TR"))
+                .replace("ı", "i")
+                .replace("ğ", "g")
+                .replace("ü", "u")
+                .replace("ş", "s")
+                .replace("ö", "o")
+                .replace("ç", "c")
+
+            queryKeywords.all { keyword ->
+                val normalizedKeyword = keyword.lowercase(java.util.Locale("tr", "TR"))
+                    .replace("ı", "i")
+                    .replace("ğ", "g")
+                    .replace("ü", "u")
+                    .replace("ş", "s")
+                    .replace("ö", "o")
+                    .replace("ç", "c")
+                searchableText.contains(normalizedKeyword)
+            } && (!favoritesOnly || asset.isFavorite)
         }.let { list ->
             // Apply priority sorting for KRIPTO
             val sortedList = if (type == AssetType.KRIPTO) {
                 list.sortedWith(compareByDescending<MarketAsset> { asset ->
                     val cleanSym = asset.symbol.replace("USDT", "").replace("TRY", "")
                     val priorityIndex = prioritySymbols.indexOf(cleanSym)
+                    if (priorityIndex != -1) 1000 - priorityIndex else 0
+                }.thenBy { it.name })
+            } else if (type == AssetType.EMTIA) {
+                list.sortedWith(compareByDescending<MarketAsset> { asset ->
+                    val priorityIndex = priorityEmtia.indexOf(asset.symbol)
                     if (priorityIndex != -1) 1000 - priorityIndex else 0
                 }.thenBy { it.name })
             } else {
