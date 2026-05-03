@@ -15,8 +15,9 @@ import com.yusufulgen.cuzdan.data.local.entity.PriceAlert
 import com.yusufulgen.cuzdan.data.remote.api.BinanceApi
 import com.yusufulgen.cuzdan.data.remote.api.TefasApi
 import com.yusufulgen.cuzdan.data.remote.api.YahooFinanceApi
-import com.yusufulgen.cuzdan.data.remote.model.TefasHistoryResponse
-import com.yusufulgen.cuzdan.data.remote.model.TefasWrapper
+import com.yusufulgen.cuzdan.data.remote.model.TefasNewHistoryResponse
+import com.yusufulgen.cuzdan.data.remote.model.TefasNewWrapper
+import com.yusufulgen.cuzdan.data.remote.model.TefasNewRequest
 import com.yusufulgen.cuzdan.util.Resource
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -386,192 +387,61 @@ constructor(
                 emit(Resource.Success(Unit))
                 return@flow
             }
-            val sdf = java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
-            val fundTypes = listOf("YAT", "BYF", "HEK", "EMK")
 
-            val calendar = java.util.Calendar.getInstance()
-            val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
-            val startDayOffset =
-                    when (dayOfWeek) {
-                        java.util.Calendar.SUNDAY -> 2
-                        java.util.Calendar.SATURDAY -> 1
-                        else -> 0
-                    }
-
-            try {
-                Log.d("TEFAS_SONUC", "Establishing Tefas session (warm-up)...")
-                tefasApi.warmUpSession()
-                delay(1000L) // Wait a bit after warm-up
-            } catch (e: Exception) {
-                Log.w("TEFAS_SONUC", "Session warm-up failed: ${e.message}")
-            }
-
-            Log.d("TEFAS_SONUC", "Refreshing ${fundAssets.size} owned funds. 2.5s delay aktif.")
+            Log.d("TEFAS_SONUC", "Refreshing ${fundAssets.size} owned funds via new API.")
 
             fundAssets.forEachIndexed { index, asset ->
-                delay(index * 2500L) // 2.5 seconds stagger between funds
-                var price = BigDecimal.ZERO
-                var prevPrice = BigDecimal.ZERO
-                var foundPriceDate: String? = null
+                try {
+                    // Stagger requests to avoid rate limiting
+                    if (index > 0) delay(1000L)
+                    
+                    val response = tefasApi.getFundHistory(
+                        TefasNewRequest(fonKodu = asset.symbol.uppercase())
+                    )
+                    
+                    val results = response.resultList?.sortedByDescending { it.tarih }
+                    val latest = results?.firstOrNull()
+                    val previous = results?.getOrNull(1)
 
-                // Son 30 günü tara (Hafta sonu atlanarak)
-                outer@ for (dayOffset in startDayOffset..30) {
-                    val cal = java.util.Calendar.getInstance()
-                    cal.add(java.util.Calendar.DATE, -dayOffset)
-                    val dateStr = sdf.format(cal.time)
-
-                    for (ft in fundTypes) {
-                        try {
-                            delay(300L) // Delay between types
-                            val rawBody =
-                                    tefasApi.getFundHistory(
-                                                    fundType = ft,
-                                                    fundCode = asset.symbol.uppercase(),
-                                                    startDate = dateStr,
-                                                    endDate = dateStr
-                                            )
-                                            .string()
-                            val entry = parseTefasFullResponse(rawBody).firstOrNull()
-                            if (entry != null) {
-                                val parsed = parseTefasPrice(entry.price)
-                                if (parsed > BigDecimal.ZERO) {
-                                    price = parsed
-                                    foundPriceDate = dateStr
-                                    break@outer
-                                }
-                            }
-                        } catch (e: Exception) {
-                            val msg = e.message ?: ""
-                            if (msg.contains("End of input") || msg.contains("malformed JSON")) {
-                                Log.v("TEFAS_SONUC", "Type $ft not found for ${asset.symbol}")
-                            } else {
-                                Log.w("TEFAS_SONUC", "Error for ${asset.symbol} ($ft): $msg")
-                            }
+                    if (latest != null && latest.price != null && latest.price > 0.0) {
+                        val price = BigDecimal.valueOf(latest.price)
+                        val prevPrice = if (previous != null && previous.price != null) {
+                            BigDecimal.valueOf(previous.price)
+                        } else {
+                            BigDecimal.ZERO
                         }
-                    }
-                }
-
-                // Önceki işlem gününün fiyatını bul (günlük değişim için)
-                if (foundPriceDate != null) {
-                    // foundPriceDate'in bir önceki takvim günü değil, bir önceki işlem günü
-                    for (dayOffset in 1..30) {
-                        val cal =
-                                java.text.SimpleDateFormat("dd.MM.yyyy", Locale("tr", "TR"))
-                                        .parse(foundPriceDate!!)
-                                        ?.let {
-                                            java.util.Calendar.getInstance().apply { time = it }
-                                        }
-                                        ?: continue
-                        cal.add(java.util.Calendar.DATE, -dayOffset)
-                        val prevDateStr = sdf.format(cal.time)
-                        var found = false
-                        for (ft in fundTypes) {
-                            try {
-                                delay(100L)
-                                val rawPrevBody =
-                                        tefasApi.getFundHistory(
-                                                        fundType = ft,
-                                                        fundCode = asset.symbol.uppercase(),
-                                                        startDate = prevDateStr,
-                                                        endDate = prevDateStr
-                                                )
-                                                .string()
-                                val prevEntry = parseTefasFullResponse(rawPrevBody).firstOrNull()
-                                if (prevEntry != null) {
-                                    val parsed = parseTefasPrice(prevEntry.price)
-                                    if (parsed > BigDecimal.ZERO) {
-                                        prevPrice = parsed
-                                        found = true
-                                        break
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                /* ignore */
-                            }
+                        
+                        val dailyChange = if (prevPrice > BigDecimal.ZERO) {
+                            price.subtract(prevPrice)
+                                .divide(prevPrice, 6, RoundingMode.HALF_UP)
+                                .multiply(BigDecimal("100"))
+                                .setScale(2, RoundingMode.HALF_UP)
+                        } else {
+                            BigDecimal.ZERO
                         }
-                        if (found) break
-                    }
-                }
 
-                if (price > BigDecimal.ZERO) {
-                    val dailyChange =
-                            if (prevPrice > BigDecimal.ZERO) {
-                                price.subtract(prevPrice)
-                                        .divide(prevPrice, 6, RoundingMode.HALF_UP)
-                                        .multiply(BigDecimal("100"))
-                                        .setScale(2, RoundingMode.HALF_UP)
-                            } else BigDecimal.ZERO
-                    assetDao.updateAsset(
+                        assetDao.updateAsset(
                             asset.copy(
-                                    currentPrice = price,
-                                    dailyChangePercentage = dailyChange,
-                                    currency = "TRY"
+                                currentPrice = price,
+                                dailyChangePercentage = dailyChange,
+                                currency = "TRY"
                             )
-                    )
-                    Log.d(
-                            "TEFAS_SONUC",
-                            "Owned fund updated ${asset.symbol}: price=$price change=${dailyChange}%"
-                    )
-                } else {
-                    Log.w(
-                            "TEFAS_SONUC",
-                            "Owned fund price stayed 0: ${asset.symbol}. Keeping existing price=${asset.currentPrice.setScale(4, RoundingMode.HALF_UP)}"
-                    )
+                        )
+                        Log.d("TEFAS_SONUC", "Owned fund updated ${asset.symbol}: price=$price change=${dailyChange}%")
+                    } else {
+                        Log.w("TEFAS_SONUC", "No price data for ${asset.symbol}")
+                    }
+                } catch (e: Exception) {
+                    Log.w("TEFAS_SONUC", "Error updating fund ${asset.symbol}: ${e.message}")
                 }
             }
             emit(Resource.Success(Unit))
         } catch (e: Exception) {
+            Log.e("TEFAS_SONUC", "refreshOwnedFundPrices error", e)
             emit(Resource.Error(e.message ?: "Fon fiyatları güncellenemedi"))
         }
     }
 
-    private fun parseTefasPrice(rawPriceAny: Any?): BigDecimal {
-        return when (rawPriceAny) {
-            is Number -> BigDecimal(rawPriceAny.toString())
-            is String -> {
-                val cleanStr = rawPriceAny.replace("\u00A0", "").trim()
-                try {
-                    if (cleanStr.contains(",") && cleanStr.contains(".")) {
-                        BigDecimal(cleanStr.replace(".", "").replace(",", "."))
-                    } else if (cleanStr.contains(",")) {
-                        BigDecimal(cleanStr.replace(",", "."))
-                    } else BigDecimal(cleanStr)
-                } catch (e: Exception) {
-                    BigDecimal.ZERO
-                }
-            }
-            else -> BigDecimal.ZERO
-        }
-    }
-
-    private fun parseTefasFullResponse(rawResponse: String): List<TefasHistoryResponse> {
-        if (rawResponse.isBlank()) return emptyList()
-        return try {
-            // Handle cases where the response is a JSON string e.g. "{\"d\": ...}"
-            var json = rawResponse.trim()
-            if (json.startsWith("\"") && json.endsWith("\"")) {
-                try {
-                    json = gson.fromJson(json, String::class.java)
-                } catch (e: Exception) {
-                    /* fallback to original */
-                }
-            }
-
-            val wrapper = gson.fromJson(json, TefasWrapper::class.java)
-            wrapper.data ?: emptyList()
-        } catch (e: Exception) {
-            // Fallback for direct list responses [...]
-            try {
-                val listType =
-                        object : com.google.gson.reflect.TypeToken<List<TefasHistoryResponse>>() {}
-                                .type
-                gson.fromJson(rawResponse, listType)
-            } catch (e2: Exception) {
-                Log.v("TEFAS_SONUC", "Parse failed for JSON: ${rawResponse.take(50)}...")
-                emptyList()
-            }
-        }
-    }
 
     suspend fun refreshMarketAssets(type: AssetType?): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
@@ -637,209 +507,78 @@ constructor(
                 AssetType.FON -> {
                     val symbols =
                             listOf(
-                                    "TTE",
-                                    "IJP",
-                                    "MAC",
-                                    "GSP",
-                                    "AFT",
-                                    "KOC",
-                                    "IPV",
-                                    "OPI",
-                                    "RPD",
-                                    "TAU",
-                                    "YAY",
-                                    "TI1",
-                                    "GMR",
-                                    "TE3",
-                                    "HVS",
-                                    "TDF",
-                                    "IKL",
-                                    "NJR",
-                                    "BUY",
-                                    "NNF",
-                                    "BGP",
-                                    "KZT",
-                                    "ZPE",
-                                    "OJT",
-                                    "IDL",
-                                    "KDV",
-                                    "GPA",
-                                    "RTG",
-                                    "OTJ",
-                                    "ZPF",
-                                    "YZG",
-                                    "HKH",
-                                    "ZHB",
-                                    "AFO",
-                                    "GL1",
-                                    "IVY",
-                                    "YAS",
-                                    "IHK",
-                                    "EID",
-                                    "ST1",
-                                    "GAY",
-                                    "DBH",
-                                    "YHS",
-                                    "ZPC",
-                                    "AES",
-                                    "IPJ",
-                                    "GUH",
-                                    "IEY",
-                                    "YTD",
-                                    "YEG",
-                                    "ZPF",
-                                    "ZRE",
-                                    "KDJ",
-                                    "KRA",
-                                    "OJK",
-                                    "AME",
-                                    "OKT",
-                                    "HAY",
-                                    "TUK",
-                                    "TUA",
-                                    "TPZ",
-                                    "TUT",
-                                    "TID",
-                                    "TIE",
-                                    "TIG",
-                                    "TIV",
-                                    "TKF",
-                                    "TLA",
-                                    "TLM",
-                                    "TLE",
-                                    "TMS",
-                                    "TMG"
+                                    "TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU",
+                                    "YAY", "TI1", "GMR", "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF",
+                                    "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF",
+                                    "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK", "EID", "ST1",
+                                    "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD", "YEG",
+                                    "ZPF", "ZRE", "KDJ", "KRA", "OJK", "AME", "OKT", "HAY", "TUK", "TUA",
+                                    "TPZ", "TUT", "TID", "TIE", "TIG", "TIV", "TKF", "TLA", "TLM", "TLE",
+                                    "TMS", "TMG"
                             )
-                    val fundTypeList = listOf("YAT", "BYF", "HEK", "EMK")
-                    Log.d(
-                            "TEFAS_SONUC",
-                            "Market Funds Refresh: ${symbols.size} symbols. (Hafta sonu kontrolü aktif)"
-                    )
-
-                    val calendar = java.util.Calendar.getInstance()
-                    val dayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
-                    val startDayOffset =
-                            when (dayOfWeek) {
-                                java.util.Calendar.SUNDAY -> 2
-                                java.util.Calendar.SATURDAY -> 1
-                                else -> 0
-                            }
+                    Log.d("TEFAS_SONUC", "Market Funds Refresh: ${symbols.size} symbols via new API.")
 
                     val fundAssets = coroutineScope {
-                        try {
-                            Log.d("TEFAS_SONUC", "Establishing Tefas session for Market Refresh...")
-                            tefasApi.warmUpSession()
-                            delay(1000L)
-                        } catch (e: Exception) {
-                            Log.w("TEFAS_SONUC", "Market session warm-up failed: ${e.message}")
-                        }
+                        symbols.mapIndexed { index, symbol ->
+                            async {
+                                try {
+                                    // Use 1s stagger to prevent rate limiting
+                                    if (index > 0) delay(1000L)
+                                    
+                                    val response = tefasApi.getFundHistory(
+                                        TefasNewRequest(fonKodu = symbol)
+                                    )
+                                    val results = response.resultList?.sortedByDescending { it.tarih }
+                                    val latest = results?.firstOrNull()
+                                    val previous = results?.getOrNull(1)
 
-                        symbols
-                                .mapIndexed { index, symbol ->
-                                    async {
-                                        try {
-                                            // Use 2.5s delay to prevent IP blocking and DNS issues
-                                            delay(index * 2500L)
-                                        } catch (e: Exception) {
-                                            /* ignore delay cancellation */
+                                    if (latest != null && latest.price != null && latest.price > 0.0) {
+                                        val price = BigDecimal.valueOf(latest.price)
+                                        val prevPrice = if (previous != null && previous.price != null) {
+                                            BigDecimal.valueOf(previous.price)
+                                        } else {
+                                            BigDecimal.ZERO
                                         }
-
-                                        var price = BigDecimal.ZERO
-                                        var fundName = "$symbol Fonu"
-                                        val sdf =
-                                                java.text.SimpleDateFormat(
-                                                        "dd.MM.yyyy",
-                                                        Locale("tr", "TR")
-                                                )
-
-                                        // Bugünden geriye doğru 30 gün tara (Hafta sonu atlanarak)
-                                        outer@ for (dayOffset in startDayOffset..30) {
-                                            val cal = java.util.Calendar.getInstance()
-                                            cal.add(java.util.Calendar.DATE, -dayOffset)
-                                            val dateStr = sdf.format(cal.time)
-                                            for (ft in fundTypeList) {
-                                                try {
-                                                    delay(300L) // Secondary stagger between types
-                                                    val rawBody =
-                                                            tefasApi.getFundHistory(
-                                                                            fundType = ft,
-                                                                            fundCode = symbol,
-                                                                            startDate = dateStr,
-                                                                            endDate = dateStr
-                                                                    )
-                                                                    .string()
-
-                                                    val entries = parseTefasFullResponse(rawBody)
-                                                    entries.firstOrNull()?.let { entry ->
-                                                        fundName = entry.fundName ?: fundName
-                                                        val parsed = parseTefasPrice(entry.price)
-                                                        if (parsed > BigDecimal.ZERO) {
-                                                            Log.d(
-                                                                    "TEFAS_SONUC",
-                                                                    "FOUND for $symbol on $dateStr: name=$fundName, rawPrice=${entry.price}, parsed=$parsed"
-                                                            )
-                                                            price = parsed
-                                                            return@async Triple(
-                                                                    symbol,
-                                                                    fundName,
-                                                                    price
-                                                            )
-                                                        }
-                                                    }
-                                                } catch (e: Exception) {
-                                                    // Silencing common non-critical errors (fund
-                                                    // type doesn't exist for this symbol)
-                                                    val msg = e.message ?: ""
-                                                    if (msg.contains("End of input") ||
-                                                                    msg.contains("malformed JSON")
-                                                    ) {
-                                                        // Ignore, just means this combo doesn't
-                                                        // exist
-                                                    } else if (dayOffset == startDayOffset) {
-                                                        Log.w(
-                                                                "TEFAS_SONUC",
-                                                                "Request Error for $symbol ($ft): $msg"
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                        
+                                        val change = if (prevPrice > BigDecimal.ZERO) {
+                                            price.subtract(prevPrice)
+                                                .divide(prevPrice, 6, RoundingMode.HALF_UP)
+                                                .multiply(BigDecimal("100"))
+                                                .setScale(2, RoundingMode.HALF_UP)
+                                        } else {
+                                            BigDecimal.ZERO
                                         }
-                                        if (price == BigDecimal.ZERO) {
-                                            Log.e(
-                                                    "TEFAS_SONUC",
-                                                    "FAILED to find price for $symbol after 30 days of checking."
-                                            )
-                                        }
-                                        Triple(symbol, fundName, price)
+                                        
+                                        Triple(symbol, latest.fundName ?: "$symbol Fonu", Pair(price, change))
+                                    } else {
+                                        Triple(symbol, "$symbol Fonu", Pair(BigDecimal.ZERO, BigDecimal.ZERO))
                                     }
+                                } catch (e: Exception) {
+                                    Log.e("TEFAS_SONUC", "Market fund error for $symbol: ${e.message}")
+                                    Triple(symbol, "$symbol Fonu", Pair(BigDecimal.ZERO, BigDecimal.ZERO))
                                 }
-                                .awaitAll()
+                            }
+                        }.awaitAll()
                     }
-                    fundAssets.forEach { (symbol, name, price) ->
-                        // Even if TEFAS fails, keep the fund visible with last known/zero price.
-                        val existing =
-                                marketAssetDao.getMarketAssetBySymbolAndTypeOnce(
-                                        symbol,
-                                        AssetType.FON
-                                )
-                        val finalPrice =
-                                if (price > BigDecimal.ZERO) price
-                                else (existing?.currentPrice ?: BigDecimal.ZERO)
-                        val finalName =
-                                if (name.isNotBlank() && name != "$symbol Fonu") name
-                                else (existing?.name ?: "$symbol Fonu")
+
+                    fundAssets.forEach { (symbol, name, priceChange) ->
+                        val (price, change) = priceChange
+                        val existing = marketAssetDao.getMarketAssetBySymbolAndTypeOnce(symbol, AssetType.FON)
+                        val finalPrice = if (price > BigDecimal.ZERO) price else (existing?.currentPrice ?: BigDecimal.ZERO)
+                        val finalChange = if (price > BigDecimal.ZERO) change else (existing?.dailyChangePercentage ?: BigDecimal.ZERO)
+                        val finalName = if (name.isNotBlank() && name != "$symbol Fonu") name else (existing?.name ?: "$symbol Fonu")
+                        
                         marketAssets.add(
-                                MarketAsset(
-                                        symbol = symbol,
-                                        name = finalName,
-                                        fullName = finalName,
-                                        currentPrice = finalPrice,
-                                        dailyChangePercentage = existing?.dailyChangePercentage
-                                                        ?: BigDecimal.ZERO,
-                                        assetType = AssetType.FON,
-                                        currency = "TRY",
-                                        isFavorite = existing?.isFavorite ?: false
-                                )
+                            MarketAsset(
+                                symbol = symbol,
+                                name = finalName,
+                                fullName = finalName,
+                                currentPrice = finalPrice,
+                                dailyChangePercentage = finalChange,
+                                assetType = AssetType.FON,
+                                currency = "TRY",
+                                isFavorite = existing?.isFavorite ?: false
+                            )
                         )
                     }
                 }

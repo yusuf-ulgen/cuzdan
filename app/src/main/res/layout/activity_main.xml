@@ -10,11 +10,11 @@
         android:id="@+id/nav_view"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        app:backgroundTint="?attr/colorSurfaceVariant"
+        android:background="@color/surface_card_dark"
         app:itemIconTint="@null"
         app:itemTextColor="@color/nav_item_color"
         app:labelVisibilityMode="labeled"
-        app:elevation="2dp"
+        app:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -23,7 +23,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="?attr/divider_light"
+        android:background="?attr/colorOutline"
         app:layout_constraintBottom_toTopOf="@id/nav_view" />
 
 

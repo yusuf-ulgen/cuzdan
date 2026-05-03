@@ -2,35 +2,25 @@ package com.yusufulgen.cuzdan.data.remote.model
 
 import com.google.gson.annotations.SerializedName
 
-data class TefasHistoryResponse(
-    @SerializedName("FONUNVAN")
+data class TefasNewHistoryResponse(
+    @SerializedName("tarih")
+    val tarih: String? = null,
+    @SerializedName("fonKodu")
+    val fonKodu: String? = null,
+    @SerializedName("fonUnvan")
     val fundName: String? = null,
-    @SerializedName("FIYAT")
-    val price: Any? = null,
-    @SerializedName("TARIH")
-    val date: Long? = null
+    @SerializedName("fiyat")
+    val price: Double? = null
 )
 
-data class TefasWrapper(
-    @SerializedName("d")
-    val data: List<TefasHistoryResponse> = emptyList()
+data class TefasNewWrapper(
+    @SerializedName("resultList")
+    val resultList: List<TefasNewHistoryResponse>? = null
 )
 
-data class TefasRequest(
-    val fontip: String,
-    val fonkod: String,
-    val bastarih: String,
-    val bittarih: String,
-    val sfontur: String = "",
-    val fongrup: String = "",
-    val fonturkod: String = "",
-    val fonunvantip: String = "",
-    val kurucukod: String = "",
-    val isin: String = "",
-    val sorunlu: String = "",
-    val datedes: String = "",
-    val fontur: String = "",
-    val unvan: String = "",
-    val fankod: String = ""
+data class TefasNewRequest(
+    val fonKodu: String,
+    val dil: String = "TR",
+    val periyod: Int = 1
 )
 

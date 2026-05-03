@@ -69,7 +69,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        val context = androidx.appcompat.view.ContextThemeWrapper(this, if (themeMode == "light") R.style.Theme_Cuzdan_Light else R.style.Theme_Cuzdan_Dark)
+        binding = ActivityMainBinding.inflate(android.view.LayoutInflater.from(context))
         setContentView(binding.root)
 
         val navView: BottomNavigationView = binding.navView

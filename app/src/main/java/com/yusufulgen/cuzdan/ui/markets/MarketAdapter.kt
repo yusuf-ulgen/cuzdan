@@ -318,23 +318,28 @@ class MarketAdapter(
     override fun getItemCount() = items.size
 
     fun setItems(newItems: List<MarketAsset>) {
-        val oldItems = items // Capture current state for the diff calculation
+        val oldItems = items.toList() // Snapshot of current list
+        val snapshotNewItems = newItems.toList() // Snapshot of new list
+        
         val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(object : androidx.recyclerview.widget.DiffUtil.Callback() {
             override fun getOldListSize(): Int = oldItems.size
-            override fun getNewListSize(): Int = newItems.size
+            override fun getNewListSize(): Int = snapshotNewItems.size
 
             override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return oldItems[oldItemPosition].symbol == newItems[newItemPosition].symbol &&
-                       oldItems[oldItemPosition].assetType == newItems[newItemPosition].assetType
+                if (oldItemPosition >= oldItems.size || newItemPosition >= snapshotNewItems.size) return false
+                return oldItems[oldItemPosition].symbol == snapshotNewItems[newItemPosition].symbol &&
+                       oldItems[oldItemPosition].assetType == snapshotNewItems[newItemPosition].assetType
             }
 
             override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-                return oldItems[oldItemPosition] == newItems[newItemPosition]
+                if (oldItemPosition >= oldItems.size || newItemPosition >= snapshotNewItems.size) return false
+                return oldItems[oldItemPosition] == snapshotNewItems[newItemPosition]
             }
 
             override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+                if (oldItemPosition >= oldItems.size || newItemPosition >= snapshotNewItems.size) return null
                 val old = oldItems[oldItemPosition]
-                val new = newItems[newItemPosition]
+                val new = snapshotNewItems[newItemPosition]
                 return if (old.isFavorite != new.isFavorite && 
                     old.copy(isFavorite = new.isFavorite) == new) {
                     "FAVORITE_CHANGED"
@@ -344,7 +349,7 @@ class MarketAdapter(
             }
         })
 
-        items = newItems
+        items = snapshotNewItems
         diffResult.dispatchUpdatesTo(this)
     }
 

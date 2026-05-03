@@ -108,10 +108,12 @@ class HomeFragment : Fragment() {
             showCurrencySwitcher()
         }
         binding.btnAddPortfolio.setOnClickListener {
+            com.yusufulgen.cuzdan.util.HapticManager.tap(it)
             AddPortfolioDialogFragment().show(childFragmentManager, "AddPortfolio")
         }
         binding.textPortfolioName.setOnClickListener {
-            PortfolioManagementBottomSheet().show(parentFragmentManager, "PortfolioManagement")
+            com.yusufulgen.cuzdan.util.HapticManager.tap(it)
+            PortfolioManagementBottomSheet().show(childFragmentManager, "PortfolioManagement")
         }
     }
 

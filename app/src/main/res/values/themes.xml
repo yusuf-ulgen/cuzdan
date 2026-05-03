@@ -24,6 +24,11 @@
         <item name="pill_green_bg">#3300FF88</item>
         <item name="pill_green_text">@color/accent_green</item>
 
+        <!-- Material Components Dialog Themes -->
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialog</item>
+        <item name="alertDialogTheme">@style/CustomDialogTheme</item>
+        <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+
         <!-- Material Attributes -->
         <item name="colorSurface">@color/surface_card_dark</item>
         <item name="colorOnSurface">@color/white</item>
@@ -87,18 +92,7 @@
 
     <style name="CustomBottomSheetDialog" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
-        <!-- Inherit color tokens from our main theme so ?attr/ works inside dialogs -->
-        <item name="colorPrimary">?attr/colorPrimary</item>
-        <item name="colorOnPrimary">?attr/colorOnPrimary</item>
-        <item name="colorSurface">?attr/colorSurface</item>
-        <item name="colorOnSurface">?attr/colorOnSurface</item>
-        <item name="colorSurfaceVariant">?attr/colorSurfaceVariant</item>
-        <item name="colorOutline">?attr/colorOutline</item>
-        <item name="colorPrimaryContainer">?attr/colorPrimaryContainer</item>
-        <item name="colorError">?attr/colorError</item>
-        <item name="colorErrorContainer">?attr/colorErrorContainer</item>
-        <item name="android:colorBackground">?attr/android:colorBackground</item>
-        <item name="colorOnBackground">?attr/colorOnBackground</item>
+        <!-- These will now inherit correctly from the Activity theme when used in context -->
     </style>
 
     <style name="CustomBottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
@@ -107,15 +101,6 @@
 
     <style name="CustomDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_glass_dialog</item>
-        <item name="colorPrimary">?attr/colorPrimary</item>
-        <item name="colorOnPrimary">?attr/colorOnPrimary</item>
-        <item name="colorSurface">?attr/colorSurface</item>
-        <item name="colorOnSurface">?attr/colorOnSurface</item>
-        <item name="colorSurfaceVariant">?attr/colorSurfaceVariant</item>
-        <item name="colorOutline">?attr/colorOutline</item>
-        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
-        <item name="colorAccent">?attr/accentColor</item>
-        <item name="android:colorBackground">?attr/android:colorBackground</item>
-        <item name="colorOnBackground">?attr/colorOnBackground</item>
+        <!-- Standard attributes will be picked up from the parent theme -->
     </style>
 </resources>

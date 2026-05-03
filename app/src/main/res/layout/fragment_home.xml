@@ -41,12 +41,13 @@
 
             <ImageButton
                 android:id="@+id/btn_add_portfolio"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:background="@drawable/bg_icon"
-                android:padding="9dp"
+                android:padding="12dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_add"
+                android:contentDescription="@string/nav_add_asset"
                 app:tint="?attr/colorOnSurface" />
 
             <ImageButton

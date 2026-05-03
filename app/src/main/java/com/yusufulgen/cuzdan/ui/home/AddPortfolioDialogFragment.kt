@@ -31,23 +31,17 @@ class AddPortfolioDialogFragment : BottomSheetDialogFragment() {
     private var _binding: DialogAddPortfolioBinding? = null
     private val binding get() = _binding!!
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return BottomSheetDialog(requireContext(), R.style.CustomBottomSheetDialog)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        return try {
-            _binding = DialogAddPortfolioBinding.inflate(inflater, container, false)
-            binding.root
-        } catch (e: Exception) {
-            android.util.Log.e("CuzdanDebug", "Portföy ekleme diyaloğu şişirilirken hata oluştu!", e)
-            // Hata durumunda boş bir view dönüp çökmesini engelleyelim veya hatayı görelim
-            View(requireContext())
-        }
+        val themeMode = PreferenceManager(requireContext()).getThemeMode()
+        val themeRes = if (themeMode == "light") R.style.Theme_Cuzdan_Light else R.style.Theme_Cuzdan_Dark
+        val context = androidx.appcompat.view.ContextThemeWrapper(requireContext(), themeRes)
+        val themedInflater = inflater.cloneInContext(context)
+        _binding = DialogAddPortfolioBinding.inflate(themedInflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
