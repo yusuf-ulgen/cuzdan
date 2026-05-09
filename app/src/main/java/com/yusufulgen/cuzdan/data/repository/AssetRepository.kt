@@ -55,6 +55,38 @@ constructor(
     private var bistJob: Job? = null
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val gson = Gson()
+    
+    init {
+        repositoryScope.launch {
+            try {
+                // Initial cleanup of spurious data
+                marketAssetDao.deleteProblematicDoviz()
+                
+                // Also cleanup Asset table (user's portfolio)
+                val assets = assetDao.getAllAssets().first()
+                val spuriousAssets = assets.filter { 
+                    val isBadName = it.name.contains("Türk Lira", ignoreCase = true) || 
+                                   it.name.contains("Turkish Lira", ignoreCase = true) ||
+                                   it.name == "USD/TRY"
+                    isBadName && it.assetType != AssetType.NAKIT
+                }
+                
+                if (spuriousAssets.isNotEmpty()) {
+                    spuriousAssets.forEach { asset ->
+                        if (asset.amount.compareTo(java.math.BigDecimal.ZERO) == 0) {
+                            assetDao.deleteAsset(asset)
+                        } else {
+                            // If user has balance, move it to NAKIT category
+                            assetDao.updateAsset(asset.copy(assetType = AssetType.NAKIT))
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("AssetRepo", "Cleanup failed: ${e.message}")
+            }
+        }
+    }
+
     /** Tüm kripto varlıkları Flow olarak döner. */
     fun getCryptoAssets(): Flow<List<Asset>> {
         return assetDao.getAssetsByTypes(listOf(AssetType.KRIPTO))
@@ -144,9 +176,11 @@ constructor(
         return when (type) {
             AssetType.BIST -> if (clean.endsWith(".IS")) clean else "$clean.IS"
             AssetType.DOVIZ -> {
-                if (clean == "USD") "USDTRY=X"
-                else if (clean == "EUR") "EURTRY=X"
-                else if (clean.contains("TRY=X")) clean else "${clean}TRY=X"
+                if (clean == "USD" || clean == "USDTRY") "USDTRY=X"
+                else if (clean == "EUR" || clean == "EURTRY") "EURTRY=X"
+                else if (clean == "TRY" || clean == "TL") "USDTRY=X" // TRY itself isn't a pair, but maybe they mean USD/TRY
+                else if (clean.contains("TRY=X")) clean 
+                else "${clean}TRY=X"
             }
             AssetType.EMTIA ->
                     when (clean) {
@@ -227,13 +261,20 @@ constructor(
                     currentOtherAssets.filter { it.symbol != "GRAM_ALTIN" }.associate {
                         it.symbol to toYahooSymbol(it.symbol, it.assetType)
                     }
-            val symbolsToFetch = symbolMap.values.distinct()
-            Log.d(TAG, "Requesting parallel chart data for: $symbolsToFetch")
+            val symbolsToFetch = symbolMap.values.toMutableList()
+            
+            if (currentOtherAssets.any { it.symbol == "GRAM_ALTIN" }) {
+                if (!symbolsToFetch.contains("GC=F")) symbolsToFetch.add("GC=F")
+                if (!symbolsToFetch.contains("USDTRY=X")) symbolsToFetch.add("USDTRY=X")
+            }
+            
+            val distinctSymbolsToFetch = symbolsToFetch.distinct()
+            Log.d(TAG, "Requesting parallel chart data for: $distinctSymbolsToFetch")
 
-            if (symbolsToFetch.isNotEmpty()) {
+            if (distinctSymbolsToFetch.isNotEmpty()) {
                 // Fetch all symbols in parallel using the more reliable chart endpoint
                 val marketAssetsResultsMap = coroutineScope {
-                    symbolsToFetch
+                    distinctSymbolsToFetch
                             .map { sym ->
                                 async {
                                     try {
@@ -241,14 +282,15 @@ constructor(
                                                 currentOtherAssets.find {
                                                     toYahooSymbol(it.symbol, it.assetType) == sym
                                                 }
-                                        if (originalAsset != null) {
-                                            val ma =
-                                                    fetchYahooMarketAsset(
-                                                            sym,
-                                                            originalAsset.assetType
-                                                    )
-                                            if (ma != null) sym to ma else null
-                                        } else null
+                                        
+                                        val typeToUse = originalAsset?.assetType ?: when(sym) {
+                                            "USDTRY=X" -> AssetType.DOVIZ
+                                            "GC=F", "GOLD" -> AssetType.EMTIA
+                                            else -> AssetType.BIST
+                                        }
+
+                                        val ma = fetchYahooMarketAsset(sym, typeToUse)
+                                        if (ma != null) sym to ma else null
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Parallel fetch failed for $sym: ${e.message}")
                                         null
@@ -309,6 +351,8 @@ constructor(
                 }
 
                 // 4. Calculate Gram Gold separately with accurate Change %
+                // Force change to 0 on weekends/holidays - markets are closed
+                val gramMarketClosed = com.yusufulgen.cuzdan.util.MarketStatusUtils.isMarketClosedToday(AssetType.EMTIA)
                 if (onsPrice != null &&
                                 usdTryPrice != null &&
                                 onsPrice!! > BigDecimal.ZERO &&
@@ -328,16 +372,18 @@ constructor(
                             BigDecimal.ONE.add(
                                     usdTryChange.divide(BigDecimal("100"), 8, RoundingMode.HALF_UP)
                             )
-                    val gramGoldChange =
+                    val rawGramGoldChange =
                             onsFactor
                                     .multiply(usdFactor)
                                     .subtract(BigDecimal.ONE)
                                     .multiply(BigDecimal("100"))
                                     .setScale(2, RoundingMode.HALF_UP)
+                    // Piyasa kapalıysa (hafta sonu / tatil) değişimi sıfırla
+                    val gramGoldChange = if (gramMarketClosed) BigDecimal.ZERO else rawGramGoldChange
 
                     Log.d(
                             TAG,
-                            "Gram Gold Calc: Ons($onsPrice) / 31.1035 * USDTRY($usdTryPrice) = $gramGoldPrice | Change: $gramGoldChange%"
+                            "Gram Gold Calc: Ons($onsPrice) / 31.1035 * USDTRY($usdTryPrice) = $gramGoldPrice | Change: $gramGoldChange% (marketClosed=$gramMarketClosed)"
                     )
 
                     assetDao.getAssetBySymbol("GRAM_ALTIN")?.let { asset ->
@@ -843,9 +889,13 @@ constructor(
                                                                     .multiply(BigDecimal("100"))
                                                 }
 
-                                                val finalChange =
+                                                var finalChange =
                                                         change?.setScale(2, RoundingMode.HALF_UP)
                                                                 ?: BigDecimal.ZERO
+                                                
+                                                if (com.yusufulgen.cuzdan.util.MarketStatusUtils.isMarketClosedToday(type)) {
+                                                    finalChange = BigDecimal.ZERO
+                                                }
 
                                                 if (type == AssetType.DOVIZ &&
                                                                 sym != "USDTRY=X" &&
@@ -921,11 +971,24 @@ constructor(
                                 .awaitAll()
                                 .filterNotNull()
                         }
-                        results.addAll(chunkResults)
+                        // Filter out fake "Türk Lirası" entries in DOVIZ that Yahoo sometimes returns
+                        // for non-TRY symbols (e.g. a cross-rate that resolves to TRY=X)
+                        val filteredChunkResults = if (type == AssetType.DOVIZ) {
+                            chunkResults.filter { asset ->
+                                val isSpuriousTry = (asset.name?.contains("Türk Lira", ignoreCase = true) == true || 
+                                    asset.name?.contains("Turkish Lira", ignoreCase = true) == true ||
+                                    asset.name == "USD/TRY" ||
+                                    asset.fullName?.contains("Türk Lira", ignoreCase = true) == true || 
+                                    asset.fullName?.contains("Turkish Lira", ignoreCase = true) == true ||
+                                    asset.symbol == "TRY" || asset.symbol == "TRY=X")
+                                !isSpuriousTry
+                            }
+                        } else chunkResults
+                        results.addAll(filteredChunkResults)
                         
                         // Incrementally save to DB so the UI updates immediately!
-                        if (chunkResults.isNotEmpty()) {
-                            marketAssetDao.insertMarketAssets(chunkResults)
+                        if (filteredChunkResults.isNotEmpty()) {
+                            marketAssetDao.insertMarketAssets(filteredChunkResults)
                         }
                         
                         delay(1000L) // Wait 1 second between chunks of 5
@@ -945,18 +1008,22 @@ constructor(
                                 "EMTIA processing: onsFound=${ons != null}, usdTryPrice=$usdTryPrice"
                         )
 
+                        // Piyasa kapalıysa (hafta sonu / tatil) değişimi her zaman sıfırla
+                        val emtiaMarketClosed = com.yusufulgen.cuzdan.util.MarketStatusUtils.isMarketClosedToday(AssetType.EMTIA)
+
                         if (ons != null && usdTryPrice > BigDecimal.ZERO) {
                             val gp =
                                     ons.currentPrice
                                             .divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP)
                                             .multiply(usdTryPrice)
+                            val gramAltinChange = if (emtiaMarketClosed) BigDecimal.ZERO else ons.dailyChangePercentage
                             marketAssets.add(
                                     MarketAsset(
                                             "GRAM_ALTIN",
                                             "Gram Altın",
                                             "Gram Altın",
                                             gp.setScale(2, RoundingMode.HALF_UP),
-                                            ons.dailyChangePercentage,
+                                            gramAltinChange,
                                             AssetType.EMTIA,
                                             "TRY"
                                     )
@@ -981,13 +1048,14 @@ constructor(
                             val sp = silverOns.currentPrice
                                     .divide(BigDecimal("31.1035"), 8, RoundingMode.HALF_UP)
                                     .multiply(usdTryPrice)
+                            val gramGumusChange = if (emtiaMarketClosed) BigDecimal.ZERO else silverOns.dailyChangePercentage
                             marketAssets.add(
                                     MarketAsset(
                                             "GRAM_GUMUS",
                                             "Gram Gümüş",
                                             "Gram Gümüş",
                                             sp.setScale(2, RoundingMode.HALF_UP),
-                                            silverOns.dailyChangePercentage,
+                                            gramGumusChange,
                                             AssetType.EMTIA,
                                             "TRY"
                                     )
@@ -1488,12 +1556,13 @@ constructor(
             type == AssetType.DOVIZ ||
                     type == AssetType.NAKIT ||
                     (type == AssetType.EMTIA &&
-                            (cleanSymbol == "TRY" || cleanSymbol == "USDTRY")) -> {
+                            (cleanSymbol == "USDTRY")) -> {
                 val localized =
                         when {
                             cleanSymbol.contains("USDTRY") || cleanSymbol == "USD" ->
                                     "Amerikan Doları"
-                            cleanSymbol == "TRY" -> "Türk Lirası"
+                            cleanSymbol == "TRY" && type == AssetType.NAKIT -> "Türk Lirası"
+                            cleanSymbol == "TRY" && type != AssetType.NAKIT -> "USD/TRY" // Fallback naming for bad symbols
                             cleanSymbol.contains("EURTRY") || cleanSymbol == "EUR" -> "Euro"
                             cleanSymbol.contains("GBPTRY") || cleanSymbol == "GBP" ->
                                     "İngiliz Sterlini"
@@ -1799,6 +1868,10 @@ constructor(
                                         .multiply(BigDecimal("100"))
                                         .setScale(2, RoundingMode.HALF_UP)
                             } else BigDecimal.ZERO
+                }
+                
+                if (com.yusufulgen.cuzdan.util.MarketStatusUtils.isMarketClosedToday(type)) {
+                    change = BigDecimal.ZERO
                 }
 
                 Log.d(
