@@ -35,6 +35,9 @@ class HomeFragment : Fragment() {
 
     private val viewModel: HomeViewModel by activityViewModels()
     private lateinit var adapter: WalletCategoryAdapter
+    
+    private var isFirstLoad = true
+    private var lastChartLabel: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -143,7 +146,16 @@ class HomeFragment : Fragment() {
 
 
 
+        val shouldAnimate = isFirstLoad || (lastChartLabel != null && lastChartLabel != state.donutCenterLabel)
+        
+        if (shouldAnimate && state.donutSegments.isNotEmpty()) {
+            binding.donutChart.animateChart()
+            isFirstLoad = false
+        }
+        
         binding.donutChart.setSegments(state.donutSegments)
+        lastChartLabel = state.donutCenterLabel
+
         binding.donutChart.setLabelColor(
             requireContext().getColor(if (prefManager.getThemeMode() == "light") R.color.text_primary_light else R.color.white)
         )

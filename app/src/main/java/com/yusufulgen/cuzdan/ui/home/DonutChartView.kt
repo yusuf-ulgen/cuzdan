@@ -1,5 +1,7 @@
 package com.yusufulgen.cuzdan.ui.home
 
+import android.animation.ValueAnimator
+import android.view.animation.DecelerateInterpolator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -21,6 +23,9 @@ class DonutChartView @JvmOverloads constructor(
     private val rectF = RectF()
     private var strokeWidthPx = 60f
     private var labelColor: Int = android.graphics.Color.WHITE
+    
+    private var animationProgress = 1f
+    private var animator: ValueAnimator? = null
 
     fun setLabelColor(color: Int) {
         labelColor = color
@@ -32,7 +37,24 @@ class DonutChartView @JvmOverloads constructor(
 
     fun setSegments(newSegments: List<Segment>) {
         segments = newSegments
+        if (animator?.isRunning != true) {
+            animationProgress = 1f
+        }
         invalidate()
+    }
+
+    fun animateChart() {
+        animator?.cancel()
+        animationProgress = 0f
+        animator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1000 // 1 second
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animation ->
+                animationProgress = animation.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
     }
 
     fun setStrokeWidth(widthDp: Float) {
@@ -65,18 +87,22 @@ class DonutChartView @JvmOverloads constructor(
 
         segments.forEach { segment ->
             paint.color = segment.color
-            val sweepAngle = segment.percentage * 360f
+            val fullSweepAngle = segment.percentage * 360f
+            val sweepAngle = fullSweepAngle * animationProgress
+            
             canvas.drawArc(rectF, startAngle, sweepAngle, false, paint)
             
             // Draw Label and Line
-            drawSegmentLabel(canvas, startAngle, sweepAngle, segment, size)
+            drawSegmentLabel(canvas, startAngle, fullSweepAngle, segment, size, animationProgress)
             
-            startAngle += sweepAngle
+            startAngle += fullSweepAngle
         }
     }
 
-    private fun drawSegmentLabel(canvas: Canvas, startAngle: Float, sweepAngle: Float, segment: Segment, size: Float) {
+    private fun drawSegmentLabel(canvas: Canvas, startAngle: Float, sweepAngle: Float, segment: Segment, size: Float, alphaProgress: Float) {
         if (segment.percentage < 0.05f) return // Küçük dilimler için yazı karmaşasını önle
+        
+        val alphaInt = (255 * alphaProgress).toInt()
 
         val midAngle = Math.toRadians((startAngle + sweepAngle / 2).toDouble())
         val centerX = width / 2f
@@ -104,6 +130,7 @@ class DonutChartView @JvmOverloads constructor(
             color = segment.color
             strokeWidth = 3f
             style = Paint.Style.STROKE
+            alpha = alphaInt
         }
         canvas.drawLine(startX, startY, elbowX, elbowY, linePaint)
         canvas.drawLine(elbowX, elbowY, endX, endY, linePaint)
@@ -114,6 +141,7 @@ class DonutChartView @JvmOverloads constructor(
             textSize = 26f
             textAlign = if (isRightSide) Paint.Align.LEFT else Paint.Align.RIGHT
             isFakeBoldText = true
+            alpha = alphaInt
         }
         
         val percentageText = "%${String.format("%.0f", segment.percentage * 100)} "
