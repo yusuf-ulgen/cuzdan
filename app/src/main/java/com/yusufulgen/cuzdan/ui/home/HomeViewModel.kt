@@ -438,32 +438,13 @@ class HomeViewModel @Inject constructor(
                 catDailyProfitBase.multiply(BigDecimal("100")).divide(catPrevDayValueBase, 2, RoundingMode.HALF_UP)
             } else BigDecimal.ZERO
 
-            val sortedAssets = when (type) {
-                AssetType.NAKIT -> {
-                    val order = listOf("TRY", "TL", "USD", "EUR", "GBP", "CHF", "JPY", "GBPUSD=X")
-                    typeAssets.sortedWith(compareBy<com.yusufulgen.cuzdan.data.local.entity.Asset> { asset ->
-                        val symbol = asset.symbol.uppercase()
-                        val name = asset.name.lowercase()
-                        if (symbol == "TRY" || symbol == "TL" || symbol == "₺" || symbol.contains("TRY") || symbol.contains("TL") || symbol.contains("₺") || 
-                            name.contains("türk lirası") || name.contains("tl") || name.contains("türk") || name == "türk lirasi") {
-                            -1
-                        } else {
-                            val index = order.indexOf(symbol)
-                            if (index == -1) Int.MAX_VALUE else index
-                        }
-                    })
+            val sortedAssets = typeAssets.sortedByDescending { asset ->
+                val assetRate = when (asset.currency) {
+                    "USD" -> usdRate ?: BigDecimal("32.5")
+                    "EUR" -> eurRate ?: BigDecimal("35.2")
+                    else -> BigDecimal.ONE
                 }
-                AssetType.KRIPTO -> {
-                    typeAssets.sortedByDescending { asset ->
-                        val assetRate = when (asset.currency) {
-                            "USD" -> usdRate ?: BigDecimal("32.5")
-                            "EUR" -> eurRate ?: BigDecimal("35.2")
-                            else -> BigDecimal.ONE
-                        }
-                        asset.amount.multiply(asset.currentPrice).multiply(assetRate)
-                    }
-                }
-                else -> typeAssets
+                asset.amount.multiply(asset.currentPrice).multiply(assetRate)
             }
 
             val convertedAssets = sortedAssets.map { asset ->
@@ -508,27 +489,18 @@ class HomeViewModel @Inject constructor(
         // Filter out empty categories AND categories where all assets have zero amount (fully sold)
         categorySummaries.removeAll { it.assets.isEmpty() || it.assets.all { a -> a.amount.compareTo(BigDecimal.ZERO) == 0 } }
 
-        // Sort categories: NAKIT first, then BIST, KRIPTO, EMTIA, FON, DOVIZ
-        val categoryOrder = listOf(AssetType.NAKIT, AssetType.BIST, AssetType.KRIPTO, AssetType.EMTIA, AssetType.FON, AssetType.DOVIZ)
-        categorySummaries.sortWith(compareBy { categoryOrder.indexOf(it.type).let { i -> if (i == -1) Int.MAX_VALUE else i } })
-
         // Inject 'Nakit' (Idle Cash) category as the first item if there is idle cash
         if (idleCashConv > BigDecimal.ZERO) {
-            // Remove any existing NAKIT from assets (those are actual fx holdings)
-            // The idle cash Nakit is a separate concept: uninvested deposited money
             val existingNakitIndex = categorySummaries.indexOfFirst { it.type == AssetType.NAKIT }
             if (existingNakitIndex != -1) {
-                // There are actual Nakit-type assets; add idle cash on top
                 val existing = categorySummaries[existingNakitIndex]
                 categorySummaries[existingNakitIndex] = existing.copy(
                     totalValue = existing.totalValue.add(idleCashConv),
-                    // Keep P/L for actual assets but mark as Nakit
                     totalProfitLoss = existing.totalProfitLoss,
                     profitLossPerc = existing.profitLossPerc
                 )
             } else {
-                // Pure idle cash card — no assets, no P/L
-                categorySummaries.add(0, WalletCategorySummary(
+                categorySummaries.add(WalletCategorySummary(
                     type = AssetType.NAKIT,
                     title = getLocalizedAssetTypeName(AssetType.NAKIT, langContext),
                     totalValue = idleCashConv,
@@ -540,6 +512,9 @@ class HomeViewModel @Inject constructor(
                 ))
             }
         }
+
+        // Final Category Sorting: Sort all categories (including injected ones) by total value descending
+        categorySummaries.sortByDescending { it.totalValue }
 
         val segments = mutableListOf<DonutChartView.Segment>()
         var centerLabel = langContext.getString(com.yusufulgen.cuzdan.R.string.label_distribution)
@@ -555,8 +530,10 @@ class HomeViewModel @Inject constructor(
             centerLabel = getLocalizedAssetTypeName(expandedCategory, langContext)
             
             if (catTotal > BigDecimal.ZERO) {
-                // Add regular assets in this category
-                catAssets.forEachIndexed { index, asset ->
+                // Sort category assets by value for the chart distribution too
+                val sortedCatAssets = catAssets.sortedByDescending { it.amount.multiply(it.currentPrice) }
+
+                sortedCatAssets.forEachIndexed { index, asset ->
                     val assetValue = asset.amount.multiply(asset.currentPrice)
                     val weight = assetValue.divide(catTotal, 4, RoundingMode.HALF_UP).toFloat()
                     
@@ -571,10 +548,13 @@ class HomeViewModel @Inject constructor(
                     
                     segments.add(DonutChartView.Segment(weight, getAssetColor(index), cleanLabel))
                 }
-                // If it's Nakit, add the idle cash portion as a segment
+                // If it's Nakit, add the idle cash portion as a segment (Idle cash is also a part of Nakit category)
                 if (expandedCategory == AssetType.NAKIT && idleCashTry > BigDecimal.ZERO) {
                     val weight = idleCashTry.divide(catTotal, 4, RoundingMode.HALF_UP).toFloat()
-                    segments.add(DonutChartView.Segment(weight, getAssetColor(catAssets.size), langContext.getString(R.string.asset_type_cash)))
+                    // Add at the correct sorted position for consistency if we wanted, but let's just add it
+                    segments.add(DonutChartView.Segment(weight, getAssetColor(sortedCatAssets.size), langContext.getString(R.string.asset_type_cash)))
+                    // Re-sort segments to ensure highest value is first in expanded view too
+                    segments.sortByDescending { it.percentage }
                 }
             }
         } else {
