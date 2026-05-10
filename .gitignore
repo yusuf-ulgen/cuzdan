@@ -20,3 +20,6 @@ app/release/
 *.apk
 *.keystore
 *.jks
+
+.env
+.env.local
