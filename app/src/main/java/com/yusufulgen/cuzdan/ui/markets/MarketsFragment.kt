@@ -52,18 +52,18 @@ class MarketsFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = MarketAdapter(
             showChange = true,
-            onItemClick = { asset, iconView, nameView ->
-                val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
-                    symbol = asset.symbol,
-                    name = asset.name,
-                    assetType = asset.assetType.name,
-                    currency = asset.currency
-                )
-                val extras = FragmentNavigatorExtras(
-                    iconView to "shared_asset_icon",
-                    nameView to "shared_asset_name"
-                )
-                findNavController().navigate(action, extras)
+            onItemClick = { asset, _, _ ->
+                try {
+                    val action = MarketsFragmentDirections.actionNavigationMarketsToNavigationAssetDetail(
+                        symbol = asset.symbol,
+                        name = asset.name,
+                        assetType = asset.assetType.name,
+                        currency = asset.currency
+                    )
+                    findNavController().navigate(action)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             },
             onFavoriteClick = { asset ->
                 viewModel.toggleFavorite(asset)

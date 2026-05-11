@@ -84,13 +84,15 @@ class AssetsFragment : Fragment() {
             layoutManager = LinearLayoutManager(context)
             adapter =
                     AssetTypeAdapter(assetTypes) { selected ->
-                        if (findNavController().currentDestination?.id == R.id.navigation_assets) {
+                        try {
                             val bundle = bundleOf("assetType" to selected.assetType)
                             findNavController()
                                     .navigate(
                                             R.id.action_navigation_assets_to_navigation_symbol_search,
                                             bundle
                                     )
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
         }

@@ -78,6 +78,16 @@ class MarketAdapter(
                 textMarketName.text = getLocalizedAssetName(item.fullName ?: item.name, root.context)
                 textMarketFullName.visibility = android.view.View.GONE
                 textMarketSymbol.visibility = android.view.View.GONE
+            } else if (item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.FON) {
+                // Funds: Show short code (symbol) as name, and long name as sub-text
+                textMarketName.text = item.symbol
+                textMarketName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
+                
+                textMarketFullName.visibility = android.view.View.VISIBLE
+                textMarketFullName.text = item.name
+                textMarketFullName.isSelected = true
+                
+                textMarketSymbol.visibility = android.view.View.GONE
             } else {
                 textMarketName.text = getLocalizedAssetName(item.name, root.context)
                 textMarketName.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16f)
@@ -228,7 +238,6 @@ class MarketAdapter(
         return when {
             item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.NAKIT -> true
             item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.DOVIZ -> true
-            item.assetType == com.yusufulgen.cuzdan.data.local.entity.AssetType.FON -> true
             sym.contains("=X") || sym.endsWith(".IS") -> true
             sym == "GRAM_ALTIN" || sym == name -> true
             // Hide if symbol is just a technical code for crypto/commodities

@@ -59,34 +59,14 @@ class HomeFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = WalletCategoryAdapter(emptyList(), { category ->
             viewModel.toggleCategoryExpansion(category.type)
-        }, { asset: Asset, iconView: View, nameView: View ->
-            try {
-                val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
-                    symbol = asset.symbol,
-                    name = asset.name,
-                    assetType = asset.assetType.name,
-                    currency = viewModel.uiState.value.currency
-                )
-                val extras = FragmentNavigatorExtras(
-                    iconView to "shared_asset_icon",
-                    nameView to "shared_asset_name"
-                )
-                findNavController().navigate(action, extras)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                // Durumsal çökme yaşanırsa animasyonsuz dene
-                try {
-                    val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
-                        symbol = asset.symbol,
-                        name = asset.name,
-                        assetType = asset.assetType.name,
-                        currency = viewModel.uiState.value.currency
-                    )
-                    findNavController().navigate(action)
-                } catch (inner: Exception) {
-                    inner.printStackTrace()
-                }
-            }
+        }, { asset, _, _ ->
+            val action = HomeFragmentDirections.actionNavigationHomeToAssetDetailFragment(
+                symbol = asset.symbol,
+                name = asset.name,
+                assetType = asset.assetType.name,
+                currency = viewModel.uiState.value.currency
+            )
+            findNavController().navigate(action)
         })
         binding.recyclerWalletCategories.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerWalletCategories.adapter = adapter

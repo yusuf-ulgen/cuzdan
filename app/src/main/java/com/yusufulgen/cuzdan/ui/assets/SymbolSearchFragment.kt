@@ -89,7 +89,6 @@ class SymbolSearchFragment : Fragment() {
         adapter = MarketAdapter(
             showChange = false,
             onItemClick = { selectedAsset, iconView, nameView ->
-                if (findNavController().currentDestination?.id != R.id.navigation_symbol_search) return@MarketAdapter
                 
                 if (type == AssetType.NAKIT && selectedAsset.symbol.startsWith("TOOL_")) {
                     when (selectedAsset.symbol) {
@@ -103,24 +102,16 @@ class SymbolSearchFragment : Fragment() {
                     }
                     return@MarketAdapter
                 }
-                val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
-                    symbol = selectedAsset.symbol,
-                    name = selectedAsset.name,
-                    assetType = selectedAsset.assetType.name,
-                    currency = selectedAsset.currency
-                )
-                val extras = FragmentNavigatorExtras(
-                    iconView to "asset_icon_${selectedAsset.symbol}",
-                    nameView to "asset_name_${selectedAsset.symbol}"
-                )
                 try {
-                    findNavController().navigate(action, extras)
+                    val action = SymbolSearchFragmentDirections.actionNavigationSymbolSearchToNavigationAssetDetail(
+                        symbol = selectedAsset.symbol,
+                        name = selectedAsset.name,
+                        assetType = selectedAsset.assetType.name,
+                        currency = selectedAsset.currency
+                    )
+                    findNavController().navigate(action)
                 } catch (e: Exception) {
-                    try {
-                        findNavController().navigate(action)
-                    } catch (inner: Exception) {
-                        inner.printStackTrace()
-                    }
+                    e.printStackTrace()
                 }
             },
             onFavoriteClick = { asset ->

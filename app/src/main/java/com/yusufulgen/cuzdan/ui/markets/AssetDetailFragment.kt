@@ -76,7 +76,7 @@ class AssetDetailFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.textTitleDetail.text = getLocalizedAssetName(args.name)
+        binding.textTitleDetail.text = if (args.assetType == "FON") args.symbol else getLocalizedAssetName(args.name)
         binding.btnBack.setOnClickListener {
             findNavController().navigateUp()
         }
