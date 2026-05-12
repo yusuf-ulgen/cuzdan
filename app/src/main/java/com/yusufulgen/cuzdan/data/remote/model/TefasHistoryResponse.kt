@@ -19,8 +19,17 @@ data class TefasNewWrapper(
 )
 
 data class TefasNewRequest(
-    val fonKodu: String,
+    @SerializedName("fonKod")
+    val fonKod: String,
+    @SerializedName("s1")
+    val s1: Boolean = true,
+    @SerializedName("s2")
+    val s2: Boolean = true,
+    @SerializedName("s3")
+    val s3: Boolean = true,
+    @SerializedName("dil")
     val dil: String = "TR",
-    val periyod: Int = 1
+    @SerializedName("periyod")
+    val periyod: String = "1"
 )
 

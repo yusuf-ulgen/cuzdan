@@ -692,7 +692,11 @@ class HomeViewModel @Inject constructor(
         
         if (asset.amount <= BigDecimal.ZERO) return AssetDailyValues(BigDecimal.ZERO, BigDecimal.ZERO)
         
-        val pct = asset.dailyChangePercentage
+        var pct = asset.dailyChangePercentage
+        if (com.yusufulgen.cuzdan.util.MarketStatusUtils.isMarketClosedToday(asset.assetType)) {
+            pct = BigDecimal.ZERO
+        }
+        
         val denom = BigDecimal.ONE.add(pct.divide(BigDecimal("100"), 12, RoundingMode.HALF_UP))
         if (denom.compareTo(BigDecimal.ZERO) == 0) return AssetDailyValues(BigDecimal.ZERO, asset.amount.multiply(asset.currentPrice).multiply(assetRate))
         

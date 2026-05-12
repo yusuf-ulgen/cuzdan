@@ -380,6 +380,16 @@ constructor(
     suspend fun refreshOwnedFundPrices(): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
         try {
+            // Force cleanup of blacklisted funds
+            val blacklisted = listOf("AME", "GAY", "HAY", "IEY", "KDJ", "KOC", "KRA", "KZT", "TDF", "TID", "TIG", "TLA", "TLM", "TUK", "TUT", "YEG")
+            blacklisted.forEach { sym ->
+                marketAssetDao.deleteMarketAssetBySymbolAndType(sym, AssetType.FON)
+                val existingAssets = assetDao.getAssetsBySymbolOnce(sym)
+                existingAssets.filter { it.assetType == AssetType.FON }.forEach { 
+                    assetDao.deleteAsset(it) 
+                }
+            }
+
             val fundAssets = getFundAssets().first()
             if (fundAssets.isEmpty()) {
                 emit(Resource.Success(Unit))
@@ -394,7 +404,7 @@ constructor(
                     if (index > 0) delay(1000L)
                     
                     val response = tefasApi.getFundHistory(
-                        TefasNewRequest(fonKodu = asset.symbol.uppercase())
+                        TefasNewRequest(fonKod = asset.symbol.uppercase(), periyod = "2")
                     )
                     
                     val results = response.resultList?.sortedByDescending { it.tarih }
@@ -503,15 +513,29 @@ constructor(
                     }
                 }
                 AssetType.FON -> {
+                    // Force cleanup of blacklisted funds from both Market and User Assets
+                    val blacklisted = listOf("AME", "GAY", "HAY", "IEY", "KDJ", "KOC", "KRA", "KZT", "TDF", "TID", "TIG", "TLA", "TLM", "TUK", "TUT", "YEG")
+                    blacklisted.forEach { sym ->
+                        marketAssetDao.deleteMarketAssetBySymbolAndType(sym, AssetType.FON)
+                        // If user has these as assets, we might want to keep them if they manually added them, 
+                        // but the user said "remove them if they are not working".
+                        repositoryScope.launch {
+                            val existingAssets = assetDao.getAssetsBySymbolOnce(sym)
+                            existingAssets.filter { it.assetType == AssetType.FON }.forEach { 
+                                assetDao.deleteAsset(it) 
+                            }
+                        }
+                    }
+
                     val symbols =
                             listOf(
-                                    "TTE", "IJP", "MAC", "GSP", "AFT", "KOC", "IPV", "OPI", "RPD", "TAU",
-                                    "YAY", "TI1", "GMR", "TE3", "HVS", "TDF", "IKL", "NJR", "BUY", "NNF",
-                                    "BGP", "KZT", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF",
+                                    "TTE", "IJP", "MAC", "GSP", "AFT", "IPV", "OPI", "RPD", "TAU",
+                                    "YAY", "TI1", "GMR", "TE3", "HVS", "IKL", "NJR", "BUY", "NNF",
+                                    "BGP", "ZPE", "OJT", "IDL", "KDV", "GPA", "RTG", "OTJ", "ZPF",
                                     "YZG", "HKH", "ZHB", "AFO", "GL1", "IVY", "YAS", "IHK", "EID", "ST1",
-                                    "GAY", "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "IEY", "YTD", "YEG",
-                                    "ZPF", "ZRE", "KDJ", "KRA", "OJK", "AME", "OKT", "HAY", "TUK", "TUA",
-                                    "TPZ", "TUT", "TID", "TIE", "TIG", "TIV", "TKF", "TLA", "TLM", "TLE",
+                                    "DBH", "YHS", "ZPC", "AES", "IPJ", "GUH", "YTD",
+                                    "ZRE", "OJK", "OKT", "TUA",
+                                    "TPZ", "TIE", "TIV", "TKF", "TLE",
                                     "TMS", "TMG"
                             )
                     Log.d("TEFAS_SONUC", "Market Funds Refresh: ${symbols.size} symbols via new API.")
@@ -520,13 +544,14 @@ constructor(
                         symbols.mapIndexed { index, symbol ->
                             async {
                                 try {
-                                    // Use 1s stagger to prevent rate limiting
-                                    if (index > 0) delay(1000L)
+                                    // Use staggered delay to avoid rate limiting
+                                    delay(index * 200L)
                                     
                                     val response = tefasApi.getFundHistory(
-                                        TefasNewRequest(fonKodu = symbol)
+                                        TefasNewRequest(fonKod = symbol.uppercase(), periyod = "2")
                                     )
                                     val results = response.resultList?.sortedByDescending { it.tarih }
+                                    android.util.Log.d("CuzdanTefas", "Fund $symbol -> Received ${results?.size ?: 0} data points")
                                     val latest = results?.firstOrNull()
                                     val previous = results?.getOrNull(1)
 
@@ -1050,8 +1075,10 @@ constructor(
                 val currentFavorites = currentAssets.filter { it.isFavorite }.associateBy { it.symbol }
                 val fetchedSymbols = marketAssets.map { it.symbol }.toSet()
                 
-                // Keep the assets that we failed to fetch this time so they don't disappear
-                val assetsToKeep = currentAssets.filter { it.symbol !in fetchedSymbols }
+                // Keep the assets that we failed to fetch this time so they don't disappear, 
+                // but EXCLUDE the problematic ones we explicitly want to remove.
+                val blacklistedFunds = setOf("AME", "GAY", "HAY", "IEY", "KDJ", "KOC", "KRA", "KZT", "TDF", "TID", "TIG", "TLA", "TLM", "TUK", "TUT", "YEG")
+                val assetsToKeep = currentAssets.filter { it.symbol !in fetchedSymbols && it.symbol !in blacklistedFunds }
 
                 val deduplicatedAssets =
                         marketAssets.map { asset ->

@@ -45,13 +45,17 @@ object MarketStatusUtils {
      * günlük değişimi %0.00 olarak gösterebiliriz.
      */
     fun isMarketClosedToday(type: AssetType): Boolean {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        // Borsa İstanbul 00:00 - 09:55 arası dünkü değişimi göstermemeli
+        val isBeforeBistOpen = hour < 9 || (hour == 9 && minute < 55)
+
         return when (type) {
-            AssetType.BIST -> isWeekend() || isTurkishHoliday()
+            AssetType.BIST -> isWeekend() || isTurkishHoliday() || isBeforeBistOpen
             AssetType.DOVIZ, AssetType.EMTIA, AssetType.NAKIT -> isWeekend()
             // Kripto her zaman açık
-            // Fonlar günlük gecikmeli yansıdığı için hafta sonu değişimleri cuma kapanışı olarak kalır, 
-            // ancak Tefas üzerinden geldiğinden hafta sonu genellikle fiyat değişmez. 
-            // Biz şimdilik sadece BIST, Döviz ve Emtia'yı sıfırlamak istiyoruz.
             else -> false
         }
     }

@@ -62,12 +62,12 @@ class MainActivity : AppCompatActivity() {
         val themeMode = PreferenceManager(this).getThemeMode()
         if (themeMode == "light") {
             setTheme(R.style.Theme_Cuzdan_Light)
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO)
         } else {
             setTheme(R.style.Theme_Cuzdan_Dark)
+            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES)
         }
         super.onCreate(savedInstanceState)
-
-
 
         val context = androidx.appcompat.view.ContextThemeWrapper(this, if (themeMode == "light") R.style.Theme_Cuzdan_Light else R.style.Theme_Cuzdan_Dark)
         binding = ActivityMainBinding.inflate(android.view.LayoutInflater.from(context))
