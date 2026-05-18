@@ -21,7 +21,7 @@ class UpdateManager @Inject constructor(
 
     fun checkForUpdates(activity: androidx.fragment.app.FragmentActivity) {
         // Mocking an update check. In a real app, you would fetch this from a server.
-        val latestVersion = "1.3" 
+        val latestVersion = "1.4" 
         val currentVersion = getCurrentVersion()
 
         if (isNewerVersion(latestVersion, currentVersion)) {

@@ -8,6 +8,12 @@ data class ReleaseNote(
 object ReleaseNotesProvider {
     val notes = listOf(
         ReleaseNote(
+            version = "1.4",
+            features = listOf(
+                "Dolar/TL dönüşümündeki hatalı maliyet hesaplama ortadan kalktı."
+            )
+        ),
+        ReleaseNote(
             version = "1.3",
             features = listOf(
                 "Eldeki maliyet gösterimi eklendi.\n",
